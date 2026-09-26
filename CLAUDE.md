@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-App học từ vựng Hàn → Việt (gõ đáp án, ôn giãn cách). Giao diện + comment:
+App học từ vựng Hàn → Việt (thẻ gõ đáp án hoặc tự chấm, ôn giãn cách). Giao diện + comment:
 **tiếng Việt**. Agent khác: xem `AGENTS.md`.
 
 - `frontend/` — Flutter + Riverpod (codegen). Học offline hoàn toàn, có mạng

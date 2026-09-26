@@ -29,7 +29,16 @@
 Nguồn đúng là DB (`Group`/`Deck`/`Card`/`StudySession`). File JSON chỉ là điểm
 khởi đầu / bản sao:
 
-- `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm). Chỉ `npm run
+- `Card` có `front` (mặt trước, câu hỏi), `back` (mặt sau, đáp án) và
+  `typeAnswer` (gõ đáp án / tự chấm, mặc định tự chấm). Trước đây là `kr`/`vi`
+  — migration `card_front_back_type_answer` đổi tên cột (giữ dữ liệu) và bật
+  `typeAnswer` cho thẻ có `back` ≤ 3 từ. JSON nhập bộ (`POST /decks`,
+  `/decks/:id/cards`) dùng `front`/`back`, `typeAnswer` không bắt buộc (thiếu
+  thì theo `defaultTypeAnswer` trong `wordInput.ts`). `PATCH /cards/:id` không
+  gửi `typeAnswer` thì giữ nguyên. App vẫn đọc được cache cũ `kr`/`vi` trên
+  máy (coi là thẻ gõ đáp án) tới lần đồng bộ sau.
+- `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm), **định dạng cũ
+  `kr`/`vi`** (`importContent.ts` tự chuyển sang `back`/`front`). Chỉ `npm run
   import-content` đọc, cùng chỉnh sửa/⭐/漢 thật từ bảng `SyncState` cũ (không có
   thì `seed-data/vocab-state.json`). Chỉ chạy khi user **chưa có nhóm nào**.
 - `frontend/assets/content.json` — bản xuất từ DB, định dạng `GET /content`.

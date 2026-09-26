@@ -4,21 +4,27 @@
 
 - `study_engine_test.dart` — thuật toán trên dữ liệu giả (dựng qua
   `support/fixtures.dart` → `buildStudyCatalog`, đúng đường chạy thật), hạt
-  giống cố định. Gồm `replaceContent` (sửa/xoá/thêm thẻ giữa lượt) và bỏ cờ
-  trong deck ⭐/漢.
+  giống cố định. Gồm `replaceContent` (sửa/xoá/thêm thẻ giữa lượt), bỏ cờ
+  trong deck ⭐/漢 và thẻ tự chấm (lật không tính điểm, chưa lật không chấm
+  được, "Nhớ"/"Chưa nhớ" đúng nhánh, thẻ ngữ cảnh tự chấm kéo thẻ gốc thuộc).
+  Fixture `contentDeck` áp `defaultTypeAnswer` như server, nên từ ngắn trong
+  test là thẻ gõ đáp án; muốn thẻ tự chấm thì ghi `"typeAnswer": false`.
 - `review_schedule_test.dart` — gợi ý ôn lại: giãn 1→3→7→14→30→60, tụt về đầu
   khi < 80%, học sớm không nhảy bậc, học dở không tính, so theo ngày lịch.
 - `deck_import_test.dart` — JSON dán từ AI (khối ` ```json `, mảng trần, thẻ
-  ngữ cảnh, lỗi đúng vị trí, giới hạn 500 khớp server).
+  ngữ cảnh, lỗi đúng vị trí, giới hạn 500 khớp server), `typeAnswer` mặc định
+  theo độ dài mặt sau / ghi rõ thì giữ.
 - `content_asset_test.dart` — trên chính `assets/content.json`: id không trùng,
   thẻ ngữ cảnh trỏ đúng thẻ gốc, dựng catalog không rơi thẻ/cờ.
 - `content_api_test.dart` — `DioContentApi` ở tầng HTTP thật (fake
   `HttpClientAdapter`): parse, `offline` vs server từ chối (thông báo từ body),
-  body sai định dạng/HTML vẫn thành `ApiException`, body gửi đi đúng định dạng.
+  body sai định dạng/HTML vẫn thành `ApiException`, body gửi đi đúng định dạng,
+  cache cũ `kr`/`vi` vẫn đọc được.
 - `study_reading_view_test.dart` — smoke test UI qua `_FakeApi` (server trong
   bộ nhớ) + `MemoryStore`: ghi lần học (hết bộ / bỏ dở / nháp sót), hàng đợi
   offline tự gửi khi có mạng, ⭐/漢 offline, lịch sử gộp máy khác, soạn nội dung
-  chỉ trên Mac/web, bộ rỗng không crash.
+  chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ), bộ rỗng không
+  crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0).
 - `hint_box_test.dart` — chú thích trên thẻ theo nền tảng: máy tính/web giới
   hạn `hintVisibleLines` dòng rồi cuộn; điện thoại cắt bớt, bấm mở bảng đầy đủ.
   Dựng trong `IntrinsicHeight` như thẻ thật — đừng dùng `LayoutBuilder` trong

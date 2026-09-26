@@ -85,6 +85,28 @@ Nút này (nhãn trên UI: "Đã trả lời đúng?"; bấm xong hiện "✓ �
 khi bấm "Xem đáp án" — lúc đó người học chưa hề trả lời nên không có gì để
 sửa lại.
 
+## Thẻ tự chấm (`typeAnswer == false`)
+
+Mỗi thẻ có `front` (mặt trước, câu hỏi) và `back` (mặt sau, đáp án), cùng
+`typeAnswer`: `true` = gõ đáp án như trên; `false` = **thẻ tự chấm** — kiểu
+lật thẻ của Anki. Thẻ mới mặc định là tự chấm; nhập bộ mà JSON không ghi rõ
+thì `back` ≤ 3 từ (tách theo khoảng trắng) là gõ đáp án — câu/cụm dài gõ lại
+từng chữ rất mệt (`defaultTypeAnswer`, có bản giống hệt ở `wordInput.ts`;
+migration `card_front_back_type_answer` áp cùng quy tắc cho thẻ đã có).
+
+1. `flipCard()` — lật sang mặt sau. **Không** phải là trả lời: chưa tính
+   đúng/sai, không đụng hàng đợi (khác "Xem đáp án" của thẻ gõ, tính là sai).
+2. `gradeSelf(remembered:)` — chỉ sau khi lật. "Nhớ" đi đúng nhánh gõ đúng,
+   "Chưa nhớ" đi đúng nhánh gõ sai: cùng `_applySchedule`, cùng cách tính tỉ lệ
+   đúng cho gợi ý ôn lại, thẻ ngữ cảnh "Nhớ" vẫn kéo thẻ gốc thuộc theo. Không
+   có "Đã trả lời đúng?" (tự chấm rồi). View model sang thẻ tiếp luôn, không
+   khoá 2 giây (mặt sau đã hiện trước khi chấm).
+3. "Đã thuộc" vẫn dùng được trước khi chấm. `checkAnswer`/`revealAnswer` bỏ
+   qua thẻ tự chấm; `flipCard`/`gradeSelf` bỏ qua thẻ gõ đáp án.
+
+Cờ `flipped` về `false` mỗi lần `loadCard()`; `replaceContent` giữ thẻ đang
+hỏi nên giữ luôn trạng thái lật.
+
 ## Deck ảo
 
 Ba deck dựng động, không có trên server, không ghi lịch sử học:
@@ -134,7 +156,8 @@ Lịch sử của **mọi máy** được gộp chung rồi tính gợi ý bằn
 | Học dở | chỉ ghi lịch sử, không ảnh hưởng lịch |
 
 Tỉ lệ đúng = `correct / attempted`, tính cả những lần hỏi lại cùng một thẻ
-("Xem đáp án" tính là sai; chỉ bấm "Đã thuộc" mà không gõ câu nào = 100%). So
+("Xem đáp án" và "Chưa nhớ" tính là sai; chỉ bấm "Đã thuộc" mà không gõ câu
+nào = 100%). So
 theo **ngày lịch** giờ địa phương, không theo số giờ: học 23h rồi mở lúc 7h sáng
 hôm sau vẫn là "ngày mai".
 

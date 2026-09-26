@@ -65,8 +65,16 @@ tới) rồi truyền vào `StudyCard`.
   khi route hiện tại không phải màn học (dialog, menu •••) và bỏ qua `Enter`
   thường khi chưa trả lời (để TextField chấm bài và bộ gõ Hàn chốt chữ). "Xem
   đáp án" là `Cmd+/` — **không phải `Cmd+Space`** (macOS giữ cho Spotlight/bộ gõ).
+  Thẻ tự chấm (không có ô nhập): chưa lật thì `Space`/`Enter`/`Cmd+/` = Lật
+  thẻ, `Cmd+Enter` = Đã thuộc; đã lật thì `1`/`→` = Nhớ, `0`/`←` = Chưa nhớ —
+  cố ý không dùng `Enter` để bấm Enter hai lần không lỡ tay chấm "Nhớ".
 - **Ô nhập dọn theo `cardSerial`**, không theo đối tượng thẻ (`replaceContent`
-  tạo đối tượng mới cho cùng thẻ đang hỏi).
+  tạo đối tượng mới cho cùng thẻ đang hỏi). Sang thẻ tự chấm thì `unfocus()` để
+  điện thoại cụp bàn phím.
+- **Thẻ tự chấm** (`typeAnswer == false`): `StudyCard` thay ô nhập bằng
+  `_FlipSide` (chưa lật: ô "chạm để lật"; lật rồi: mặt sau + đáp án phụ);
+  `StudyControls` đổi "Xem đáp án" thành "Lật thẻ", lật rồi thì hàng trên là
+  "✕ Chưa nhớ" / "✓ Nhớ". Tự chấm xong sang thẻ tiếp luôn, không khoá 2 giây.
 
 ## Điện thoại
 
@@ -88,9 +96,12 @@ tới) rồi truyền vào `StudyCard`.
   bàn phím mở xong (metrics đổi liên tục trong animation).
 - **Soạn nội dung chỉ trên Mac/web** (`!isPhone`): "+ Nhóm", "✎" đổi tên nhóm,
   "+ Bộ mới", "+ Thêm từ vào bộ này", "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
-  ⭐/漢 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{kr, vi,
-  hint?, altAnswers?, followUp?/followUps?}]}` hoặc mảng trần, kể cả còn bọc
-  trong ` ```json `; nút "Sao chép prompt tách từ" chép `deckExtractionPrompt`.
+  ⭐/漢 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
+  back, hint?, altAnswers?, typeAnswer?, followUp?/followUps?}]}` hoặc mảng
+  trần, kể cả còn bọc trong ` ```json `; nút "Sao chép prompt tách từ" chép
+  `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô "Nhập đáp án" (tick
+  sẵn theo `defaultTypeAnswer`: mặt sau ≤ 3 từ), đổi được trước khi gửi. Dialog
+  sửa thẻ có checkbox "Nhập đáp án".
 
 ## Mạng
 
