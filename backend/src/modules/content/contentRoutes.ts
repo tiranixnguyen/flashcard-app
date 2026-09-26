@@ -100,9 +100,13 @@ contentRouter.patch(
   "/cards/:id",
   handle(async (req, res, userId) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
-    const { kr, vi, hint, altAnswers } = body;
-    if (typeof kr !== "string" || !kr.trim() || typeof vi !== "string" || !vi.trim()) {
-      res.status(400).json({ error: "Cần đủ nghĩa tiếng Việt và từ tiếng Hàn." });
+    const { front, back, hint, altAnswers, typeAnswer } = body;
+    if (typeof front !== "string" || !front.trim() || typeof back !== "string" || !back.trim()) {
+      res.status(400).json({ error: "Cần đủ mặt trước và mặt sau." });
+      return;
+    }
+    if (typeAnswer !== undefined && typeof typeAnswer !== "boolean") {
+      res.status(400).json({ error: "typeAnswer phải là true/false." });
       return;
     }
     if (hint !== undefined && hint !== null && typeof hint !== "string") {
@@ -118,10 +122,11 @@ contentRouter.patch(
     }
     res.json(
       await updateCard(prisma, userId, String(req.params.id), {
-        kr,
-        vi,
+        front,
+        back,
         hint: (hint as string | null | undefined) ?? null,
         altAnswers: (altAnswers as string[] | undefined) ?? [],
+        typeAnswer,
       }),
     );
   }),

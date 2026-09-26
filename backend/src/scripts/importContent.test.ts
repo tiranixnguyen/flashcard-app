@@ -39,10 +39,14 @@ describe("buildImportPlan trên dữ liệu thật", () => {
 
   it("chỉnh sửa rơi đúng thẻ (so với vị trí đã làm phẳng, có tính thẻ ngữ cảnh)", () => {
     // ds2 có 3 thẻ ngữ cảnh chen giữa — nếu làm phẳng lệch, 키우다 sẽ không ở vị trí 16.
-    expect(card("ds2-16")).toMatchObject({ kr: "키우다", marked: true });
-    expect(card("ds2-7")).toMatchObject({ kr: "유치원", hint: "ấu: 유, trĩ: 치", hanja: true });
-    expect(card("ds20-0")).toMatchObject({ kr: "1일 2회, 1회 1정 복용" });
+    expect(card("ds2-16")).toMatchObject({ back: "키우다", marked: true });
+    expect(card("ds2-7")).toMatchObject({ back: "유치원", hint: "ấu: 유, trĩ: 치", hanja: true });
+    expect(card("ds20-0")).toMatchObject({ back: "1일 2회, 1회 1정 복용", typeAnswer: false });
     expect(card("ds23-24")?.altAnswers).toEqual(["다양"]);
+  });
+
+  it("định dạng cũ kr/vi được chuyển thành back/front; đáp án ngắn thì gõ đáp án", () => {
+    expect(card("ds1-0")).toMatchObject({ back: "치아", front: "răng", typeAnswer: true });
   });
 
   it("thẻ đã xoá không được tạo", () => {
@@ -51,7 +55,7 @@ describe("buildImportPlan trên dữ liệu thật", () => {
   });
 
   it("thẻ ngữ cảnh trỏ đúng thẻ gốc", () => {
-    expect(card("ds2-9")).toMatchObject({ kr: "우리 아이", parentId: "ds2-8" });
+    expect(card("ds2-9")).toMatchObject({ back: "우리 아이", parentId: "ds2-8" });
   });
 
   it("entry lệch vị trí (baseKr khác) bị bỏ qua, không áp nhầm", () => {

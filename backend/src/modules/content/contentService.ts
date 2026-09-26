@@ -7,10 +7,11 @@ export interface CardDto {
   id: string;
   position: number;
   parentId: string | null;
-  kr: string;
-  vi: string;
+  front: string;
+  back: string;
   hint: string | null;
   altAnswers: string[];
+  typeAnswer: boolean;
   marked: boolean;
   hanja: boolean;
 }
@@ -38,10 +39,11 @@ const cardSelect = {
   id: true,
   position: true,
   parentId: true,
-  kr: true,
-  vi: true,
+  front: true,
+  back: true,
   hint: true,
   altAnswers: true,
+  typeAnswer: true,
   marked: true,
   hanja: true,
 } as const;
@@ -130,10 +132,11 @@ async function insertCards(
     deckId,
     position: startPosition + i,
     parentId: c.parentOffset === null ? null : ids[c.parentOffset]!,
-    kr: c.kr,
-    vi: c.vi,
+    front: c.front,
+    back: c.back,
     hint: c.hint,
     altAnswers: c.altAnswers,
+    typeAnswer: c.typeAnswer,
   }));
   await tx.card.createMany({ data: rows.filter((r) => r.parentId === null) });
   await tx.card.createMany({ data: rows.filter((r) => r.parentId !== null) });
@@ -207,17 +210,25 @@ export async function updateCard(
   prisma: PrismaClient,
   userId: string,
   cardId: string,
-  input: { kr: string; vi: string; hint: string | null; altAnswers: string[] },
+  input: {
+    front: string;
+    back: string;
+    hint: string | null;
+    altAnswers: string[];
+    /** Bỏ trống thì giữ nguyên kiểu thẻ hiện tại. */
+    typeAnswer?: boolean | undefined;
+  },
 ): Promise<CardDto> {
   await findOwnedCard(prisma, userId, cardId);
   const hint = input.hint?.trim();
   return prisma.card.update({
     where: { id: cardId },
     data: {
-      kr: input.kr.trim(),
-      vi: input.vi.trim(),
+      front: input.front.trim(),
+      back: input.back.trim(),
       hint: hint ? hint : null,
-      altAnswers: cleanAlts(input.altAnswers, input.kr),
+      altAnswers: cleanAlts(input.altAnswers, input.back),
+      ...(input.typeAnswer === undefined ? {} : { typeAnswer: input.typeAnswer }),
     },
     select: cardSelect,
   });

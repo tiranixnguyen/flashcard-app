@@ -11,7 +11,7 @@ async function makeDeckId() {
   const d = await api("POST", "/decks", {
     groupId: g.json.id,
     name: "D",
-    words: [{ kr: "가", vi: "a" }],
+    words: [{ back: "가", front: "a" }],
   });
   return d.json.id as string;
 }

@@ -1,50 +1,87 @@
 import { describe, expect, it } from "vitest";
-import { expandWordInputs, parseWordInputs } from "./wordInput";
+import { defaultTypeAnswer, expandWordInputs, parseWordInputs } from "./wordInput";
 
 describe("expandWordInputs — phải giống hệt expandWords bên Dart", () => {
   it("thẻ ngữ cảnh nằm ngay sau thẻ gốc và trỏ về nó", () => {
     const out = expandWordInputs([
-      { kr: "가다", vi: "đi", followUp: { kr: "학교에 가다", vi: "đi đến trường" } },
-      { kr: "학생", vi: "học sinh" },
+      { back: "가다", front: "đi", followUp: { back: "학교에 가다", front: "đi đến trường" } },
+      { back: "학생", front: "học sinh" },
     ]);
-    expect(out.map((c) => [c.kr, c.parentOffset])).toEqual([
+    expect(out.map((c) => [c.back, c.parentOffset])).toEqual([
       ["가다", null],
       ["학교에 가다", 0],
       ["학생", null],
     ]);
   });
 
-  it("thẻ ngữ cảnh thiếu kr thì mượn kr của thẻ gốc", () => {
-    const out = expandWordInputs([{ kr: "먹다", vi: "ăn", followUp: { vi: "ăn cơm" } }]);
-    expect(out[1]!.kr).toBe("먹다");
+  it("thẻ ngữ cảnh thiếu back thì mượn back của thẻ gốc", () => {
+    const out = expandWordInputs([{ back: "먹다", front: "ăn", followUp: { front: "ăn cơm" } }]);
+    expect(out[1]!.back).toBe("먹다");
   });
 
   it("followUps được ưu tiên hơn followUp", () => {
     const out = expandWordInputs([
       {
-        kr: "a",
-        vi: "a",
-        followUp: { vi: "bị bỏ qua" },
-        followUps: [{ vi: "một" }, { vi: "hai" }],
+        back: "a",
+        front: "a",
+        followUp: { front: "bị bỏ qua" },
+        followUps: [{ front: "một" }, { front: "hai" }],
       },
     ]);
-    expect(out.map((c) => c.vi)).toEqual(["a", "một", "hai"]);
+    expect(out.map((c) => c.front)).toEqual(["a", "một", "hai"]);
     expect(out[2]!.parentOffset).toBe(0);
   });
 
   it("dọn đáp án phụ: bỏ rỗng, bỏ trùng, bỏ trùng đáp án chính", () => {
     const [c] = expandWordInputs([
-      { kr: "학생", vi: "hs", altAnswers: ["학생", "", "생도", "생도"] },
+      { back: "학생", front: "hs", altAnswers: ["학생", "", "생도", "생도"] },
     ]);
     expect(c!.altAnswers).toEqual(["생도"]);
+  });
+
+  it("không ghi typeAnswer: mặt sau ≤ 3 từ là gõ đáp án, dài hơn là tự chấm", () => {
+    const out = expandWordInputs([
+      {
+        back: "간 이식 수술",
+        front: "ghép gan",
+        followUps: [
+          { back: "간 이식 수술을 하다", front: "làm phẫu thuật ghép gan" },
+          { front: "x" },
+        ],
+      },
+    ]);
+    expect(out.map((c) => c.typeAnswer)).toEqual([true, false, true]);
+  });
+
+  it("ghi rõ typeAnswer thì luôn theo đó, kể cả thẻ ngữ cảnh", () => {
+    const out = expandWordInputs([
+      {
+        back: "가다",
+        front: "đi",
+        typeAnswer: false,
+        followUp: { back: "학교에 가서 공부를 하다", front: "đi học", typeAnswer: true },
+      },
+    ]);
+    expect(out.map((c) => c.typeAnswer)).toEqual([false, true]);
+  });
+});
+
+describe("defaultTypeAnswer", () => {
+  it.each([
+    ["가다", true],
+    ["  학교에   가다  ", true],
+    ["1일 2회 복용", true],
+    ["1일 2회, 1회 1정 복용", false],
+  ])("%j -> %s", (back, expected) => {
+    expect(defaultTypeAnswer(back)).toBe(expected);
   });
 });
 
 describe("parseWordInputs", () => {
   it("chấp nhận đúng định dạng prompt tách từ trả về", () => {
     const r = parseWordInputs([
-      { kr: "치아", vi: "răng", hint: "xỉ nha" },
-      { kr: "눈", vi: "mắt" },
+      { back: "치아", front: "răng", hint: "xỉ nha" },
+      { back: "눈", front: "mắt", typeAnswer: false },
     ]);
     expect(r.ok).toBe(true);
   });
@@ -52,10 +89,12 @@ describe("parseWordInputs", () => {
   it.each([
     [[], "trống"],
     ["không phải mảng", "mảng"],
-    [[{ vi: "thiếu kr" }], "words[0].kr"],
-    [[{ kr: "x" }], "words[0].vi"],
-    [[{ kr: "x", vi: "y", altAnswers: [1] }], "altAnswers"],
-    [[{ kr: "x", vi: "y", followUp: { kr: "z" } }], "followUp.vi"],
+    [[{ front: "thiếu back" }], "words[0].back"],
+    [[{ back: "x" }], "words[0].front"],
+    [[{ back: "x", front: "y", altAnswers: [1] }], "altAnswers"],
+    [[{ back: "x", front: "y", typeAnswer: "có" }], "words[0].typeAnswer"],
+    [[{ back: "x", front: "y", followUp: { back: "z" } }], "followUp.front"],
+    [[{ kr: "x", vi: "y" }], "words[0].front"],
   ])("từ chối %j — báo đúng chỗ sai", (input, expected) => {
     const r = parseWordInputs(input);
     expect(r.ok).toBe(false);

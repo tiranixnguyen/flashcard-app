@@ -41,10 +41,10 @@ describe("bộ từ và thẻ", () => {
   it("tạo bộ từ JSON của prompt tách từ, làm phẳng thẻ ngữ cảnh", async () => {
     const g = await makeGroup();
     const deck = await makeDeck(g.id, [
-      { kr: "가다", vi: "đi", followUp: { kr: "학교에 가다", vi: "đi đến trường" } },
-      { kr: "공지하다", vi: "thông báo", hint: "công tri", altAnswers: ["공지"] },
+      { back: "가다", front: "đi", followUp: { back: "학교에 가다", front: "đi đến trường" } },
+      { back: "공지하다", front: "thông báo", hint: "công tri", altAnswers: ["공지"] },
     ]);
-    expect(deck.cards.map((c) => [c.position, c.kr])).toEqual([
+    expect(deck.cards.map((c) => [c.position, c.back])).toEqual([
       [0, "가다"],
       [1, "학교에 가다"],
       [2, "공지하다"],
@@ -55,14 +55,14 @@ describe("bộ từ và thẻ", () => {
 
   it("JSON sai định dạng -> 400 kèm vị trí từ sai; nhóm không tồn tại -> 404", async () => {
     const g = await makeGroup();
-    const bad = await api("POST", "/decks", { groupId: g.id, name: "x", words: [{ kr: "a" }] });
+    const bad = await api("POST", "/decks", { groupId: g.id, name: "x", words: [{ back: "a" }] });
     expect(bad.status).toBe(400);
-    expect(bad.json.error).toContain("words[0].vi");
+    expect(bad.json.error).toContain("words[0].front");
 
     const noGroup = await api("POST", "/decks", {
       groupId: "khong-co",
       name: "x",
-      words: [{ kr: "a", vi: "b" }],
+      words: [{ back: "a", front: "b" }],
     });
     expect(noGroup.status).toBe(404);
   });
@@ -70,28 +70,28 @@ describe("bộ từ và thẻ", () => {
   it("bộ tối đa 500 từ, mỗi từ 2 thẻ ngữ cảnh -> tạo trọn trong một transaction", async () => {
     const g = await makeGroup();
     const words = Array.from({ length: 500 }, (_, i) => ({
-      kr: `단어${i}`,
-      vi: `từ ${i}`,
-      followUps: [{ vi: `ngữ cảnh ${i}a` }, { vi: `ngữ cảnh ${i}b` }],
+      back: `단어${i}`,
+      front: `từ ${i}`,
+      followUps: [{ front: `ngữ cảnh ${i}a` }, { front: `ngữ cảnh ${i}b` }],
     }));
     const deck = await makeDeck(g.id, words);
     expect(deck.cards).toHaveLength(1500);
     expect(deck.cards.map((c) => c.position)).toEqual([...Array(1500).keys()]);
     // Thẻ ngữ cảnh trỏ đúng thẻ gốc đứng ngay trước nó trong cùng lô.
     expect(deck.cards[1499].parentId).toBe(deck.cards[1497].id);
-    expect(deck.cards[1499].kr).toBe("단어499");
+    expect(deck.cards[1499].back).toBe("단어499");
   });
 
   it("thêm từ vào CUỐI bộ, thứ tự cũ giữ nguyên", async () => {
     const g = await makeGroup();
-    const deck = await makeDeck(g.id, [{ kr: "하나", vi: "một" }]);
+    const deck = await makeDeck(g.id, [{ back: "하나", front: "một" }]);
     const r = await api("POST", `/decks/${deck.id}/cards`, {
       words: [
-        { kr: "둘", vi: "hai" },
-        { kr: "셋", vi: "ba" },
+        { back: "둘", front: "hai" },
+        { back: "셋", front: "ba" },
       ],
     });
-    expect(r.json.cards.map((c: any) => [c.position, c.kr])).toEqual([
+    expect(r.json.cards.map((c: any) => [c.position, c.back])).toEqual([
       [0, "하나"],
       [1, "둘"],
       [2, "셋"],
@@ -101,26 +101,49 @@ describe("bộ từ và thẻ", () => {
   it("sửa thẻ ghi thẳng lên server; xoá thẻ gốc xoá luôn thẻ ngữ cảnh", async () => {
     const g = await makeGroup();
     const deck = await makeDeck(g.id, [
-      { kr: "가다", vi: "đi", followUp: { vi: "đi đến trường" } },
-      { kr: "오다", vi: "đến" },
+      { back: "가다", front: "đi", followUp: { front: "đi đến trường" } },
+      { back: "오다", front: "đến" },
     ]);
     const [root, , other] = deck.cards;
 
     const edited = await api("PATCH", `/cards/${other.id}`, {
-      kr: "오다",
-      vi: "đến, tới",
+      back: "오다",
+      front: "đến, tới",
       hint: "  ",
       altAnswers: ["오다", "와요"],
     });
-    expect(edited.json).toMatchObject({ vi: "đến, tới", hint: null, altAnswers: ["와요"] });
+    expect(edited.json).toMatchObject({ front: "đến, tới", hint: null, altAnswers: ["와요"] });
 
     expect((await api("DELETE", `/cards/${root.id}`)).status).toBe(204);
     const content = await api("GET", "/content");
-    expect(content.json.decks[0].cards.map((c: any) => c.kr)).toEqual(["오다"]);
+    expect(content.json.decks[0].cards.map((c: any) => c.back)).toEqual(["오다"]);
+  });
+
+  it("kiểu thẻ: nhập bộ tự chọn theo độ dài mặt sau; PATCH đổi được, bỏ trống thì giữ", async () => {
+    const g = await makeGroup();
+    const deck = await makeDeck(g.id, [
+      { back: "가다", front: "đi" },
+      { back: "쓰레기는 줄이고 재활용은 늘리다", front: "giảm rác, tăng tái chế" },
+      { back: "오다", front: "đến", typeAnswer: false },
+    ]);
+    expect(deck.cards.map((c) => c.typeAnswer)).toEqual([true, false, false]);
+
+    const id = deck.cards[0].id;
+    const off = await api("PATCH", `/cards/${id}`, {
+      back: "가다",
+      front: "đi",
+      typeAnswer: false,
+    });
+    expect(off.json.typeAnswer).toBe(false);
+    const kept = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi (sửa)" });
+    expect(kept.json).toMatchObject({ front: "đi (sửa)", typeAnswer: false });
+
+    const bad = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi", typeAnswer: 1 });
+    expect(bad.status).toBe(400);
   });
 
   it("thẻ không tồn tại -> 404", async () => {
-    expect((await api("PATCH", "/cards/khong-co", { kr: "a", vi: "b" })).status).toBe(404);
+    expect((await api("PATCH", "/cards/khong-co", { back: "a", front: "b" })).status).toBe(404);
     expect((await api("DELETE", "/cards/khong-co")).status).toBe(404);
   });
 });
@@ -128,7 +151,7 @@ describe("bộ từ và thẻ", () => {
 describe("dấu ⭐/漢 — lần bấm muộn nhất thắng, mỗi dấu tính riêng", () => {
   it("lần bấm cũ tới sau (hàng đợi offline) không đè lần bấm mới hơn", async () => {
     const g = await makeGroup();
-    const { cards } = await makeDeck(g.id, [{ kr: "가", vi: "a" }]);
+    const { cards } = await makeDeck(g.id, [{ back: "가", front: "a" }]);
     const id = cards[0].id;
 
     await api("POST", "/cards/flags", {
@@ -145,7 +168,7 @@ describe("dấu ⭐/漢 — lần bấm muộn nhất thắng, mỗi dấu tính
 
   it("đổi 漢 muộn hơn không làm lần đổi ⭐ sớm hơn bị từ chối", async () => {
     const g = await makeGroup();
-    const { cards } = await makeDeck(g.id, [{ kr: "가", vi: "a" }]);
+    const { cards } = await makeDeck(g.id, [{ back: "가", front: "a" }]);
     const id = cards[0].id;
 
     await api("POST", "/cards/flags", {

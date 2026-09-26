@@ -66,10 +66,16 @@ model Card {
   deckId     String
   position   Int
   parentId   String?
-  kr         String
-  vi         String
+  /// Mặt trước — câu hỏi hiện ra (thường là nghĩa tiếng Việt).
+  front      String
+  /// Mặt sau — đáp án (thường là từ tiếng Hàn).
+  back       String
   hint       String?
   altAnswers String[] @default([])
+  /// `true` = gõ đáp án (chấm theo `back`/`altAnswers`); `false` = thẻ tự
+  /// chấm: lật thẻ rồi tự bấm "Nhớ"/"Chưa nhớ". Nhập bộ mà không ghi rõ thì
+  /// `back` ngắn (≤ 3 từ) là gõ đáp án — xem wordInput.ts.
+  typeAnswer Boolean  @default(false)
   /// ⭐ khó nhớ / 漢 Hán Hàn — điện thoại vẫn được bật/tắt (kể cả offline).
   /// Nhiều máy cùng đổi thì lần đổi muộn nhất thắng, so theo thời điểm bấm do
   /// client gửi lên (không phải lúc tới server). Mỗi cờ một mốc riêng: dùng

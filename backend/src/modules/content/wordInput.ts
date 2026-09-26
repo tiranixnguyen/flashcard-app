@@ -1,21 +1,26 @@
 /**
  * Đầu vào từ vựng khi tạo bộ / thêm từ — đúng định dạng JSON mà prompt tách từ
- * trên claude.ai trả về, và cũng là định dạng của backend/prisma/seed-data/decks.json:
+ * trên claude.ai trả về:
  *
- *   { "kr": "가다", "vi": "đi", "hint": "...", "altAnswers": ["..."],
- *     "followUp": { "kr": "...", "vi": "..." } }   // hoặc "followUps": [...]
+ *   { "front": "đi", "back": "가다", "hint": "...", "altAnswers": ["..."],
+ *     "typeAnswer": true,                            // không bắt buộc
+ *     "followUp": { "front": "...", "back": "..." } } // hoặc "followUps": [...]
+ *
+ * `front` là mặt hiện ra (câu hỏi), `back` là đáp án.
  */
 export interface FollowUpInput {
-  kr?: string;
-  vi: string;
+  back?: string;
+  front: string;
   hint?: string | null;
+  typeAnswer?: boolean | null;
 }
 
 export interface WordInput {
-  kr: string;
-  vi: string;
+  back: string;
+  front: string;
   hint?: string | null;
   altAnswers?: string[] | null;
+  typeAnswer?: boolean | null;
   followUp?: FollowUpInput | null;
   followUps?: FollowUpInput[] | null;
 }
@@ -23,37 +28,55 @@ export interface WordInput {
 /** Một thẻ sau khi làm phẳng. `parentOffset` là vị trí (trong cùng lô) của
  * thẻ gốc nếu đây là thẻ ngữ cảnh. */
 export interface ExpandedCard {
-  kr: string;
-  vi: string;
+  back: string;
+  front: string;
   hint: string | null;
   altAnswers: string[];
+  typeAnswer: boolean;
   parentOffset: number | null;
+}
+
+/** Mặt sau tối đa bấy nhiêu từ thì coi là "ngắn". */
+export const SHORT_ANSWER_MAX_WORDS = 3;
+
+/**
+ * Nhập bộ mà không ghi rõ `typeAnswer`: đáp án ngắn (≤ 3 từ) thì gõ đáp án,
+ * dài hơn (câu, cụm dài — gõ lại từng chữ rất mệt) thì là thẻ tự chấm. Phải
+ * giống `defaultTypeAnswer` bên Dart và câu UPDATE trong migration
+ * card_front_back_type_answer.
+ */
+export function defaultTypeAnswer(back: string): boolean {
+  return back.trim().split(/\s+/).length <= SHORT_ANSWER_MAX_WORDS;
 }
 
 /**
  * Làm phẳng chuỗi thẻ ngữ cảnh: thẻ gốc rồi tới các thẻ ngữ cảnh theo thứ tự;
- * `followUps` được ưu tiên hơn `followUp`; thẻ ngữ cảnh thiếu `kr` thì mượn
- * `kr` của thẻ gốc. `scripts/importContent.ts` dựng id bộ gốc ("ds2-7") từ vị
- * trí sau khi làm phẳng — đổi thứ tự ở đây là id lệch với DB đang có.
+ * `followUps` được ưu tiên hơn `followUp`; thẻ ngữ cảnh thiếu `back` thì mượn
+ * `back` của thẻ gốc. `scripts/importContent.ts` dựng id bộ gốc ("ds2-7") từ
+ * vị trí sau khi làm phẳng — đổi thứ tự ở đây là id lệch với DB đang có.
  */
 export function expandWordInputs(words: WordInput[]): ExpandedCard[] {
   const out: ExpandedCard[] = [];
   for (const w of words) {
     const parentOffset = out.length;
+    const back = w.back.trim();
     out.push({
-      kr: w.kr.trim(),
-      vi: w.vi.trim(),
+      back,
+      front: w.front.trim(),
       hint: cleanHint(w.hint),
-      altAnswers: cleanAlts(w.altAnswers, w.kr),
+      altAnswers: cleanAlts(w.altAnswers, back),
+      typeAnswer: w.typeAnswer ?? defaultTypeAnswer(back),
       parentOffset: null,
     });
     const chain = w.followUps?.length ? w.followUps : w.followUp ? [w.followUp] : [];
     for (const fu of chain) {
+      const fuBack = (fu.back ?? w.back).trim();
       out.push({
-        kr: (fu.kr ?? w.kr).trim(),
-        vi: fu.vi.trim(),
+        back: fuBack,
+        front: fu.front.trim(),
         hint: cleanHint(fu.hint),
         altAnswers: [],
+        typeAnswer: fu.typeAnswer ?? defaultTypeAnswer(fuBack),
         parentOffset,
       });
     }
@@ -67,8 +90,8 @@ function cleanHint(hint: string | null | undefined): string | null {
 }
 
 /** Bỏ rỗng, bỏ trùng, bỏ đáp án phụ trùng đáp án chính — giống dialog sửa thẻ. */
-export function cleanAlts(alts: string[] | null | undefined, kr: string): string[] {
-  const main = kr.trim();
+export function cleanAlts(alts: string[] | null | undefined, back: string): string[] {
+  const main = back.trim();
   return [...new Set((alts ?? []).map((a) => a.trim()).filter((a) => a && a !== main))];
 }
 
@@ -88,11 +111,17 @@ function optionalString(v: unknown): boolean {
   return v === undefined || v === null || typeof v === "string";
 }
 
+function optionalBoolean(v: unknown): boolean {
+  return v === undefined || v === null || typeof v === "boolean";
+}
+
 function checkFollowUp(v: unknown, path: string): string | null {
   if (!isRecord(v)) return `${path}: phải là object`;
-  if (v.kr !== undefined && !nonEmptyString(v.kr)) return `${path}.kr: phải là chuỗi không rỗng`;
-  if (!nonEmptyString(v.vi)) return `${path}.vi: thiếu nghĩa tiếng Việt`;
+  if (v.back !== undefined && !nonEmptyString(v.back))
+    return `${path}.back: phải là chuỗi không rỗng`;
+  if (!nonEmptyString(v.front)) return `${path}.front: thiếu mặt trước`;
   if (!optionalString(v.hint)) return `${path}.hint: phải là chuỗi`;
+  if (!optionalBoolean(v.typeAnswer)) return `${path}.typeAnswer: phải là true/false`;
   return null;
 }
 
@@ -106,9 +135,11 @@ export function parseWordInputs(input: unknown): ParseResult<WordInput[]> {
     const w: unknown = input[i];
     const path = `words[${i}]`;
     if (!isRecord(w)) return { ok: false, error: `${path}: phải là object` };
-    if (!nonEmptyString(w.kr)) return { ok: false, error: `${path}.kr: thiếu từ tiếng Hàn` };
-    if (!nonEmptyString(w.vi)) return { ok: false, error: `${path}.vi: thiếu nghĩa tiếng Việt` };
+    if (!nonEmptyString(w.front)) return { ok: false, error: `${path}.front: thiếu mặt trước` };
+    if (!nonEmptyString(w.back)) return { ok: false, error: `${path}.back: thiếu mặt sau` };
     if (!optionalString(w.hint)) return { ok: false, error: `${path}.hint: phải là chuỗi` };
+    if (!optionalBoolean(w.typeAnswer))
+      return { ok: false, error: `${path}.typeAnswer: phải là true/false` };
     if (
       w.altAnswers !== undefined &&
       w.altAnswers !== null &&

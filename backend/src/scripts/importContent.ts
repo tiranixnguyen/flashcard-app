@@ -15,11 +15,49 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "../config/db";
 import { ensureDefaultUser } from "../modules/common/defaultUser";
-import { expandWordInputs, type WordInput } from "../modules/content/wordInput";
+import {
+  defaultTypeAnswer,
+  expandWordInputs,
+  type FollowUpInput,
+  type WordInput,
+} from "../modules/content/wordInput";
+
+/** Định dạng cũ của seed-data/decks.json: `kr` là đáp án, `vi` là câu hỏi. */
+interface LegacyFollowUp {
+  kr?: string;
+  vi: string;
+  hint?: string | null;
+}
+interface LegacyWord {
+  kr: string;
+  vi: string;
+  hint?: string | null;
+  altAnswers?: string[] | null;
+  followUp?: LegacyFollowUp | null;
+  followUps?: LegacyFollowUp[] | null;
+}
 
 interface DecksJson {
   vocabGroups: { id: string; name: string }[];
-  decks: { id: string; name: string; group?: string; category?: string; words: WordInput[] }[];
+  decks: { id: string; name: string; group?: string; category?: string; words: LegacyWord[] }[];
+}
+
+const fromLegacyFollowUp = (f: LegacyFollowUp): FollowUpInput => ({
+  front: f.vi,
+  hint: f.hint ?? null,
+  ...(f.kr === undefined ? {} : { back: f.kr }),
+});
+
+/** kr/vi -> back/front; `typeAnswer` để trống cho quy tắc mặc định tự quyết. */
+export function fromLegacyWord(w: LegacyWord): WordInput {
+  return {
+    front: w.vi,
+    back: w.kr,
+    hint: w.hint ?? null,
+    altAnswers: w.altAnswers ?? null,
+    followUp: w.followUp ? fromLegacyFollowUp(w.followUp) : null,
+    followUps: w.followUps?.map(fromLegacyFollowUp) ?? null,
+  };
 }
 
 interface LegacyEntry {
@@ -48,10 +86,11 @@ export interface ImportPlan {
     deckId: string;
     position: number;
     parentId: string | null;
-    kr: string;
-    vi: string;
+    front: string;
+    back: string;
     hint: string | null;
     altAnswers: string[];
+    typeAnswer: boolean;
     marked: boolean;
     hanja: boolean;
   }[];
@@ -84,14 +123,14 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
     deckPositionInGroup.set(groupId, position + 1);
     decks.push({ id: d.id, groupId, name: d.name, position });
 
-    const expanded = expandWordInputs(d.words);
+    const expanded = expandWordInputs(d.words.map(fromLegacyWord));
     const deletedIndexes = new Set<number>();
     expanded.forEach((c, i) => {
       const k = key(d.id, i);
       const matches = (e: LegacyEntry | undefined) => {
         if (!e) return false;
-        if (e.baseKr === c.kr) return true;
-        report.skipped.push(`${k}: baseKr "${e.baseKr}" ≠ "${c.kr}"`);
+        if (e.baseKr === c.back) return true;
+        report.skipped.push(`${k}: baseKr "${e.baseKr}" ≠ "${c.back}"`);
         return false;
       };
 
@@ -102,7 +141,7 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
         report.deleted++;
         return;
       }
-      const isEdited = edit !== undefined && edit.baseKr === c.kr;
+      const isEdited = edit !== undefined && edit.baseKr === c.back;
       if (isEdited) report.edited++;
       const isMarked = matches(marked.get(k));
       const isHanja = matches(hanja.get(k));
@@ -114,10 +153,11 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
         deckId: d.id,
         position: i,
         parentId: c.parentOffset === null ? null : `${d.id}-${c.parentOffset}`,
-        kr: isEdited ? edit!.kr : c.kr,
-        vi: isEdited ? edit!.vi : c.vi,
+        front: isEdited ? edit!.vi : c.front,
+        back: isEdited ? edit!.kr : c.back,
         hint: isEdited ? edit!.hint : c.hint,
         altAnswers: isEdited ? (edit!.altAnswers ?? []) : c.altAnswers,
+        typeAnswer: isEdited ? defaultTypeAnswer(edit!.kr) : c.typeAnswer,
         marked: isMarked,
         hanja: isHanja,
       });
