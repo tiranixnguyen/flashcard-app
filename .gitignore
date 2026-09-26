@@ -1,0 +1,38 @@
+# Bí mật — không bao giờ commit
+.env
+.env.*
+!.env.example
+
+# pg_dump chứa dữ liệu học thật — chỉ giữ ở máy
+backups/
+
+# Node / backend
+node_modules/
+dist/
+*.tsbuildinfo
+backend/prisma/generated/
+
+# Skill Prisma Platform/Composer do CLI của Prisma tự cài cho các coding agent
+# — không liên quan dự án này (không dùng Prisma Platform), 4 bản giống hệt.
+backend/.agents/
+backend/.claude/
+backend/.cursor/
+backend/.devin/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+frontend/.fvm/flutter_sdk
+
+# Mã sinh bởi build_runner (*.g.dart) CÓ commit: tránh bắt buộc chạy codegen
+# trước mỗi lần build sạch.
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
