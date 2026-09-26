@@ -1,0 +1,46 @@
+/// Một thẻ trong lúc học (đã làm phẳng chuỗi thẻ ngữ cảnh).
+///
+/// Bất biến về nội dung: sửa/xoá/thêm thẻ thì dựng lại cả danh sách rồi đưa
+/// vào `StudyEngine.replaceContent`, engine tự mang tiến trình lượt học đang
+/// dở sang theo [id].
+class StudyWord {
+  StudyWord({
+    required this.id,
+    required this.kr,
+    required this.vi,
+    this.hint,
+    this.altAnswers,
+    this.isFollowUp = false,
+    this.followUpIndex,
+    this.impliesIndex,
+  });
+
+  /// Id thẻ trên server (bộ gốc: `<deckId>-<vị trí>`, vd `ds2-7`). Thẻ trong
+  /// bộ ảo (⭐/漢/🔀) giữ nguyên id của thẻ gốc — nhờ vậy dấu ⭐/漢 và thao tác
+  /// sửa luôn trỏ đúng thẻ thật.
+  final String id;
+
+  final String kr;
+  final String vi;
+  final String? hint;
+  final List<String>? altAnswers;
+
+  /// `true` nếu đây là thẻ ngữ cảnh nối tiếp một thẻ gốc.
+  final bool isFollowUp;
+
+  /// Vị trí thẻ nối tiếp kế sau trong cùng bộ, `null` nếu chuỗi kết thúc.
+  /// Gán sau khi dựng xong cả bộ (xem `buildStudyCatalog`).
+  int? followUpIndex;
+
+  /// Vị trí thẻ gốc mà thẻ này hàm ý: trả lời đúng thẻ ngữ cảnh nghĩa là đã
+  /// thuộc thẻ gốc, nên thẻ gốc được tính là thuộc luôn.
+  final int? impliesIndex;
+
+  bool matches(String answer) =>
+      answer == kr || (altAnswers?.contains(answer) ?? false);
+
+  /// Bản sao đứng một mình cho bộ ảo — bỏ liên kết chuỗi ngữ cảnh vì chỉ số
+  /// chỉ có nghĩa trong bộ gốc.
+  StudyWord copyAsVirtual() =>
+      StudyWord(id: id, kr: kr, vi: vi, hint: hint, altAnswers: altAnswers);
+}
