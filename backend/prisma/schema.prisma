@@ -1,0 +1,129 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+}
+
+/// Chưa có đăng nhập: toàn bộ backend phục vụ đúng một user cố định (xem
+/// src/modules/common/defaultUser.ts). Giữ userId trên mọi bảng để sau này
+/// thêm auth thật không phải đổi schema.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  groups    Group[]
+  decks     Deck[]
+  sessions  StudySession[]
+  syncState SyncState?
+}
+
+/// Nhóm bộ từ (Sep1, Sep2, …) — tạo / đổi tên trên Mac/web.
+model Group {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decks Deck[]
+
+  @@index([userId, position])
+}
+
+/// Bộ từ. 28 bộ gốc giữ id cũ ("ds1" … "ds30") để khớp với bản đóng gói sẵn
+/// trong app (frontend/assets/content.json) — xem scripts/importContent.ts.
+model Deck {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  name      String
+  position  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // NoAction thay vì Restrict mặc định: vẫn cấm xoá nhóm còn chứa bộ, nhưng
+  // kiểm tra ở cuối câu lệnh -> xoá user (cascade cả nhóm lẫn bộ) chạy được.
+  group    Group          @relation(fields: [groupId], references: [id], onDelete: NoAction)
+  cards    Card[]
+  sessions StudySession[]
+
+  @@index([groupId, position])
+}
+
+/// Một thẻ. Thẻ ngữ cảnh (follow-up) cũng là một dòng riêng, trỏ về thẻ gốc
+/// qua parentId và nằm ngay sau thẻ gốc theo `position`. Thẻ của bộ gốc có id
+/// cố định "<deckId>-<vị trí>" (vd "ds2-7"), khớp với bản đóng gói trong app.
+model Card {
+  id         String   @id @default(cuid())
+  deckId     String
+  position   Int
+  parentId   String?
+  kr         String
+  vi         String
+  hint       String?
+  altAnswers String[] @default([])
+  /// ⭐ khó nhớ / 漢 Hán Hàn — điện thoại vẫn được bật/tắt (kể cả offline).
+  /// Nhiều máy cùng đổi thì lần đổi muộn nhất thắng, so theo thời điểm bấm do
+  /// client gửi lên (không phải lúc tới server). Mỗi cờ một mốc riêng: dùng
+  /// chung một mốc thì đổi ⭐ có thể bị từ chối chỉ vì 漢 vừa đổi muộn hơn.
+  marked          Boolean   @default(false)
+  markedChangedAt DateTime?
+  hanja           Boolean   @default(false)
+  hanjaChangedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  deck      Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  parent    Card?  @relation("FollowUps", fields: [parentId], references: [id], onDelete: Cascade)
+  followUps Card[] @relation("FollowUps")
+
+  @@index([deckId, position])
+}
+
+/// Một lần học một bộ, trên bất kỳ máy nào. Chỉ thêm, không bao giờ sửa: id do
+/// client sinh (uuid) nên gửi lại nhiều lần (mạng chập chờn) vẫn chỉ ra một
+/// bản ghi, và hai máy học cùng lúc không bao giờ ghi đè nhau.
+model StudySession {
+  id            String   @id
+  userId        String
+  deckId        String
+  /// "ios" | "android" | "macos" | "web" | … — chỉ để hiển thị lịch sử.
+  device        String
+  startedAt     DateTime
+  endedAt       DateTime
+  attempted     Int
+  correct       Int
+  masteredCount Int
+  totalCards    Int
+  /// Học hết bộ (mọi thẻ đều thuộc) hay bỏ dở giữa chừng.
+  completed     Boolean
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deckId, endedAt])
+}
+
+/// CŨ — snapshot đồng bộ kiểu v1 (overlay/marked/hanja/progress theo vị trí).
+/// Chỉ còn giữ để scripts/importContent.ts đọc chỉnh sửa + dấu ⭐/漢 thật của
+/// người dùng khi chuyển sang mô hình Group/Deck/Card. Không route nào dùng
+/// nữa; xoá bảng này sau khi đã import xong trên mọi môi trường.
+model SyncState {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  payload   Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
