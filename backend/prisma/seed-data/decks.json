@@ -1,0 +1,2637 @@
+{
+  "version": 1,
+  "vocabGroups": [
+    {
+      "id": "g1",
+      "name": "Sep1"
+    },
+    {
+      "id": "g2",
+      "name": "Sep2"
+    },
+    {
+      "id": "g3",
+      "name": "Sep3"
+    }
+  ],
+  "decks": [
+    {
+      "id": "ds1",
+      "name": "Vệ sinh cá nhân",
+      "words": [
+        {
+          "kr": "치아",
+          "vi": "răng"
+        },
+        {
+          "kr": "사이사이",
+          "vi": "xen kẽ"
+        },
+        {
+          "kr": "부드럽다",
+          "vi": "mềm mại"
+        },
+        {
+          "kr": "딱딱하다",
+          "vi": "cứng"
+        },
+        {
+          "kr": "안경",
+          "vi": "kính (đeo mắt)"
+        },
+        {
+          "kr": "눈",
+          "vi": "mắt"
+        },
+        {
+          "kr": "보이다",
+          "vi": "thấy được, nhìn được"
+        },
+        {
+          "kr": "선명하다",
+          "vi": "rõ ràng"
+        },
+        {
+          "kr": "먼 곳",
+          "vi": "nơi xa"
+        },
+        {
+          "kr": "가까운 곳",
+          "vi": "nơi gần"
+        },
+        {
+          "kr": "칫솔",
+          "vi": "bàn chải đánh răng"
+        },
+        {
+          "kr": "닦다",
+          "vi": "kì cọ, lau chùi, đánh răng"
+        },
+        {
+          "kr": "입속",
+          "vi": "bên trong miệng"
+        },
+        {
+          "kr": "깨끗하다",
+          "vi": "sạch sẽ"
+        },
+        {
+          "kr": "치약",
+          "vi": "thuốc đánh răng"
+        },
+        {
+          "kr": "비누",
+          "vi": "xà phòng"
+        },
+        {
+          "kr": "손",
+          "vi": "tay"
+        },
+        {
+          "kr": "피부",
+          "vi": "da"
+        },
+        {
+          "kr": "씻다",
+          "vi": "rửa, tắm"
+        },
+        {
+          "kr": "매끈매끈",
+          "vi": "nhẵn nhụi, láng mịn"
+        },
+        {
+          "kr": "향기",
+          "vi": "mùi hương"
+        },
+        {
+          "kr": "거품",
+          "vi": "bọt xà phòng"
+        },
+        {
+          "kr": "수건",
+          "vi": "khăn lau"
+        },
+        {
+          "kr": "더럽다",
+          "vi": "bẩn"
+        },
+        {
+          "kr": "건조하다",
+          "vi": "khô"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds2",
+      "name": "Gia đình & Cuộc sống",
+      "words": [
+        {
+          "kr": "보살피다",
+          "vi": "chăm sóc, trông coi"
+        },
+        {
+          "kr": "돈을 모으다",
+          "vi": "gom góp / tiết kiệm tiền"
+        },
+        {
+          "kr": "부자",
+          "vi": "giàu, người giàu"
+        },
+        {
+          "kr": "지갑",
+          "vi": "ví"
+        },
+        {
+          "kr": "안정",
+          "vi": "ổn định, bình an, bảo đảm"
+        },
+        {
+          "kr": "한 권",
+          "vi": "một quyển/cuốn (sách, vở)"
+        },
+        {
+          "kr": "문구 용품",
+          "vi": "văn phòng phẩm"
+        },
+        {
+          "kr": "유치원",
+          "vi": "trường mẫu giáo, nhà trẻ"
+        },
+        {
+          "kr": "아이",
+          "vi": "trẻ em, đứa trẻ",
+          "hint": "cách gọi thông dụng, đời thường nhất, hay dùng khi nói về con cái trong gia đình",
+          "followUp": {
+            "kr": "우리 아이",
+            "vi": "con của chúng tôi (cách gọi thân mật, đời thường)"
+          }
+        },
+        {
+          "kr": "어린이",
+          "vi": "trẻ em, nhi đồng",
+          "hint": "trang trọng hơn, thường gắn với giáo dục hoặc ngày lễ dành riêng cho trẻ nhỏ (mùng 5 tháng 5)",
+          "followUp": {
+            "kr": "어린이날",
+            "vi": "Ngày Thiếu nhi Hàn Quốc (mùng 5 tháng 5)"
+          }
+        },
+        {
+          "kr": "아동",
+          "vi": "nhi đồng, trẻ em",
+          "hint": "mang tính hành chính, pháp lý, hay xuất hiện trong luật và văn bản nhà nước",
+          "followUp": {
+            "kr": "아동법",
+            "vi": "luật trẻ em"
+          }
+        },
+        {
+          "kr": "부모의 마음",
+          "vi": "tấm lòng của cha mẹ"
+        },
+        {
+          "kr": "지키다",
+          "vi": "giữ, bảo vệ"
+        },
+        {
+          "kr": "키우다",
+          "vi": "nuôi, nuôi dưỡng"
+        },
+        {
+          "kr": "물건",
+          "vi": "đồ vật, đồ đạc"
+        },
+        {
+          "kr": "배달하다",
+          "vi": "giao hàng, ship, chuyển phát"
+        },
+        {
+          "kr": "빠르다",
+          "vi": "nhanh, nhanh chóng"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds3",
+      "name": "Đồ dùng & trải nghiệm",
+      "words": [
+        {
+          "kr": "흐리다",
+          "vi": "mờ, mờ nhạt",
+          "hint": "trái nghĩa với 선명하다 (rõ ràng)"
+        },
+        {
+          "kr": "쓰다",
+          "vi": "đeo (kính)",
+          "hint": "đồng âm với 쓰다 nghĩa là 'viết' — ở đây đi với 안경 nên nghĩa là 'đeo'"
+        },
+        {
+          "kr": "침대",
+          "vi": "giường"
+        },
+        {
+          "kr": "눕다",
+          "vi": "nằm",
+          "hint": "chỉ hành động ngả lưng xuống, chưa chắc đã ngủ — khác với 자다"
+        },
+        {
+          "kr": "자다",
+          "vi": "ngủ",
+          "hint": "chỉ trạng thái đang ngủ, khác với 눕다 (chỉ là nằm xuống)"
+        },
+        {
+          "kr": "잠",
+          "vi": "giấc ngủ"
+        },
+        {
+          "kr": "편안하다",
+          "vi": "thoải mái, dễ chịu",
+          "hint": "cảm giác yên bình, dễ chịu cả về tinh thần lẫn thể chất — hay dùng khi nói về nghỉ ngơi, giấc ngủ, tâm trạng",
+          "followUp": {
+            "kr": "편안한 마음",
+            "vi": "tâm hồn an yên, thanh thản"
+          }
+        },
+        {
+          "kr": "허리",
+          "vi": "eo, lưng"
+        },
+        {
+          "kr": "신다",
+          "vi": "mang, xỏ (giày, dép, tất)"
+        },
+        {
+          "kr": "운동화",
+          "vi": "giày thể thao"
+        },
+        {
+          "kr": "공기가 잘 통하다",
+          "vi": "thông thoáng (không khí lưu thông tốt)"
+        },
+        {
+          "kr": "가볍다",
+          "vi": "nhẹ"
+        },
+        {
+          "kr": "가벼움",
+          "vi": "sự nhẹ nhàng",
+          "hint": "dạng danh từ hoá của tính từ 가볍다"
+        },
+        {
+          "kr": "편하다",
+          "vi": "thoải mái, tiện lợi",
+          "hint": "nghiêng về nghĩa tiện lợi, dễ dàng, thuận tiện khi sử dụng — không nhất thiết liên quan cảm xúc như 편안하다",
+          "followUp": {
+            "kr": "편한 신발",
+            "vi": "đôi giày tiện lợi, dễ đi"
+          }
+        },
+        {
+          "kr": "노트북",
+          "vi": "laptop"
+        },
+        {
+          "kr": "경험하다",
+          "vi": "trải nghiệm"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds4",
+      "name": "Địa điểm & Dịch vụ",
+      "words": [
+        {
+          "kr": "정성을 담다",
+          "vi": "đặt cả tấm lòng, tâm huyết vào (điều gì đó)"
+        },
+        {
+          "kr": "얻다",
+          "vi": "đạt được, nhận được"
+        },
+        {
+          "kr": "자연",
+          "vi": "tự nhiên, thiên nhiên"
+        },
+        {
+          "kr": "공원",
+          "vi": "công viên"
+        },
+        {
+          "kr": "식당",
+          "vi": "nhà hàng, quán ăn"
+        },
+        {
+          "kr": "꽃집",
+          "vi": "tiệm hoa"
+        },
+        {
+          "kr": "서점",
+          "vi": "tiệm sách, nhà sách"
+        },
+        {
+          "kr": "산책하다",
+          "vi": "đi dạo, tản bộ"
+        },
+        {
+          "kr": "잔디",
+          "vi": "cỏ, thảm cỏ"
+        },
+        {
+          "kr": "벤치",
+          "vi": "ghế băng, ghế đá (công viên)"
+        },
+        {
+          "kr": "놀이터",
+          "vi": "sân chơi"
+        },
+        {
+          "kr": "휴식",
+          "vi": "sự nghỉ ngơi"
+        },
+        {
+          "kr": "손맛",
+          "vi": "tay nghề nấu ăn, hương vị riêng của người nấu"
+        },
+        {
+          "kr": "가격",
+          "vi": "giá cả"
+        },
+        {
+          "kr": "영양",
+          "vi": "dinh dưỡng"
+        },
+        {
+          "kr": "기념일",
+          "vi": "ngày kỷ niệm"
+        },
+        {
+          "kr": "주문하다",
+          "vi": "đặt hàng, gọi món"
+        },
+        {
+          "kr": "아름답다",
+          "vi": "đẹp, xinh đẹp"
+        },
+        {
+          "kr": "한 송이",
+          "vi": "một đóa, một bông (hoa)"
+        },
+        {
+          "kr": "한 다발",
+          "vi": "một bó (hoa)"
+        },
+        {
+          "kr": "선물",
+          "vi": "quà, món quà"
+        },
+        {
+          "kr": "선물하다",
+          "vi": "tặng quà"
+        },
+        {
+          "kr": "축하",
+          "vi": "lời chúc mừng"
+        },
+        {
+          "kr": "감사",
+          "vi": "lời cảm ơn, sự biết ơn"
+        },
+        {
+          "kr": "생일",
+          "vi": "sinh nhật"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds5",
+      "name": "Thiết bị gia dụng",
+      "words": [
+        {
+          "kr": "더위",
+          "vi": "cái nóng, sự oi bức"
+        },
+        {
+          "kr": "작별",
+          "vi": "sự chia tay, lời từ biệt"
+        },
+        {
+          "kr": "추위",
+          "vi": "cái lạnh, sự lạnh giá"
+        },
+        {
+          "kr": "에어컨",
+          "vi": "điều hoà, máy lạnh"
+        },
+        {
+          "kr": "바람",
+          "vi": "gió, luồng gió"
+        },
+        {
+          "kr": "시원하다",
+          "vi": "mát mẻ, mát"
+        },
+        {
+          "kr": "청소기",
+          "vi": "máy hút bụi"
+        },
+        {
+          "kr": "먼지",
+          "vi": "bụi"
+        },
+        {
+          "kr": "소리 없이",
+          "vi": "một cách êm ái, không tiếng động"
+        },
+        {
+          "kr": "구석구석",
+          "vi": "khắp mọi ngóc ngách"
+        },
+        {
+          "kr": "냉장고",
+          "vi": "tủ lạnh"
+        },
+        {
+          "kr": "신선도",
+          "vi": "độ tươi"
+        },
+        {
+          "kr": "온도",
+          "vi": "nhiệt độ"
+        },
+        {
+          "kr": "조절하다",
+          "vi": "điều chỉnh"
+        },
+        {
+          "kr": "세탁기",
+          "vi": "máy giặt"
+        },
+        {
+          "kr": "세제",
+          "vi": "nước giặt, bột giặt"
+        },
+        {
+          "kr": "옷",
+          "vi": "quần áo"
+        },
+        {
+          "kr": "진드기",
+          "vi": "con mạt (bụi)"
+        },
+        {
+          "kr": "이불",
+          "vi": "chăn, mền"
+        },
+        {
+          "kr": "뽀송뽀송하다",
+          "vi": "khô ráo, bông xốp, mềm mại (cảm giác sau khi giặt/sấy)"
+        },
+        {
+          "kr": "만들다",
+          "vi": "làm, chế biến, khiến cho"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds7",
+      "name": "Rừng & Bảo vệ môi trường",
+      "words": [
+        {
+          "kr": "숲",
+          "vi": "rừng"
+        },
+        {
+          "kr": "식물",
+          "vi": "thực vật"
+        },
+        {
+          "kr": "나무",
+          "vi": "cây, cây cối"
+        },
+        {
+          "kr": "심다",
+          "vi": "trồng (cây)"
+        },
+        {
+          "kr": "없어지다",
+          "vi": "biến mất, không còn nữa",
+          "hint": "nhấn mạnh việc gì đó bị mất đi/hết đi, thường do một tác động cụ thể"
+        },
+        {
+          "kr": "사라지다",
+          "vi": "biến mất, tan biến, dần biến mất",
+          "hint": "nhấn mạnh quá trình biến mất dần, mang tính trừu tượng/tự nhiên hơn 없어지다"
+        },
+        {
+          "kr": "환경",
+          "vi": "môi trường"
+        },
+        {
+          "kr": "보호하다",
+          "vi": "bảo vệ"
+        },
+        {
+          "kr": "환경보호",
+          "vi": "bảo vệ môi trường"
+        },
+        {
+          "kr": "오염",
+          "vi": "sự ô nhiễm"
+        },
+        {
+          "kr": "오염되다",
+          "vi": "bị ô nhiễm"
+        },
+        {
+          "kr": "동물",
+          "vi": "động vật"
+        },
+        {
+          "kr": "멸종되다",
+          "vi": "tuyệt chủng"
+        },
+        {
+          "kr": "지구",
+          "vi": "trái đất, địa cầu"
+        },
+        {
+          "kr": "온난화",
+          "vi": "sự ấm lên (nóng lên toàn cầu)"
+        },
+        {
+          "kr": "재활용하다",
+          "vi": "tái chế"
+        },
+        {
+          "kr": "쓰레기",
+          "vi": "rác"
+        },
+        {
+          "kr": "줄이다",
+          "vi": "giảm bớt, giảm thiểu"
+        },
+        {
+          "kr": "아끼다",
+          "vi": "tiết kiệm, trân trọng, quý trọng",
+          "hint": "mang nghĩa 'trân trọng' nên đi được với danh từ chỉ con người/tình cảm — điều mà 절약 không làm được, vì 절약 chỉ đi với danh từ chỉ tài nguyên (kể cả 시간, vì thời gian cũng là một dạng tài nguyên)",
+          "followUp": {
+            "kr": "친구를 아끼다",
+            "vi": "trân trọng, quý mến một người bạn"
+          }
+        },
+        {
+          "kr": "절약",
+          "vi": "sự tiết kiệm (tiền bạc, năng lượng, tài nguyên — kể cả thời gian)",
+          "hint": "mang tính khách quan, chỉ đi với danh từ chỉ tài nguyên (tiền, điện, nước, thời gian...) — không dùng để nói về tình cảm hay con người như 아끼다",
+          "followUp": {
+            "kr": "에너지 절약",
+            "vi": "tiết kiệm năng lượng"
+          }
+        },
+        {
+          "kr": "자원",
+          "vi": "tài nguyên"
+        },
+        {
+          "kr": "생태계",
+          "vi": "hệ sinh thái"
+        },
+        {
+          "kr": "산소",
+          "vi": "oxy, dưỡng khí"
+        },
+        {
+          "kr": "벌목",
+          "vi": "việc chặt phá rừng, khai thác gỗ"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds8",
+      "name": "Đồ dùng học tập & câu bị động",
+      "words": [
+        {
+          "kr": "연필",
+          "vi": "bút chì"
+        },
+        {
+          "kr": "휴지",
+          "vi": "giấy vệ sinh, khăn giấy"
+        },
+        {
+          "kr": "책상",
+          "vi": "bàn học, bàn làm việc"
+        },
+        {
+          "kr": "거울",
+          "vi": "gương",
+          "hint": "dễ nhầm mặt chữ với 겨울 (mùa đông) — chú ý nguyên âm ㅓ khác ㅕ"
+        },
+        {
+          "kr": "겨울",
+          "vi": "mùa đông",
+          "hint": "dễ nhầm mặt chữ với 거울 (gương) — chú ý nguyên âm ㅕ khác ㅓ"
+        },
+        {
+          "kr": "풀다",
+          "vi": "gỡ, tháo, cởi"
+        },
+        {
+          "kr": "풀리다",
+          "vi": "được gỡ, được tháo (thể bị động)"
+        },
+        {
+          "kr": "닦이다",
+          "vi": "được lau, được chùi (thể bị động)"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds9",
+      "name": "Tuyển dụng & Công việc",
+      "words": [
+        {
+          "kr": "성장하다",
+          "vi": "trưởng thành, phát triển"
+        },
+        {
+          "kr": "사원",
+          "vi": "nhân viên"
+        },
+        {
+          "kr": "모집하다",
+          "vi": "tuyển mộ, thông báo tuyển dụng",
+          "hint": "chỉ giai đoạn kêu gọi, thông báo tìm ứng viên — khác với 채용하다 là giai đoạn quyết định nhận vào làm"
+        },
+        {
+          "kr": "채용하다",
+          "vi": "tuyển dụng, nhận vào làm",
+          "hint": "chỉ hành động quyết định chọn và nhận ứng viên vào làm — khác với 모집하다 là giai đoạn thông báo tìm người"
+        },
+        {
+          "kr": "지원하다",
+          "vi": "ứng tuyển, nộp đơn xin việc"
+        },
+        {
+          "kr": "이력서",
+          "vi": "sơ yếu lý lịch, CV"
+        },
+        {
+          "kr": "자기소개서",
+          "vi": "thư giới thiệu bản thân (cover letter)"
+        },
+        {
+          "kr": "면접",
+          "vi": "phỏng vấn"
+        },
+        {
+          "kr": "경력",
+          "vi": "kinh nghiệm làm việc"
+        },
+        {
+          "kr": "신입",
+          "vi": "người mới, nhân viên mới ra trường"
+        },
+        {
+          "kr": "자격증",
+          "vi": "chứng chỉ",
+          "hint": "chứng nhận năng lực/kỹ năng chuyên môn cụ thể (chứng chỉ kế toán, IT, bằng lái xe...) — khác với 학위 (bằng cấp học thuật) và 졸업장 (bằng tốt nghiệp)"
+        },
+        {
+          "kr": "학위",
+          "vi": "bằng cấp, học vị",
+          "hint": "bằng cấp học thuật (cử nhân, thạc sĩ, tiến sĩ) do trường đại học/viện nghiên cứu cấp — khác với 자격증 (chứng chỉ kỹ năng) và 졸업장 (giấy chứng nhận tốt nghiệp)"
+        },
+        {
+          "kr": "졸업장",
+          "vi": "bằng tốt nghiệp",
+          "hint": "giấy chứng nhận đã hoàn thành/tốt nghiệp một trường hay khoá học cụ thể — khác với 학위 (bằng cấp học thuật) và 자격증 (chứng chỉ kỹ năng)"
+        },
+        {
+          "kr": "연봉",
+          "vi": "lương năm, mức lương hàng năm"
+        },
+        {
+          "kr": "근무하다",
+          "vi": "làm việc, công tác"
+        },
+        {
+          "kr": "복지",
+          "vi": "phúc lợi"
+        },
+        {
+          "kr": "승진하다",
+          "vi": "thăng chức"
+        },
+        {
+          "kr": "퇴사하다",
+          "vi": "nghỉ việc, thôi việc"
+        },
+        {
+          "kr": "입사하다",
+          "vi": "vào làm việc (ở công ty), nhập chức"
+        },
+        {
+          "kr": "정규직",
+          "vi": "nhân viên chính thức"
+        },
+        {
+          "kr": "계약직",
+          "vi": "nhân viên hợp đồng (có thời hạn)"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds10",
+      "name": "Mua sắm & Chợ đồ cũ",
+      "words": [
+        {
+          "kr": "중고",
+          "vi": "đồ cũ, đã qua sử dụng"
+        },
+        {
+          "kr": "거래",
+          "vi": "giao dịch, sự mua bán"
+        },
+        {
+          "kr": "거래하다",
+          "vi": "giao dịch, mua bán"
+        },
+        {
+          "kr": "취향",
+          "vi": "sở thích, gu (thẩm mỹ cá nhân)"
+        },
+        {
+          "kr": "잇다",
+          "vi": "nối liền, kết nối",
+          "followUp": {
+            "kr": "전통을 잇다",
+            "vi": "kế thừa truyền thống"
+          }
+        },
+        {
+          "kr": "연결하다",
+          "vi": "kết nối"
+        },
+        {
+          "kr": "원하다",
+          "vi": "mong muốn, muốn"
+        },
+        {
+          "kr": "사다",
+          "vi": "mua",
+          "hint": "từ thông dụng, đời thường nhất để nói 'mua'"
+        },
+        {
+          "kr": "구매하다",
+          "vi": "mua hàng",
+          "hint": "mang tính trang trọng/thương mại hơn 사다, hay dùng trong văn viết, hoá đơn, báo cáo"
+        },
+        {
+          "kr": "팔다",
+          "vi": "bán",
+          "hint": "từ thông dụng, đời thường nhất để nói 'bán'"
+        },
+        {
+          "kr": "판매하다",
+          "vi": "bán hàng, kinh doanh bán",
+          "hint": "mang tính trang trọng/thương mại hơn 팔다, hay dùng khi nói về hoạt động kinh doanh"
+        },
+        {
+          "kr": "흥정하다",
+          "vi": "mặc cả, trả giá",
+          "hint": "Ví dụ dễ nhớ: đi chợ mua mỗi cái áo cộc mà \"hơn trăm\" — chắc chắn phải mặc cả!"
+        },
+        {
+          "kr": "환불하다",
+          "vi": "hoàn tiền, trả lại tiền"
+        },
+        {
+          "kr": "교환하다",
+          "vi": "đổi hàng, trao đổi"
+        },
+        {
+          "kr": "배송",
+          "vi": "vận chuyển, giao hàng",
+          "hint": "mang tính thương mại/trang trọng hơn 배달, hay dùng khi nói về vận chuyển đơn hàng online"
+        },
+        {
+          "kr": "결제하다",
+          "vi": "thanh toán",
+          "hint": "mang tính hệ thống, hình thức — dùng khi thanh toán bằng thẻ, chuyển khoản, ví điện tử, mua hàng online",
+          "followUp": {
+            "kr": "카드로 결제하다",
+            "vi": "thanh toán bằng thẻ"
+          }
+        },
+        {
+          "kr": "계산하다",
+          "vi": "tính toán, tính tiền",
+          "hint": "nghĩa gốc là 'tính toán', mở rộng thành 'tính tiền' kiểu truyền thống — hay dùng khi thanh toán tại quầy, nhà hàng, quán ăn",
+          "followUp": {
+            "kr": "계산해 주세요",
+            "vi": "tính tiền giúp tôi (nói khi thanh toán ở quán ăn/cửa hàng)"
+          }
+        },
+        {
+          "kr": "할인",
+          "vi": "giảm giá"
+        },
+        {
+          "kr": "판매자",
+          "vi": "người bán"
+        },
+        {
+          "kr": "구매자",
+          "vi": "người mua"
+        },
+        {
+          "kr": "상품",
+          "vi": "hàng hoá, sản phẩm"
+        },
+        {
+          "kr": "제품구성",
+          "vi": "thành phần/bộ sản phẩm (những gì có trong hộp)"
+        },
+        {
+          "kr": "살펴보다",
+          "vi": "xem xét kỹ, kiểm tra"
+        },
+        {
+          "kr": "문제",
+          "vi": "vấn đề"
+        },
+        {
+          "kr": "발생하다",
+          "vi": "phát sinh, xảy ra",
+          "hint": "mang tính trang trọng, khách quan — hay dùng cho sự cố/vấn đề trong văn bản, thông báo"
+        },
+        {
+          "kr": "생기다",
+          "vi": "phát sinh, xảy ra, xuất hiện",
+          "hint": "thông dụng hơn 발생하다, dùng rộng rãi trong đời thường cho nhiều loại sự việc xuất hiện"
+        },
+        {
+          "kr": "사용 설명서",
+          "vi": "hướng dẫn sử dụng"
+        },
+        {
+          "kr": "이상",
+          "vi": "sự bất thường, trục trặc",
+          "hint": "đồng âm với 이상 nghĩa 'trở lên' (số lượng) — ở đây là danh từ chỉ sự cố/vấn đề bất thường"
+        },
+        {
+          "kr": "고객센터",
+          "vi": "trung tâm chăm sóc khách hàng"
+        },
+        {
+          "kr": "문의하다",
+          "vi": "liên hệ hỏi, thắc mắc"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds11",
+      "name": "Thẩm mỹ & Làm đẹp",
+      "words": [
+        {
+          "kr": "주름",
+          "vi": "nếp nhăn"
+        },
+        {
+          "kr": "아름다움",
+          "vi": "vẻ đẹp"
+        },
+        {
+          "kr": "바르다",
+          "vi": "bôi, thoa (kem, mỹ phẩm)"
+        },
+        {
+          "kr": "비타민",
+          "vi": "vitamin"
+        },
+        {
+          "kr": "돌보다",
+          "vi": "chăm sóc, trông nom",
+          "hint": "gần nghĩa với 보살피다 (đã học) — 돌보다 thiên về chăm sóc thể chất/sinh hoạt hàng ngày (chăm da, chăm em bé), còn 보살피다 mang sắc thái ân cần, quan tâm sâu sắc hơn"
+        },
+        {
+          "kr": "다이어트",
+          "vi": "ăn kiêng, giảm cân"
+        },
+        {
+          "kr": "미용",
+          "vi": "làm đẹp, thẩm mỹ"
+        },
+        {
+          "kr": "화장품",
+          "vi": "mỹ phẩm"
+        },
+        {
+          "kr": "화장하다",
+          "vi": "trang điểm"
+        },
+        {
+          "kr": "로션",
+          "vi": "sữa dưỡng thể, lotion"
+        },
+        {
+          "kr": "크림",
+          "vi": "kem dưỡng da"
+        },
+        {
+          "kr": "자외선",
+          "vi": "tia cực tím (UV)"
+        },
+        {
+          "kr": "자외선 차단제",
+          "vi": "kem chống nắng"
+        },
+        {
+          "kr": "탄력",
+          "vi": "độ đàn hồi (của da)"
+        },
+        {
+          "kr": "촉촉하다",
+          "vi": "ẩm mượt, mọng nước"
+        },
+        {
+          "kr": "트러블",
+          "vi": "vấn đề về da, mụn"
+        },
+        {
+          "kr": "여드름",
+          "vi": "mụn trứng cá"
+        },
+        {
+          "kr": "모공",
+          "vi": "lỗ chân lông"
+        },
+        {
+          "kr": "미백",
+          "vi": "làm trắng da"
+        },
+        {
+          "kr": "마사지하다",
+          "vi": "massage, xoa bóp"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds12",
+      "name": "Câu lạc bộ & Đời sống đại học",
+      "words": [
+        {
+          "kr": "동아리",
+          "vi": "câu lạc bộ"
+        },
+        {
+          "kr": "설명회",
+          "vi": "buổi giới thiệu, buổi thuyết trình giới thiệu"
+        },
+        {
+          "kr": "가입하다",
+          "vi": "gia nhập, tham gia (làm thành viên)"
+        },
+        {
+          "kr": "선배",
+          "vi": "tiền bối, đàn anh/chị (người đi trước)"
+        },
+        {
+          "kr": "활동",
+          "vi": "hoạt động"
+        },
+        {
+          "kr": "어울리다",
+          "vi": "hoà nhập, giao lưu, chơi cùng"
+        },
+        {
+          "kr": "기회",
+          "vi": "cơ hội"
+        },
+        {
+          "kr": "유학",
+          "vi": "du học"
+        },
+        {
+          "kr": "도움이 되다",
+          "vi": "có ích, giúp ích"
+        },
+        {
+          "kr": "참석하다",
+          "vi": "tham dự, tham gia"
+        },
+        {
+          "kr": "정하다",
+          "vi": "quyết định, ấn định"
+        },
+        {
+          "kr": "사진 찍다",
+          "vi": "chụp ảnh"
+        },
+        {
+          "kr": "자원봉사",
+          "vi": "hoạt động tình nguyện"
+        },
+        {
+          "kr": "관심",
+          "vi": "sự quan tâm, hứng thú"
+        },
+        {
+          "kr": "유명하다",
+          "vi": "nổi tiếng"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds13",
+      "name": "Từ vựng hành chính & Viết đơn",
+      "words": [
+        {
+          "kr": "진짜",
+          "vi": "thật, thực sự"
+        },
+        {
+          "kr": "경험",
+          "vi": "kinh nghiệm, trải nghiệm"
+        },
+        {
+          "kr": "능력",
+          "vi": "năng lực"
+        },
+        {
+          "kr": "자신감",
+          "vi": "sự tự tin"
+        },
+        {
+          "kr": "표현하다",
+          "vi": "thể hiện, diễn đạt"
+        },
+        {
+          "kr": "겸손하다",
+          "vi": "khiêm tốn"
+        },
+        {
+          "kr": "작성하다",
+          "vi": "soạn thảo, viết (văn bản)"
+        },
+        {
+          "kr": "신청",
+          "vi": "đăng ký, nộp đơn"
+        },
+        {
+          "kr": "문의",
+          "vi": "hỏi đáp, thắc mắc"
+        },
+        {
+          "kr": "진행",
+          "vi": "tiến hành, thực hiện"
+        },
+        {
+          "kr": "안내",
+          "vi": "hướng dẫn, thông báo"
+        },
+        {
+          "kr": "조건",
+          "vi": "điều kiện"
+        },
+        {
+          "kr": "작성 방법",
+          "vi": "phương pháp soạn thảo, cách viết"
+        },
+        {
+          "kr": "신청 문의",
+          "vi": "hỏi đáp về việc đăng ký"
+        },
+        {
+          "kr": "진행 안내",
+          "vi": "hướng dẫn tiến hành"
+        },
+        {
+          "kr": "사용 조건",
+          "vi": "điều kiện sử dụng"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds14",
+      "name": "Ăn uống lành mạnh & Dinh dưỡng",
+      "words": [
+        {
+          "kr": "짜다",
+          "vi": "mặn"
+        },
+        {
+          "kr": "맵다",
+          "vi": "cay"
+        },
+        {
+          "kr": "싱겁다",
+          "vi": "nhạt, ít muối"
+        },
+        {
+          "kr": "채소",
+          "vi": "rau củ"
+        },
+        {
+          "kr": "익히다",
+          "vi": "làm chín, nấu chín"
+        },
+        {
+          "kr": "살짝",
+          "vi": "nhẹ, sơ qua"
+        },
+        {
+          "kr": "데치다",
+          "vi": "chần, trụng (rau) sơ qua nước sôi"
+        },
+        {
+          "kr": "콩",
+          "vi": "đậu"
+        },
+        {
+          "kr": "생선",
+          "vi": "cá (thực phẩm)"
+        },
+        {
+          "kr": "우유",
+          "vi": "sữa (bò)"
+        },
+        {
+          "kr": "요구르트",
+          "vi": "sữa chua"
+        },
+        {
+          "kr": "단백질",
+          "vi": "chất đạm, protein"
+        },
+        {
+          "kr": "보충하다",
+          "vi": "bổ sung"
+        },
+        {
+          "kr": "식습관",
+          "vi": "thói quen ăn uống"
+        },
+        {
+          "kr": "손쉽다",
+          "vi": "dễ dàng, tiện lợi"
+        },
+        {
+          "kr": "요리법",
+          "vi": "công thức nấu ăn, cách nấu"
+        },
+        {
+          "kr": "우수하다",
+          "vi": "ưu tú, xuất sắc"
+        },
+        {
+          "kr": "관리법",
+          "vi": "phương pháp quản lý"
+        },
+        {
+          "kr": "식재료",
+          "vi": "nguyên liệu thực phẩm"
+        },
+        {
+          "kr": "광고",
+          "vi": "quảng cáo"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds15",
+      "name": "Điện ảnh & Phim",
+      "words": [
+        {
+          "kr": "영화",
+          "vi": "phim"
+        },
+        {
+          "kr": "감독",
+          "vi": "đạo diễn"
+        },
+        {
+          "kr": "배우",
+          "vi": "diễn viên"
+        },
+        {
+          "kr": "주인공",
+          "vi": "nhân vật chính"
+        },
+        {
+          "kr": "관객",
+          "vi": "khán giả"
+        },
+        {
+          "kr": "개봉하다",
+          "vi": "công chiếu, ra mắt (phim)"
+        },
+        {
+          "kr": "상영하다",
+          "vi": "chiếu (phim)"
+        },
+        {
+          "kr": "예고편",
+          "vi": "trailer, đoạn giới thiệu phim"
+        },
+        {
+          "kr": "줄거리",
+          "vi": "cốt truyện"
+        },
+        {
+          "kr": "감동",
+          "vi": "sự cảm động, xúc động"
+        },
+        {
+          "kr": "재미",
+          "vi": "sự thú vị, niềm vui"
+        },
+        {
+          "kr": "작품",
+          "vi": "tác phẩm"
+        },
+        {
+          "kr": "인정하다",
+          "vi": "công nhận, thừa nhận"
+        },
+        {
+          "kr": "편",
+          "vi": "tập, phần (đơn vị đếm phần phim)"
+        },
+        {
+          "kr": "흥행하다",
+          "vi": "ăn khách, thành công về doanh thu"
+        },
+        {
+          "kr": "관람하다",
+          "vi": "xem (phim, biểu diễn — trang trọng)"
+        },
+        {
+          "kr": "극장",
+          "vi": "rạp chiếu phim, nhà hát",
+          "hint": "nghĩa rộng hơn, có thể chỉ cả nhà hát kịch/biểu diễn — khác với 영화관 chỉ riêng rạp chiếu phim"
+        },
+        {
+          "kr": "시사회",
+          "vi": "buổi chiếu ra mắt, buổi công chiếu sớm"
+        },
+        {
+          "kr": "소개하다",
+          "vi": "giới thiệu"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds16",
+      "name": "Chăm sóc răng miệng",
+      "words": [
+        {
+          "kr": "한여름",
+          "vi": "giữa mùa hè, mùa hè oi bức"
+        },
+        {
+          "kr": "소나기",
+          "vi": "mưa rào"
+        },
+        {
+          "kr": "입안",
+          "vi": "trong miệng, khoang miệng"
+        },
+        {
+          "kr": "충치",
+          "vi": "sâu răng"
+        },
+        {
+          "kr": "예방하다",
+          "vi": "phòng ngừa"
+        },
+        {
+          "kr": "해결하다",
+          "vi": "giải quyết"
+        },
+        {
+          "kr": "잇몸",
+          "vi": "nướu răng"
+        },
+        {
+          "kr": "구강",
+          "vi": "khoang miệng (trang trọng, dùng trong y tế)"
+        },
+        {
+          "kr": "치석",
+          "vi": "cao răng, vôi răng"
+        },
+        {
+          "kr": "스케일링",
+          "vi": "cạo vôi răng (scaling)"
+        },
+        {
+          "kr": "가글",
+          "vi": "nước súc miệng"
+        },
+        {
+          "kr": "헹구다",
+          "vi": "súc, tráng (miệng)"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds17",
+      "name": "An toàn giao thông",
+      "words": [
+        {
+          "kr": "졸리다",
+          "vi": "buồn ngủ"
+        },
+        {
+          "kr": "쉬다",
+          "vi": "nghỉ ngơi"
+        },
+        {
+          "kr": "절대",
+          "vi": "tuyệt đối"
+        },
+        {
+          "kr": "휴대 전화",
+          "vi": "điện thoại di động"
+        },
+        {
+          "kr": "만지다",
+          "vi": "chạm, sờ"
+        },
+        {
+          "kr": "속도 줄이기",
+          "vi": "giảm tốc độ"
+        },
+        {
+          "kr": "양보하다",
+          "vi": "nhường (đường, chỗ)"
+        },
+        {
+          "kr": "도로",
+          "vi": "đường, con đường"
+        },
+        {
+          "kr": "횡단보도",
+          "vi": "vạch/lối qua đường cho người đi bộ"
+        },
+        {
+          "kr": "멈추다",
+          "vi": "dừng lại"
+        },
+        {
+          "kr": "살피다",
+          "vi": "quan sát, xem xét kỹ"
+        },
+        {
+          "kr": "행복하다",
+          "vi": "hạnh phúc"
+        },
+        {
+          "kr": "뛰다",
+          "vi": "chạy, nhảy",
+          "hint": "mang tính đời thường, thường dùng khi nói về chạy nhảy/đùa nghịch trong sinh hoạt hàng ngày (ở nơi công cộng, sân chơi...)",
+          "followUp": {
+            "kr": "횡단보도에서 뛰지 마세요",
+            "vi": "đừng chạy nhảy trên vạch qua đường"
+          }
+        },
+        {
+          "kr": "달리다",
+          "vi": "chạy (có mục đích/khoảng cách, như chạy bộ, chạy đua; cũng dùng cho xe cộ)",
+          "hint": "mang tính trang trọng/thể thao hơn 뛰다, dùng cho chạy bộ luyện tập, chạy đua, hoặc xe/phương tiện đang di chuyển nhanh",
+          "followUp": {
+            "kr": "자동차가 빠르게 달리다",
+            "vi": "ô tô chạy nhanh (trên đường)"
+          }
+        },
+        {
+          "kr": "키",
+          "vi": "chiều cao (của người)"
+        },
+        {
+          "kr": "손을 들다",
+          "vi": "giơ tay"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds18",
+      "name": "Mô tả & Quảng cáo phương tiện",
+      "words": [
+        {
+          "kr": "좁다",
+          "vi": "hẹp, chật"
+        },
+        {
+          "kr": "언덕길",
+          "vi": "đường dốc, đường lên đồi"
+        },
+        {
+          "kr": "씽씽",
+          "vi": "vun vút, vèo vèo (tượng thanh diễn tả tốc độ nhanh)"
+        },
+        {
+          "kr": "충전하다",
+          "vi": "sạc (điện)"
+        },
+        {
+          "kr": "전동킥보드",
+          "vi": "xe điện scooter (kick scooter điện)"
+        },
+        {
+          "kr": "인라인스케이트",
+          "vi": "giày trượt patin"
+        },
+        {
+          "kr": "스케이트보드",
+          "vi": "ván trượt"
+        },
+        {
+          "kr": "오토바이",
+          "vi": "xe máy, mô tô"
+        },
+        {
+          "kr": "자전거",
+          "vi": "xe đạp"
+        },
+        {
+          "kr": "헬멧",
+          "vi": "mũ bảo hiểm"
+        },
+        {
+          "kr": "배터리",
+          "vi": "pin, ắc quy"
+        },
+        {
+          "kr": "주행하다",
+          "vi": "vận hành, di chuyển (phương tiện chạy trên đường)"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds19",
+      "name": "Nghe biểu đồ câu 3",
+      "words": [
+        {
+          "kr": "늘다",
+          "vi": "tăng, tăng lên",
+          "hint": "dạng ngắn gọn, thông dụng nhất để nói 'tăng'"
+        },
+        {
+          "kr": "늘어나다",
+          "vi": "tăng lên, gia tăng",
+          "hint": "nhấn mạnh quá trình tăng dần, kéo dài hơn so với dạng ngắn gọn"
+        },
+        {
+          "kr": "많아지다",
+          "vi": "trở nên nhiều hơn",
+          "hint": "dùng khi nói về số lượng cụ thể trở nên nhiều hơn"
+        },
+        {
+          "kr": "높아지다",
+          "vi": "trở nên cao hơn",
+          "hint": "dùng khi nói về mức độ/tỷ lệ tăng cao hơn, ví dụ giá cả, nhiệt độ"
+        },
+        {
+          "kr": "증가하다",
+          "vi": "tăng, gia tăng",
+          "hint": "mang tính trang trọng, thống kê — hay dùng trong báo cáo, biểu đồ số liệu"
+        },
+        {
+          "kr": "올라가다",
+          "vi": "đi lên, tăng lên",
+          "hint": "hình ảnh hoá như đường biểu đồ đi lên, dùng cho giá cả/nhiệt độ/số liệu"
+        },
+        {
+          "kr": "줄다",
+          "vi": "giảm",
+          "hint": "dạng ngắn gọn, thông dụng nhất để nói 'giảm'"
+        },
+        {
+          "kr": "줄어들다",
+          "vi": "giảm dần, giảm xuống",
+          "hint": "nhấn mạnh quá trình giảm dần, kéo dài hơn so với dạng ngắn gọn"
+        },
+        {
+          "kr": "낮아지다",
+          "vi": "trở nên thấp hơn",
+          "hint": "dùng khi nói về mức độ/tỷ lệ giảm xuống thấp hơn"
+        },
+        {
+          "kr": "감소하다",
+          "vi": "giảm, suy giảm",
+          "hint": "mang tính trang trọng, thống kê — hay dùng trong báo cáo, biểu đồ số liệu"
+        },
+        {
+          "kr": "내려가다",
+          "vi": "đi xuống, giảm xuống",
+          "hint": "hình ảnh hoá như đường biểu đồ đi xuống"
+        },
+        {
+          "kr": "늘다가 줄어들다",
+          "vi": "tăng rồi giảm (dao động lên xuống)"
+        },
+        {
+          "kr": "이후",
+          "vi": "sau đó, kể từ sau"
+        },
+        {
+          "kr": "영화관",
+          "vi": "rạp chiếu phim",
+          "hint": "chỉ riêng rạp chiếu phim — khác với 극장 mang nghĩa rộng hơn (có thể cả nhà hát kịch)"
+        },
+        {
+          "kr": "찾다",
+          "vi": "tìm, đến/ghé thăm (nghĩa mở rộng: khán giả đến rạp)"
+        },
+        {
+          "kr": "계속해서",
+          "vi": "liên tục, tiếp tục"
+        },
+        {
+          "kr": "이유",
+          "vi": "lý do"
+        },
+        {
+          "kr": "여가 활동",
+          "vi": "hoạt động giải trí, thời gian rảnh"
+        },
+        {
+          "kr": "다양해지다",
+          "vi": "trở nên đa dạng"
+        },
+        {
+          "kr": "모바일",
+          "vi": "điện thoại di động, thiết bị di động"
+        },
+        {
+          "kr": "경우",
+          "vi": "trường hợp"
+        },
+        {
+          "kr": "관람료",
+          "vi": "phí xem (vé xem phim/biểu diễn)"
+        },
+        {
+          "kr": "뒤를 잇다",
+          "vi": "nối tiếp theo sau, đứng ở vị trí sau đó"
+        },
+        {
+          "kr": "위",
+          "vi": "hạng, vị trí xếp hạng (1위 = hạng nhất)"
+        },
+        {
+          "kr": "직장인",
+          "vi": "người đi làm, nhân viên công sở"
+        },
+        {
+          "kr": "점심시간",
+          "vi": "giờ nghỉ trưa, thời gian ăn trưa"
+        },
+        {
+          "kr": "보내다",
+          "vi": "trải qua, dùng (thời gian)"
+        },
+        {
+          "kr": "미만",
+          "vi": "dưới, chưa đến (số lượng)"
+        },
+        {
+          "kr": "식사",
+          "vi": "bữa ăn"
+        },
+        {
+          "kr": "동료",
+          "vi": "đồng nghiệp"
+        },
+        {
+          "kr": "차",
+          "vi": "trà"
+        },
+        {
+          "kr": "마시다",
+          "vi": "uống"
+        },
+        {
+          "kr": "낮잠",
+          "vi": "giấc ngủ trưa"
+        },
+        {
+          "kr": "자주",
+          "vi": "thường xuyên"
+        },
+        {
+          "kr": "문화체육관광부",
+          "vi": "Bộ Văn hoá, Thể thao và Du lịch (Hàn Quốc)"
+        },
+        {
+          "kr": "조사",
+          "vi": "điều tra, khảo sát"
+        },
+        {
+          "kr": "결과",
+          "vi": "kết quả"
+        },
+        {
+          "kr": "국민",
+          "vi": "quốc dân, người dân"
+        },
+        {
+          "kr": "주",
+          "vi": "tuần (đơn vị thời gian)"
+        },
+        {
+          "kr": "참여하다",
+          "vi": "tham gia"
+        },
+        {
+          "kr": "비율",
+          "vi": "tỷ lệ"
+        },
+        {
+          "kr": "나타나다",
+          "vi": "xuất hiện, thể hiện, cho thấy"
+        },
+        {
+          "kr": "걷기",
+          "vi": "đi bộ"
+        },
+        {
+          "kr": "등산",
+          "vi": "leo núi"
+        },
+        {
+          "kr": "생활체육",
+          "vi": "thể thao đời sống, thể dục thể thao quần chúng"
+        },
+        {
+          "kr": "따르다",
+          "vi": "tuân theo, dựa theo, đi theo"
+        },
+        {
+          "kr": "결과에 따르면",
+          "vi": "theo như kết quả (khảo sát/nghiên cứu)"
+        },
+        {
+          "kr": "가장",
+          "vi": "nhất (đứng trước tính từ/động từ để so sánh nhất)"
+        },
+        {
+          "kr": "다음",
+          "vi": "tiếp theo, kế tiếp"
+        },
+        {
+          "kr": "주 1회",
+          "vi": "mỗi tuần 1 lần"
+        },
+        {
+          "kr": "출판 시장",
+          "vi": "thị trường xuất bản"
+        },
+        {
+          "kr": "소비층",
+          "vi": "tầng lớp tiêu dùng, nhóm người tiêu dùng"
+        },
+        {
+          "kr": "변하다",
+          "vi": "thay đổi, biến đổi"
+        },
+        {
+          "kr": "지난",
+          "vi": "đã qua, trước đây (지난 10년간 = trong 10 năm qua)"
+        },
+        {
+          "kr": "연령별",
+          "vi": "theo độ tuổi, phân theo lứa tuổi"
+        },
+        {
+          "kr": "도서 구매율",
+          "vi": "tỷ lệ mua sách"
+        },
+        {
+          "kr": "비중을 차지하다",
+          "vi": "chiếm tỷ trọng"
+        },
+        {
+          "kr": "분야별로는",
+          "vi": "xét theo từng lĩnh vực"
+        },
+        {
+          "kr": "문학",
+          "vi": "văn học"
+        },
+        {
+          "kr": "자기 계발",
+          "vi": "phát triển bản thân, tự hoàn thiện"
+        },
+        {
+          "kr": "유아",
+          "vi": "trẻ nhỏ, mầm non"
+        },
+        {
+          "kr": "기타",
+          "vi": "khác, còn lại"
+        },
+        {
+          "kr": "판매율",
+          "vi": "tỷ lệ bán ra"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds20",
+      "name": "Y tế - Thuốc",
+      "words": [
+        {
+          "kr": "회",
+          "vi": "lần (đơn vị đếm số lần)"
+        },
+        {
+          "kr": "정",
+          "vi": "viên (đơn vị đếm thuốc)"
+        },
+        {
+          "kr": "이상",
+          "vi": "trở lên (số lượng)",
+          "hint": "đồng âm với 이상 nghĩa 'bất thường/trục trặc' đã học — ở đây nghĩa là 'trở lên' khi nói về số lượng"
+        },
+        {
+          "kr": "복용하다",
+          "vi": "uống thuốc, dùng thuốc"
+        },
+        {
+          "kr": "식후",
+          "vi": "sau bữa ăn"
+        },
+        {
+          "kr": "임산부",
+          "vi": "phụ nữ mang thai"
+        },
+        {
+          "kr": "반드시",
+          "vi": "nhất định, chắc chắn phải"
+        },
+        {
+          "kr": "의사",
+          "vi": "bác sĩ"
+        },
+        {
+          "kr": "약사",
+          "vi": "dược sĩ"
+        },
+        {
+          "kr": "상의하다",
+          "vi": "bàn bạc, trao đổi ý kiến, hỏi ý kiến"
+        },
+        {
+          "kr": "구입",
+          "vi": "mua, mua sắm"
+        },
+        {
+          "kr": "복용 방법",
+          "vi": "cách dùng thuốc"
+        },
+        {
+          "kr": "상담 방법",
+          "vi": "phương pháp tư vấn"
+        },
+        {
+          "kr": "성분",
+          "vi": "thành phần"
+        },
+        {
+          "kr": "설명",
+          "vi": "giải thích, thuyết minh"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds22",
+      "name": "Làm việc nhà",
+      "words": [
+        {
+          "kr": "집안일",
+          "vi": "việc nhà"
+        },
+        {
+          "kr": "설거지하다",
+          "vi": "rửa bát"
+        },
+        {
+          "kr": "청소하다",
+          "vi": "dọn dẹp, lau dọn"
+        },
+        {
+          "kr": "쓸다",
+          "vi": "quét (sàn nhà)"
+        },
+        {
+          "kr": "걸레질하다",
+          "vi": "lau nhà (bằng giẻ lau)"
+        },
+        {
+          "kr": "정리하다",
+          "vi": "sắp xếp, dọn dẹp gọn gàng"
+        },
+        {
+          "kr": "빨래하다",
+          "vi": "giặt đồ, giặt quần áo"
+        },
+        {
+          "kr": "빨래를 널다",
+          "vi": "phơi đồ, phơi quần áo"
+        },
+        {
+          "kr": "빨래를 개다",
+          "vi": "gấp quần áo"
+        },
+        {
+          "kr": "다림질하다",
+          "vi": "ủi, là quần áo"
+        },
+        {
+          "kr": "요리하다",
+          "vi": "nấu ăn"
+        },
+        {
+          "kr": "쓰레기를 버리다",
+          "vi": "đổ rác, vứt rác"
+        },
+        {
+          "kr": "침대를 정리하다",
+          "vi": "dọn giường"
+        },
+        {
+          "kr": "물을 주다",
+          "vi": "tưới (cây, nước)"
+        },
+        {
+          "kr": "먼지를 털다",
+          "vi": "phủi bụi"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds23",
+      "group": "g2",
+      "name": "Lễ hội & Sự kiện văn hoá",
+      "words": [
+        {
+          "kr": "다음 달",
+          "vi": "tháng sau, tháng tới"
+        },
+        {
+          "kr": "국제 영화제",
+          "vi": "liên hoan phim quốc tế"
+        },
+        {
+          "kr": "열리다",
+          "vi": "được tổ chức, diễn ra"
+        },
+        {
+          "kr": "세계",
+          "vi": "thế giới"
+        },
+        {
+          "kr": "감독",
+          "vi": "đạo diễn"
+        },
+        {
+          "kr": "참석하다",
+          "vi": "tham dự, tham gia"
+        },
+        {
+          "kr": "자신",
+          "vi": "bản thân, chính mình"
+        },
+        {
+          "kr": "상영하다",
+          "vi": "chiếu (phim)"
+        },
+        {
+          "kr": "소개",
+          "vi": "giới thiệu"
+        },
+        {
+          "kr": "팬",
+          "vi": "người hâm mộ, fan"
+        },
+        {
+          "kr": "대화",
+          "vi": "cuộc trò chuyện, đối thoại"
+        },
+        {
+          "kr": "시간을 가지다",
+          "vi": "có thời gian, dành thời gian"
+        },
+        {
+          "kr": "예정이다",
+          "vi": "dự định, có kế hoạch"
+        },
+        {
+          "kr": "올해",
+          "vi": "năm nay"
+        },
+        {
+          "kr": "관람객",
+          "vi": "khán giả, người xem"
+        },
+        {
+          "kr": "새벽",
+          "vi": "rạng sáng, tờ mờ sáng"
+        },
+        {
+          "kr": "관람하다",
+          "vi": "xem, thưởng thức (biểu diễn/phim)"
+        },
+        {
+          "kr": "준비하다",
+          "vi": "chuẩn bị"
+        },
+        {
+          "kr": "저렴하다",
+          "vi": "rẻ, giá phải chăng"
+        },
+        {
+          "kr": "전통",
+          "vi": "truyền thống"
+        },
+        {
+          "kr": "한정식",
+          "vi": "cơm phần kiểu Hàn (set menu truyền thống)"
+        },
+        {
+          "kr": "맛보다",
+          "vi": "nếm thử, thưởng thức"
+        },
+        {
+          "kr": "한옥 마을",
+          "vi": "làng nhà cổ Hanok"
+        },
+        {
+          "kr": "체험",
+          "vi": "trải nghiệm"
+        },
+        {
+          "kr": "다양하다",
+          "vi": "đa dạng"
+        },
+        {
+          "kr": "행사",
+          "vi": "sự kiện"
+        },
+        {
+          "kr": "마련하다",
+          "vi": "chuẩn bị, sắp xếp, tổ chức"
+        },
+        {
+          "kr": "간",
+          "vi": "giữa, trong (hậu tố chỉ khoảng thời gian, VD: 3일 간 = trong 3 ngày)"
+        },
+        {
+          "kr": "싸다",
+          "vi": "rẻ",
+          "hint": "đồng nghĩa với 저렴하다 đã học"
+        },
+        {
+          "kr": "체험하다",
+          "vi": "trải nghiệm"
+        },
+        {
+          "kr": "기간",
+          "vi": "thời gian, khoảng thời gian, kỳ hạn"
+        },
+        {
+          "kr": "내내",
+          "vi": "suốt, liền suốt (trong cả một khoảng thời gian)"
+        },
+        {
+          "kr": "무료",
+          "vi": "miễn phí"
+        },
+        {
+          "kr": "직접",
+          "vi": "trực tiếp, đích thân"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds24",
+      "group": "g2",
+      "name": "Cắm trại & Ẩm thực dã ngoại",
+      "words": [
+        {
+          "kr": "국내",
+          "vi": "trong nước, nội địa"
+        },
+        {
+          "kr": "캠핑",
+          "vi": "cắm trại"
+        },
+        {
+          "kr": "인구",
+          "vi": "dân số, số người"
+        },
+        {
+          "kr": "증가",
+          "vi": "sự tăng lên, sự gia tăng"
+        },
+        {
+          "kr": "문화",
+          "vi": "văn hoá"
+        },
+        {
+          "kr": "달라지다",
+          "vi": "thay đổi, trở nên khác đi"
+        },
+        {
+          "kr": "획일적이다",
+          "vi": "mang tính rập khuôn, đồng nhất, thiếu đa dạng"
+        },
+        {
+          "kr": "벗어나다",
+          "vi": "thoát khỏi, ra khỏi"
+        },
+        {
+          "kr": "해 먹다",
+          "vi": "tự nấu để ăn"
+        },
+        {
+          "kr": "재료",
+          "vi": "nguyên liệu"
+        },
+        {
+          "kr": "조리",
+          "vi": "nấu nướng, chế biến"
+        },
+        {
+          "kr": "조리 방법",
+          "vi": "phương pháp nấu nướng, cách chế biến"
+        },
+        {
+          "kr": "번거롭다",
+          "vi": "phiền phức, rắc rối"
+        },
+        {
+          "kr": "호소하다",
+          "vi": "than phiền, bày tỏ (kêu than)"
+        },
+        {
+          "kr": "이색",
+          "vi": "khác lạ, độc đáo"
+        },
+        {
+          "kr": "간편식",
+          "vi": "đồ ăn tiện lợi, thức ăn nhanh gọn"
+        },
+        {
+          "kr": "등장하다",
+          "vi": "xuất hiện"
+        },
+        {
+          "kr": "인기를 끌다",
+          "vi": "thu hút sự yêu thích, gây sốt"
+        },
+        {
+          "kr": "지속되다",
+          "vi": "tiếp diễn, duy trì, kéo dài"
+        },
+        {
+          "kr": "전망이다",
+          "vi": "được dự đoán là, có triển vọng là"
+        },
+        {
+          "kr": "뿐만 아니라",
+          "vi": "không những... mà còn (nối 2 vế, vế sau bổ sung thêm)"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds25",
+      "name": "Hán Hàn: 등(登) & 장(場)",
+      "words": [
+        {
+          "kr": "등",
+          "vi": "Đăng — lên, bước lên, ghi chép (gốc Hán tự 登)"
+        },
+        {
+          "kr": "등산",
+          "vi": "Đăng sơn — leo núi"
+        },
+        {
+          "kr": "등록",
+          "vi": "Đăng lục — đăng ký"
+        },
+        {
+          "kr": "등교",
+          "vi": "Đăng hiệu — đến trường (bước vào cổng trường)"
+        },
+        {
+          "kr": "등극",
+          "vi": "Đăng cực — lên ngôi, đăng quang"
+        },
+        {
+          "kr": "장",
+          "vi": "Tràng/Trường — nơi, chốn, sân khấu (gốc Hán tự 場)"
+        },
+        {
+          "kr": "극장",
+          "vi": "Kịch trường — rạp chiếu phim, nhà hát"
+        },
+        {
+          "kr": "입장",
+          "vi": "Nhập tràng — đi vào, lối vào (sân khấu, sự kiện)"
+        },
+        {
+          "kr": "현장",
+          "vi": "Hiện trường — hiện trường"
+        },
+        {
+          "kr": "매장",
+          "vi": "Mại trường — cửa hàng, điểm bán hàng"
+        }
+      ],
+      "category": "vocab",
+      "group": "g1"
+    },
+    {
+      "id": "ds26",
+      "group": "g2",
+      "name": "Chương trình truyền hình",
+      "words": [
+        {
+          "kr": "방송되다",
+          "vi": "được phát sóng"
+        },
+        {
+          "kr": "프로그램",
+          "vi": "chương trình"
+        },
+        {
+          "kr": "제목",
+          "vi": "tiêu đề"
+        },
+        {
+          "kr": "저자",
+          "vi": "tác giả"
+        },
+        {
+          "kr": "출연하다",
+          "vi": "xuất hiện, tham gia (lên sóng, lên hình)"
+        },
+        {
+          "kr": "의도",
+          "vi": "ý định, mục đích"
+        },
+        {
+          "kr": "과정",
+          "vi": "quá trình"
+        },
+        {
+          "kr": "내용",
+          "vi": "nội dung"
+        },
+        {
+          "kr": "관련되다",
+          "vi": "liên quan"
+        },
+        {
+          "kr": "상황",
+          "vi": "tình huống, hoàn cảnh"
+        },
+        {
+          "kr": "진행자",
+          "vi": "người dẫn chương trình, MC"
+        },
+        {
+          "kr": "연령대",
+          "vi": "độ tuổi, nhóm tuổi"
+        },
+        {
+          "kr": "방청객",
+          "vi": "khán giả (tại trường quay)"
+        },
+        {
+          "kr": "질문",
+          "vi": "câu hỏi"
+        },
+        {
+          "kr": "방식",
+          "vi": "phương thức, cách thức"
+        },
+        {
+          "kr": "진행되다",
+          "vi": "được tiến hành, diễn ra"
+        },
+        {
+          "kr": "감상문",
+          "vi": "bài cảm nhận, bài viết cảm nghĩ"
+        },
+        {
+          "kr": "시청자",
+          "vi": "khán giả truyền hình, người xem"
+        },
+        {
+          "kr": "뽑다",
+          "vi": "chọn, rút ra, bốc thăm"
+        },
+        {
+          "kr": "궁금하다",
+          "vi": "tò mò, thắc mắc"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds27",
+      "group": "g2",
+      "name": "Xã hội hiện đại & Xu hướng cá nhân hoá",
+      "words": [
+        {
+          "kr": "현대 사회",
+          "vi": "xã hội hiện đại"
+        },
+        {
+          "kr": "부분",
+          "vi": "phần, bộ phận"
+        },
+        {
+          "kr": "개인 중심의 삶으로 변화하다",
+          "vi": "thay đổi sang cuộc sống lấy cá nhân làm trung tâm"
+        },
+        {
+          "kr": "적은 양으로 포장해서 팔다",
+          "vi": "đóng gói với lượng ít rồi đem bán"
+        },
+        {
+          "kr": "작은 크기로 만들다",
+          "vi": "làm ra với kích thước nhỏ"
+        },
+        {
+          "kr": "1인용 자리",
+          "vi": "chỗ ngồi dành cho 1 người"
+        },
+        {
+          "kr": "적당하다",
+          "vi": "vừa phải, thích hợp, phù hợp"
+        },
+        {
+          "kr": "혼자 살기에 적당하다",
+          "vi": "phù hợp để sống một mình"
+        },
+        {
+          "kr": "오피스텔",
+          "vi": "căn hộ officetel (nhà ở kết hợp văn phòng nhỏ)"
+        },
+        {
+          "kr": "행복에 대한 인식이 변화하다",
+          "vi": "nhận thức về hạnh phúc thay đổi"
+        },
+        {
+          "kr": "경제 상황이 나빠지다",
+          "vi": "tình hình kinh tế trở nên xấu đi"
+        },
+        {
+          "kr": "경제 상황이 삶에 영향을 주다",
+          "vi": "tình hình kinh tế ảnh hưởng đến cuộc sống"
+        },
+        {
+          "kr": "식품을 싼 가격으로 팔다",
+          "vi": "bán thực phẩm với giá rẻ"
+        },
+        {
+          "kr": "가전 제품",
+          "vi": "đồ điện gia dụng"
+        },
+        {
+          "kr": "점차",
+          "vi": "dần dần"
+        },
+        {
+          "kr": "긍정적인",
+          "vi": "tích cực"
+        },
+        {
+          "kr": "부정적인",
+          "vi": "tiêu cực"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds28",
+      "group": "g2",
+      "name": "Cuộc thi & Trao giải",
+      "words": [
+        {
+          "kr": "오는",
+          "vi": "sắp tới (thời gian gần)"
+        },
+        {
+          "kr": "외국인",
+          "vi": "người nước ngoài"
+        },
+        {
+          "kr": "낭송 대회",
+          "vi": "cuộc thi ngâm thơ, đọc diễn cảm"
+        },
+        {
+          "kr": "개최하다",
+          "vi": "tổ chức, khai mạc"
+        },
+        {
+          "kr": "참가하다",
+          "vi": "tham gia, dự thi"
+        },
+        {
+          "kr": "지정시",
+          "vi": "thơ chỉ định (bài thơ được quy định trước)"
+        },
+        {
+          "kr": "자유시",
+          "vi": "thơ tự do"
+        },
+        {
+          "kr": "외우다",
+          "vi": "học thuộc lòng"
+        },
+        {
+          "kr": "낭송하다",
+          "vi": "ngâm thơ, đọc diễn cảm"
+        },
+        {
+          "kr": "희망하다",
+          "vi": "mong muốn, hy vọng"
+        },
+        {
+          "kr": "참가 신청서",
+          "vi": "đơn đăng ký tham gia"
+        },
+        {
+          "kr": "본선",
+          "vi": "vòng chung kết"
+        },
+        {
+          "kr": "예선",
+          "vi": "vòng loại, sơ tuyển"
+        },
+        {
+          "kr": "수상자",
+          "vi": "người đoạt giải, người nhận giải"
+        },
+        {
+          "kr": "홈페이지",
+          "vi": "trang chủ (website)"
+        },
+        {
+          "kr": "공지하다",
+          "vi": "công bố, thông báo"
+        },
+        {
+          "kr": "대상",
+          "vi": "giải đặc biệt, giải nhất (đại thưởng)"
+        },
+        {
+          "kr": "상장",
+          "vi": "giấy khen, bằng khen"
+        },
+        {
+          "kr": "상금",
+          "vi": "tiền thưởng"
+        },
+        {
+          "kr": "수여하다",
+          "vi": "trao cho, tặng cho"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds29",
+      "group": "g2",
+      "name": "Nghe 1 - câu 4 -> 8",
+      "words": [
+        {
+          "kr": "모임",
+          "vi": "buổi họp mặt, cuộc gặp mặt"
+        },
+        {
+          "kr": "장소",
+          "vi": "địa điểm, nơi chốn"
+        },
+        {
+          "kr": "바뀌다",
+          "vi": "thay đổi, được đổi"
+        },
+        {
+          "kr": "정문",
+          "vi": "cổng chính"
+        },
+        {
+          "kr": "기차표",
+          "vi": "vé tàu hoả"
+        },
+        {
+          "kr": "알아보다",
+          "vi": "tìm hiểu, hỏi thăm"
+        },
+        {
+          "kr": "표가 있는지 알아보다",
+          "vi": "tìm hiểu xem liệu có vé hay không"
+        },
+        {
+          "kr": "취소하다",
+          "vi": "huỷ, huỷ bỏ"
+        },
+        {
+          "kr": "예매하다",
+          "vi": "đặt trước (vé)"
+        },
+        {
+          "kr": "발표",
+          "vi": "bài phát biểu, thuyết trình"
+        },
+        {
+          "kr": "학기",
+          "vi": "học kỳ"
+        },
+        {
+          "kr": "방학",
+          "vi": "kỳ nghỉ (hè/đông)"
+        },
+        {
+          "kr": "계획을 세우다",
+          "vi": "lập kế hoạch"
+        },
+        {
+          "kr": "외국어 공부를 할까 하다",
+          "vi": "đang tính học (một ít) ngoại ngữ (dự định chưa chắc chắn)"
+        },
+        {
+          "kr": "시작되다",
+          "vi": "được bắt đầu"
+        },
+        {
+          "kr": "시골",
+          "vi": "vùng quê, nông thôn"
+        },
+        {
+          "kr": "할머니",
+          "vi": "bà (nội/ngoại)"
+        },
+        {
+          "kr": "지루하다",
+          "vi": "nhàm chán, buồn tẻ"
+        },
+        {
+          "kr": "졸다",
+          "vi": "ngủ gật"
+        },
+        {
+          "kr": "한참",
+          "vi": "một lúc lâu, hồi lâu"
+        },
+        {
+          "kr": "팀장",
+          "vi": "trưởng nhóm, trưởng phòng"
+        },
+        {
+          "kr": "만족도",
+          "vi": "mức độ hài lòng"
+        },
+        {
+          "kr": "설문 조사",
+          "vi": "khảo sát, điều tra bằng bảng hỏi"
+        },
+        {
+          "kr": "확인하다",
+          "vi": "xác nhận, kiểm tra"
+        },
+        {
+          "kr": "질문 수가 많다",
+          "vi": "số lượng câu hỏi nhiều"
+        },
+        {
+          "kr": "질문을 정리하다",
+          "vi": "sắp xếp lại câu hỏi"
+        }
+      ],
+      "category": "vocab"
+    },
+    {
+      "id": "ds30",
+      "group": "g3",
+      "name": "Y tế: Ghép tạng & Hiến tặng",
+      "words": [
+        {
+          "kr": "간경화",
+          "vi": "xơ gan"
+        },
+        {
+          "kr": "심해지다",
+          "vi": "trở nên nghiêm trọng, nặng hơn"
+        },
+        {
+          "kr": "간",
+          "vi": "gan"
+        },
+        {
+          "kr": "일부",
+          "vi": "một phần"
+        },
+        {
+          "kr": "이식하다",
+          "vi": "cấy ghép (nội tạng)"
+        },
+        {
+          "kr": "사연",
+          "vi": "câu chuyện, hoàn cảnh (đằng sau sự việc)"
+        },
+        {
+          "kr": "화제가 되다",
+          "vi": "trở thành chủ đề bàn tán, gây xôn xao"
+        },
+        {
+          "kr": "앓다",
+          "vi": "mắc bệnh, chịu đựng bệnh"
+        },
+        {
+          "kr": "위독하다",
+          "vi": "nguy kịch, nguy hiểm đến tính mạng"
+        },
+        {
+          "kr": "마땅히",
+          "vi": "đích đáng, thích hợp (thường dùng ở câu phủ định)"
+        },
+        {
+          "kr": "기증하다",
+          "vi": "hiến tặng (nội tạng, máu...)"
+        },
+        {
+          "kr": "나이가 어리다",
+          "vi": "còn nhỏ tuổi"
+        },
+        {
+          "kr": "불가능하다",
+          "vi": "không thể, bất khả thi"
+        },
+        {
+          "kr": "생일이 지나다",
+          "vi": "qua sinh nhật"
+        },
+        {
+          "kr": "되자마자",
+          "vi": "ngay khi vừa trở thành (mẫu câu ~자마자: ngay khi vừa...)"
+        },
+        {
+          "kr": "간 이식 수술을 하다",
+          "vi": "làm phẫu thuật ghép gan"
+        }
+      ],
+      "category": "vocab"
+    }
+  ]
+}
