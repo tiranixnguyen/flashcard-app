@@ -10,7 +10,8 @@ typedef DeckSubmit =
     Future<String?> Function(String name, List<Map<String, dynamic>> words);
 
 /// Tạo bộ mới (có ô tên) hoặc thêm từ vào bộ có sẵn ([appendTo] = tên bộ).
-/// Dán JSON từ AI, xem trước số thẻ + từ trùng, rồi gửi — cần có mạng.
+/// Dán JSON từ AI, xem trước số thẻ + từ trùng, chọn thẻ nào gõ đáp án
+/// ("Nhập đáp án", tick sẵn cho đáp án ngắn), rồi gửi — cần có mạng.
 Future<bool?> showDeckEditorDialog({
   required BuildContext context,
   required AppPalette palette,
@@ -171,7 +172,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
                 style: GoogleFonts.notoSansKr(fontSize: 13, color: p.ink),
                 decoration: _decoration(
                   p,
-                  '{"name": "…", "words": [{"kr": "치아", "vi": "răng"}]}',
+                  '{"name": "…", "words": [{"front": "răng", "back": "치아"}]}',
                 ),
               ),
               const SizedBox(height: 10),
@@ -223,19 +224,70 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     if (_parsed.words.isEmpty) {
       return Text("Chưa có từ nào.", style: style);
     }
+    final cards = _parsed.cards;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "✓ ${_parsed.words.length} từ (${_parsed.cardCount} thẻ)",
+          "✓ ${_parsed.words.length} từ (${_parsed.cardCount} thẻ · "
+          "${_parsed.typeAnswerCount} nhập đáp án, còn lại tự chấm)",
           style: style.copyWith(color: p.correct),
         ),
+        const SizedBox(height: 6),
+        Text(
+          "☑ Nhập đáp án · ☐ tự chấm (lật thẻ rồi tự bấm Nhớ / Chưa nhớ)",
+          style: style.copyWith(fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        _cardList(p, cards),
         if (dups.isNotEmpty)
           Text(
             "Đã có sẵn trong các bộ khác (vẫn thêm được): ${dups.join(", ")}",
             style: GoogleFonts.notoSansKr(fontSize: 12.5, color: p.gold),
           ),
       ],
+    );
+  }
+
+  static const _cardRowHeight = 36.0;
+
+  /// Mỗi thẻ một dòng: ô "Nhập đáp án" + mặt trước → mặt sau. Đổi ô tick là
+  /// sửa thẳng `typeAnswer` trong [DeckImport.words] (thứ sẽ gửi lên server);
+  /// sửa JSON thì đọc lại từ đầu, tick về mặc định.
+  Widget _cardList(AppPalette p, List<Map<String, dynamic>> cards) {
+    return Container(
+      height: (cards.length * _cardRowHeight).clamp(0, 6 * _cardRowHeight),
+      decoration: BoxDecoration(border: Border.all(color: p.paperLine)),
+      child: ListView.builder(
+        itemCount: cards.length,
+        itemExtent: _cardRowHeight,
+        itemBuilder: (_, i) {
+          final c = cards[i];
+          final back = c["back"] as String?;
+          return Row(
+            children: [
+              Tooltip(
+                message: "Nhập đáp án",
+                child: Checkbox(
+                  value: c["typeAnswer"] == true,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: _sending
+                      ? null
+                      : (v) => setState(() => c["typeAnswer"] = v ?? false),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  back == null ? c["front"] as String : "${c["front"]} → $back",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.notoSansKr(fontSize: 13, color: p.ink),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

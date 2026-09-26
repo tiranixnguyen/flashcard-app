@@ -9,7 +9,7 @@ StudyEngine buildEngine({List<Map<String, dynamic>>? words}) =>
 
 /// Trả lời đúng thẻ đang hiển thị, dù nó là thẻ nào.
 void answerCurrentCorrectly(StudyEngine e) {
-  expect(e.checkAnswer(e.currentWord!.kr), isTrue);
+  expect(e.checkAnswer(e.currentWord!.back), isTrue);
 }
 
 /// Học tới khi thẻ đang hỏi thoả [test] (trả lời bằng "Xem đáp án").
@@ -22,12 +22,12 @@ void skipUntil(StudyEngine e, bool Function(StudyEngine) test) {
 
 const withFollowUp = [
   {
-    "kr": "가다",
-    "vi": "đi",
-    "followUp": {"kr": "학교에 가다", "vi": "đi đến trường"},
+    "back": "가다",
+    "front": "đi",
+    "followUp": {"back": "학교에 가다", "front": "đi đến trường"},
   },
-  {"kr": "학생", "vi": "học sinh"},
-  {"kr": "학교", "vi": "trường học"},
+  {"back": "학생", "front": "học sinh"},
+  {"back": "학교", "front": "trường học"},
 ];
 
 void main() {
@@ -37,11 +37,11 @@ void main() {
         contentOf([
           contentDeck("d1", [
             {
-              "kr": "가다",
-              "vi": "đi",
+              "back": "가다",
+              "front": "đi",
               "followUps": [
-                {"kr": "학교에 가다", "vi": "đi đến trường"},
-                {"vi": "đi thôi"},
+                {"back": "학교에 가다", "front": "đi đến trường"},
+                {"front": "đi thôi"},
               ],
             },
           ]),
@@ -55,14 +55,14 @@ void main() {
       expect(words[2].followUpIndex, isNull);
       expect(words[1].impliesIndex, 0);
       expect(words[2].impliesIndex, 0);
-      expect(words[2].kr, "가다"); // thiếu kr thì mượn của thẻ gốc
+      expect(words[2].back, "가다"); // thiếu back thì mượn của thẻ gốc
     });
 
     test("sắp theo position, không theo thứ tự trong JSON", () {
       final deck = contentDeck("d1", threeWords);
       final shuffled = deck.copyWith(cards: deck.cards.reversed.toList());
       final c = buildStudyCatalog(contentOf([shuffled]));
-      expect(c.decks.single.words.map((w) => w.kr), ["학생", "선생님", "학교"]);
+      expect(c.decks.single.words.map((w) => w.back), ["학생", "선생님", "학교"]);
     });
 
     test("gom cờ ⭐/漢 theo id thẻ", () {
@@ -81,8 +81,8 @@ void main() {
       final e = buildEngine(
         words: [
           {
-            "kr": "감사합니다",
-            "vi": "cảm ơn",
+            "back": "감사합니다",
+            "front": "cảm ơn",
             "altAnswers": ["고맙습니다"],
           },
         ],
@@ -104,7 +104,7 @@ void main() {
       final e = buildEngine();
       e.checkAnswer("sai bét");
       final attempts = e.attemptedCount;
-      e.checkAnswer(e.currentWord!.kr);
+      e.checkAnswer(e.currentWord!.back);
       expect(e.attemptedCount, attempts);
     });
   });
@@ -115,7 +115,7 @@ void main() {
       () {
         final e = buildEngine(
           words: [
-            {"kr": "학생", "vi": "học sinh"},
+            {"back": "학생", "front": "học sinh"},
           ],
         );
 
@@ -132,8 +132,8 @@ void main() {
     test("trả lời sai đặt lại streak và box về 0", () {
       final e = buildEngine(
         words: [
-          {"kr": "학생", "vi": "học sinh"},
-          {"kr": "학교", "vi": "trường học"},
+          {"back": "학생", "front": "học sinh"},
+          {"back": "학교", "front": "trường học"},
         ],
       );
 
@@ -142,12 +142,12 @@ void main() {
       expect(e.currentProgress!.box, 1);
 
       e.nextCard();
-      final target = e.currentWord!.kr;
+      final target = e.currentWord!.back;
       e.checkAnswer("đáp án sai");
       expect(e.outcome, AnswerOutcome.wrong);
 
       // Tìm lại đúng thẻ vừa sai để kiểm tra trạng thái của nó.
-      while (e.currentWord!.kr != target) {
+      while (e.currentWord!.back != target) {
         e.nextCard();
       }
       expect(e.currentProgress!.streak, 0);
@@ -164,13 +164,13 @@ void main() {
     test("mỗi lượt hỏi mới tăng cardSerial, kể cả hỏi lại cùng thẻ", () {
       final e = buildEngine(
         words: [
-          {"kr": "학생", "vi": "học sinh"},
+          {"back": "학생", "front": "học sinh"},
         ],
       );
       final first = e.cardSerial;
       e.checkAnswer("sai");
       e.nextCard();
-      expect(e.currentWord!.kr, "학생");
+      expect(e.currentWord!.back, "학생");
       expect(e.cardSerial, greaterThan(first));
     });
   });
@@ -212,6 +212,145 @@ void main() {
     });
   });
 
+  group("thẻ tự chấm", () {
+    const selfGraded = [
+      {"back": "학생", "front": "học sinh", "typeAnswer": false},
+      {"back": "선생님", "front": "giáo viên", "typeAnswer": false},
+      {"back": "학교", "front": "trường học", "typeAnswer": false},
+    ];
+
+    test("lật chưa phải là trả lời: không tính điểm, không đụng hàng đợi", () {
+      final e = buildEngine(words: selfGraded);
+      final remaining = e.remainingInRound;
+      e.flipCard();
+      expect(e.flipped, isTrue);
+      expect(e.answered, isFalse);
+      expect(e.attemptedCount, 0);
+      expect(e.remainingInRound, remaining);
+      expect(e.currentProgress!.streak, 0);
+    });
+
+    test("chưa lật thì không tự chấm được", () {
+      final e = buildEngine(words: selfGraded);
+      e.gradeSelf(remembered: true);
+      expect(e.answered, isFalse);
+      expect(e.attemptedCount, 0);
+    });
+
+    test("'Nhớ' đi đúng nhánh gõ đúng, 'Chưa nhớ' đúng nhánh gõ sai", () {
+      final e = buildEngine(words: selfGraded);
+      e.flipCard();
+      e.gradeSelf(remembered: true);
+      expect(e.outcome, AnswerOutcome.correct);
+      expect(e.currentProgress!.streak, 1);
+      expect(e.currentProgress!.box, 1);
+      expect(e.canOverride, isFalse);
+
+      e.nextCard();
+      expect(e.flipped, isFalse); // lượt hỏi mới thì úp lại
+      e.flipCard();
+      e.gradeSelf(remembered: false);
+      expect(e.outcome, AnswerOutcome.wrong);
+      expect(e.currentProgress!.box, 0);
+      expect(e.canOverride, isFalse); // tự chấm rồi, không có gì để sửa
+      expect(e.correctCount, 1);
+      expect(e.attemptedCount, 2);
+    });
+
+    test("chấm hai lần trong một lượt chỉ tính lần đầu", () {
+      final e = buildEngine(words: selfGraded);
+      e.flipCard();
+      e.gradeSelf(remembered: false);
+      e.gradeSelf(remembered: true);
+      expect(e.attemptedCount, 1);
+      expect(e.correctCount, 0);
+    });
+
+    test("'Nhớ' 3 lần liên tiếp thì thuộc, hết bộ như thẻ gõ", () {
+      final e = buildEngine(words: [selfGraded.first]);
+      for (var i = 0; i < StudyEngine.masteryStreak; i++) {
+        e.flipCard();
+        e.gradeSelf(remembered: true);
+        e.nextCard();
+      }
+      expect(e.isCompleted, isTrue);
+      expect(e.masteredCount, 1);
+    });
+
+    test("thẻ tự chấm không nhận gõ đáp án / 'Xem đáp án'", () {
+      final e = buildEngine(words: selfGraded);
+      expect(e.checkAnswer(e.currentWord!.back), isFalse);
+      e.revealAnswer();
+      expect(e.answered, isFalse);
+      expect(e.attemptedCount, 0);
+    });
+
+    test("thẻ gõ đáp án không lật / tự chấm được", () {
+      final e = buildEngine();
+      e.flipCard();
+      expect(e.flipped, isFalse);
+      e.gradeSelf(remembered: true);
+      expect(e.answered, isFalse);
+    });
+
+    test("'Đã thuộc' vẫn dùng được, trước hoặc sau khi lật", () {
+      final e = buildEngine(words: selfGraded);
+      e.flipCard();
+      e.markKnown();
+      expect(e.outcome, AnswerOutcome.known);
+      expect(e.masteredCount, 1);
+    });
+
+    test("thẻ ngữ cảnh tự chấm 'Nhớ' thì thẻ gốc (gõ đáp án) thuộc luôn", () {
+      final e = buildEngine(
+        words: [
+          {
+            "back": "가다",
+            "front": "đi",
+            "followUp": {
+              "back": "학교에 가서 공부를 하다",
+              "front": "đi đến trường để học",
+            },
+          },
+        ],
+      );
+      skipUntil(e, (e) => !e.currentWord!.isFollowUp);
+      expect(e.currentWord!.typeAnswer, isTrue); // ≤ 3 từ
+      answerCurrentCorrectly(e);
+      e.nextCard();
+
+      expect(e.currentWord!.isFollowUp, isTrue);
+      expect(e.currentWord!.typeAnswer, isFalse); // câu dài -> tự chấm
+      e.flipCard();
+      e.gradeSelf(remembered: true);
+      expect(e.masteredCount, 1);
+      expect(e.currentProgress!.mastered, isFalse);
+    });
+
+    test("nội dung tải lại giữa lúc đã lật: vẫn giữ trạng thái lật", () {
+      final content = contentOf([contentDeck("d1", selfGraded)]);
+      final e = engineFor(content);
+      e.flipCard();
+      final id = e.currentWord!.id;
+      replaceWith(
+        e,
+        content.updateCard(id, (c) => c.copyWith(front: "nghĩa mới")),
+      );
+      expect(e.currentWord!.front, "nghĩa mới");
+      expect(e.flipped, isTrue);
+    });
+
+    test("bộ ảo giữ nguyên kiểu thẻ của thẻ gốc", () {
+      final e = engineFor(
+        contentOf([
+          contentDeck("d1", selfGraded, marked: {0}),
+        ]),
+      );
+      e.switchDeck(markedDeckId);
+      expect(e.currentWord!.typeAnswer, isFalse);
+    });
+  });
+
   group("thẻ ngữ cảnh", () {
     test("trả lời xong thẻ gốc thì thẻ ngữ cảnh được hỏi ngay sau đó", () {
       final e = buildEngine(words: withFollowUp);
@@ -221,7 +360,7 @@ void main() {
       e.nextCard();
 
       expect(e.currentWord!.isFollowUp, isTrue);
-      expect(e.currentWord!.vi, "đi đến trường");
+      expect(e.currentWord!.front, "đi đến trường");
     });
 
     test("đúng thẻ ngữ cảnh thì thẻ gốc được tính là đã thuộc", () {
@@ -267,7 +406,7 @@ void main() {
       );
       expect(e.markedCount, 1);
       e.switchDeck(markedDeckId);
-      expect(e.currentWord!.kr, "학교");
+      expect(e.currentWord!.back, "학교");
       // Thẻ trong bộ ảo giữ id thẻ gốc -> bỏ cờ ở đây là bỏ cờ thẻ thật.
       expect(e.currentWord!.id, "d1-2");
       expect(e.currentIsMarked, isTrue);
@@ -275,13 +414,13 @@ void main() {
 
     test("chuyển sang deck ⭐ thì học đúng các từ đã đánh dấu", () {
       final e = buildEngine();
-      final marked = e.currentWord!.kr;
+      final marked = e.currentWord!.back;
       e.toggleMark();
 
       e.switchDeck(markedDeckId);
       expect(e.currentDeckId, markedDeckId);
       expect(e.totalCount, 1);
-      expect(e.currentWord!.kr, marked);
+      expect(e.currentWord!.back, marked);
     });
 
     test("deck ⭐ chỉ gồm từ của nhóm đang mở", () {
@@ -379,7 +518,7 @@ void main() {
     test("học lại từ đầu xoá tiến trình lượt này", () {
       final e = buildEngine(
         words: [
-          {"kr": "학생", "vi": "học sinh"},
+          {"back": "학생", "front": "học sinh"},
         ],
       );
       for (var i = 0; i < StudyEngine.masteryStreak; i++) {
@@ -404,12 +543,12 @@ void main() {
 
       final changed = replaceWith(
         e,
-        content.updateCard(id, (c) => c.copyWith(vi: "nghĩa mới")),
+        content.updateCard(id, (c) => c.copyWith(front: "nghĩa mới")),
       );
 
       expect(changed, isFalse);
       expect(e.currentWord!.id, id);
-      expect(e.currentWord!.vi, "nghĩa mới");
+      expect(e.currentWord!.front, "nghĩa mới");
       expect(e.cardSerial, serial); // ô nhập không bị dọn
       expect(e.answered, isTrue);
       expect(e.currentProgress!.streak, 1);
@@ -452,7 +591,7 @@ void main() {
       expect(e.totalCount, 3);
       final seen = <String>{};
       for (var i = 0; i < 10; i++) {
-        seen.add(e.currentWord!.kr);
+        seen.add(e.currentWord!.back);
         e.revealAnswer();
         e.nextCard();
       }

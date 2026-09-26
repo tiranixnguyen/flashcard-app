@@ -11,8 +11,9 @@ import "dashed_line.dart";
 import "edit_card_dialog.dart";
 import "hint_box.dart";
 
-/// Thẻ đang hỏi: trạng thái thẻ + menu •••, nghĩa, chú thích, ô trả lời và
-/// phản hồi sau khi trả lời. Ô nhập (controller/focus) do màn học giữ vì phím
+/// Thẻ đang hỏi: trạng thái thẻ + menu •••, mặt trước, chú thích, rồi ô trả
+/// lời (thẻ gõ đáp án) hoặc mặt sau lúc lật (thẻ tự chấm), và phản hồi sau khi
+/// trả lời. Ô nhập (controller/focus) do màn học giữ vì phím
 /// tắt, tự cuộn và việc dọn ô khi sang thẻ mới đều cần tới chúng.
 class StudyCard extends ConsumerWidget {
   const StudyCard({
@@ -76,7 +77,7 @@ class StudyCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    word.vi,
+                    word.front,
                     style: GoogleFonts.notoSans(
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
@@ -90,16 +91,23 @@ class StudyCard extends ConsumerWidget {
                     HintBox(
                       key: ValueKey(s.cardSerial),
                       hint: word.hint!,
-                      title: word.vi,
+                      title: word.front,
                       palette: p,
                     ),
                   ],
                   const SizedBox(height: 22),
-                  _answerRow(ref, isCorrect),
-                  if (s.answered) ...[
-                    const SizedBox(height: 14),
-                    _Feedback(state: s, palette: p, isCorrect: isCorrect),
-                  ],
+                  if (word.typeAnswer) ...[
+                    _answerRow(ref, isCorrect),
+                    if (s.answered) ...[
+                      const SizedBox(height: 14),
+                      _Feedback(state: s, palette: p, isCorrect: isCorrect),
+                    ],
+                  ] else if (s.answered)
+                    // Thẻ tự chấm chỉ dừng lại ở đây sau "Đã thuộc" — tự
+                    // chấm xong là sang thẻ tiếp luôn.
+                    _Feedback(state: s, palette: p, isCorrect: isCorrect)
+                  else
+                    _FlipSide(key: answerRowKey, state: s, palette: p),
                 ],
               ),
             ),
@@ -163,6 +171,67 @@ class StudyCard extends ConsumerWidget {
           ),
           child: const Text("Kiểm tra"),
         ),
+      ],
+    );
+  }
+}
+
+/// Thẻ tự chấm: chưa lật thì là ô "chạm để lật" (điện thoại chạm thẳng vào
+/// đây cho tiện ngón cái; nút "Lật thẻ" ở cụm nút bên dưới cũng làm được), lật
+/// rồi thì hiện mặt sau kèm đáp án phụ.
+class _FlipSide extends ConsumerWidget {
+  const _FlipSide({super.key, required this.state, required this.palette});
+
+  final StudySessionState state;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = palette;
+    final word = state.word!;
+    if (!state.flipped) {
+      return InkWell(
+        onTap: ref.read(studySessionViewModelProvider.notifier).flipCard,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: p.paperLine, width: 1.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            isPhone
+                ? "Nhớ đáp án trong đầu rồi chạm để lật thẻ"
+                : "Nhớ đáp án trong đầu rồi lật thẻ (Space)",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.notoSans(fontSize: 14, color: p.inkSoft),
+          ),
+        ),
+      );
+    }
+    final alts = word.altAnswers ?? const <String>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Đáp án",
+          style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          word.back,
+          style: GoogleFonts.notoSansKr(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: p.ink,
+          ),
+        ),
+        if (alts.isNotEmpty)
+          Text(
+            "(hoặc: ${alts.join(", ")})",
+            style: GoogleFonts.notoSansKr(fontSize: 14, color: p.inkSoft),
+          ),
       ],
     );
   }
@@ -301,10 +370,17 @@ class _CardMeta extends ConsumerWidget {
     if (!context.mounted || result == null) return;
 
     final error = switch (result) {
-      EditCardSaved(:final vi, :final kr, :final hint, :final altAnswers) =>
+      EditCardSaved(
+        :final front,
+        :final back,
+        :final typeAnswer,
+        :final hint,
+        :final altAnswers,
+      ) =>
         await vm.editCurrentCard(
-          vi: vi,
-          kr: kr,
+          front: front,
+          back: back,
+          typeAnswer: typeAnswer,
           hint: hint,
           altAnswers: altAnswers,
         ),
@@ -366,7 +442,7 @@ class _Feedback extends ConsumerWidget {
                         const TextSpan(text: "Đã đánh dấu thuộc — "),
                       if (state.overridden) const TextSpan(text: "맞아 — "),
                       TextSpan(
-                        text: word.kr,
+                        text: word.back,
                         style: GoogleFonts.notoSansKr(
                           fontWeight: FontWeight.w700,
                         ),

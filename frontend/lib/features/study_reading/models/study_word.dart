@@ -6,10 +6,11 @@
 class StudyWord {
   StudyWord({
     required this.id,
-    required this.kr,
-    required this.vi,
+    required this.front,
+    required this.back,
     this.hint,
     this.altAnswers,
+    this.typeAnswer = false,
     this.isFollowUp = false,
     this.followUpIndex,
     this.impliesIndex,
@@ -20,10 +21,17 @@ class StudyWord {
   /// sửa luôn trỏ đúng thẻ thật.
   final String id;
 
-  final String kr;
-  final String vi;
+  /// Mặt trước — câu hỏi hiện ra (thường là nghĩa tiếng Việt).
+  final String front;
+
+  /// Mặt sau — đáp án (thường là từ tiếng Hàn).
+  final String back;
   final String? hint;
   final List<String>? altAnswers;
+
+  /// `true` = gõ đáp án rồi chấm; `false` = thẻ tự chấm (lật thẻ rồi tự bấm
+  /// "Nhớ"/"Chưa nhớ").
+  final bool typeAnswer;
 
   /// `true` nếu đây là thẻ ngữ cảnh nối tiếp một thẻ gốc.
   final bool isFollowUp;
@@ -37,10 +45,16 @@ class StudyWord {
   final int? impliesIndex;
 
   bool matches(String answer) =>
-      answer == kr || (altAnswers?.contains(answer) ?? false);
+      answer == back || (altAnswers?.contains(answer) ?? false);
 
   /// Bản sao đứng một mình cho bộ ảo — bỏ liên kết chuỗi ngữ cảnh vì chỉ số
   /// chỉ có nghĩa trong bộ gốc.
-  StudyWord copyAsVirtual() =>
-      StudyWord(id: id, kr: kr, vi: vi, hint: hint, altAnswers: altAnswers);
+  StudyWord copyAsVirtual() => StudyWord(
+    id: id,
+    front: front,
+    back: back,
+    hint: hint,
+    altAnswers: altAnswers,
+    typeAnswer: typeAnswer,
+  );
 }

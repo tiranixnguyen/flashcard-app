@@ -12,14 +12,16 @@ sealed class EditCardResult {
 
 class EditCardSaved extends EditCardResult {
   const EditCardSaved({
-    required this.vi,
-    required this.kr,
+    required this.front,
+    required this.back,
+    required this.typeAnswer,
     this.hint,
     this.altAnswers = const [],
   });
 
-  final String vi;
-  final String kr;
+  final String front;
+  final String back;
+  final bool typeAnswer;
   final String? hint;
   final List<String> altAnswers;
 }
@@ -50,8 +52,9 @@ class _EditCardDialog extends StatefulWidget {
 }
 
 class _EditCardDialogState extends State<_EditCardDialog> {
-  late final _viController = TextEditingController(text: widget.word.vi);
-  late final _krController = TextEditingController(text: widget.word.kr);
+  late final _frontController = TextEditingController(text: widget.word.front);
+  late final _backController = TextEditingController(text: widget.word.back);
+  late bool _typeAnswer = widget.word.typeAnswer;
   late final _hintController = TextEditingController(
     text: widget.word.hint ?? "",
   );
@@ -65,8 +68,8 @@ class _EditCardDialogState extends State<_EditCardDialog> {
 
   @override
   void dispose() {
-    _viController.dispose();
-    _krController.dispose();
+    _frontController.dispose();
+    _backController.dispose();
     _hintController.dispose();
     for (final c in _altControllers) {
       c.dispose();
@@ -75,17 +78,16 @@ class _EditCardDialogState extends State<_EditCardDialog> {
   }
 
   void _submit() {
-    if (_viController.text.trim().isEmpty ||
-        _krController.text.trim().isEmpty) {
-      setState(
-        () => _error = "Vui lòng nhập đủ nghĩa tiếng Việt và từ tiếng Hàn.",
-      );
+    if (_frontController.text.trim().isEmpty ||
+        _backController.text.trim().isEmpty) {
+      setState(() => _error = "Vui lòng nhập đủ mặt trước và mặt sau.");
       return;
     }
     Navigator.of(context).pop(
       EditCardSaved(
-        vi: _viController.text,
-        kr: _krController.text,
+        front: _frontController.text,
+        back: _backController.text,
+        typeAnswer: _typeAnswer,
         hint: _hintController.text,
         altAnswers: [for (final c in _altControllers) c.text],
       ),
@@ -112,12 +114,30 @@ class _EditCardDialogState extends State<_EditCardDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _label(p, "Nghĩa tiếng Việt"),
-              _field(p, _viController),
+              _label(p, "Mặt trước — nghĩa tiếng Việt"),
+              _field(p, _frontController),
               const SizedBox(height: 14),
-              _label(p, "Từ tiếng Hàn (đáp án chính)"),
-              _field(p, _krController, korean: true),
-              const SizedBox(height: 14),
+              _label(p, "Mặt sau — tiếng Hàn (đáp án chính)"),
+              _field(p, _backController, korean: true),
+              const SizedBox(height: 6),
+              CheckboxListTile(
+                value: _typeAnswer,
+                onChanged: (v) => setState(() => _typeAnswer = v ?? false),
+                title: Text(
+                  "Nhập đáp án",
+                  style: GoogleFonts.notoSans(fontSize: 14, color: p.ink),
+                ),
+                subtitle: Text(
+                  _typeAnswer
+                      ? "Gõ mặt sau rồi chấm."
+                      : "Thẻ tự chấm: lật thẻ rồi tự bấm Nhớ / Chưa nhớ.",
+                  style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+              const SizedBox(height: 8),
               _label(p, "Đáp án đúng khác (không bắt buộc)"),
               for (var i = 0; i < _altControllers.length; i++)
                 Padding(

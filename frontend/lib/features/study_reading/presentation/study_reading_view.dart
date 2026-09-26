@@ -119,6 +119,9 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
   ///   `Enter` = chấm bài (do chính TextField xử lý, handler này bỏ qua).
   /// - Đã trả lời: `Enter` hoặc `Cmd+Enter` = Thẻ tiếp (vẫn tôn trọng khoá
   ///   2 giây sau khi sai — `nextCard()` tự bỏ qua lúc đang khoá).
+  /// - Thẻ tự chấm, chưa lật: `Space`/`Enter`/`Cmd+/` = Lật thẻ, `Cmd+Enter`
+  ///   = Đã thuộc. Đã lật: `1`/`→` = Nhớ, `0`/`←` = Chưa nhớ (không dùng
+  ///   Enter để bấm Enter hai lần không lỡ tay chấm "Nhớ").
   /// `Ctrl` được coi như `Cmd` (web trên Windows/Linux), giống bản HTML gốc.
   ///
   /// Bắt ở cấp HardwareKeyboard chứ không dùng Shortcuts/Focus: sau khi trả
@@ -138,6 +141,36 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     final isEnter =
         key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter;
+
+    if (!s.word!.typeAnswer && !s.answered) {
+      if (!s.flipped) {
+        if (withCmd && isEnter) {
+          _vm.markKnown();
+          return true;
+        }
+        if (isEnter ||
+            key == LogicalKeyboardKey.space ||
+            (withCmd && key == LogicalKeyboardKey.slash)) {
+          _vm.flipCard();
+          return true;
+        }
+        return false;
+      }
+      if (withCmd) return false;
+      if (key == LogicalKeyboardKey.digit1 ||
+          key == LogicalKeyboardKey.numpad1 ||
+          key == LogicalKeyboardKey.arrowRight) {
+        _vm.gradeSelf(remembered: true);
+        return true;
+      }
+      if (key == LogicalKeyboardKey.digit0 ||
+          key == LogicalKeyboardKey.numpad0 ||
+          key == LogicalKeyboardKey.arrowLeft) {
+        _vm.gradeSelf(remembered: false);
+        return true;
+      }
+      return false;
+    }
 
     if (withCmd && key == LogicalKeyboardKey.slash) {
       if (s.answered) return false;
@@ -168,7 +201,12 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _answerController.clear();
-      if (s.word != null) _answerFocus.requestFocus();
+      // Thẻ tự chấm không có ô nhập: bỏ focus để điện thoại cụp bàn phím.
+      if (s.word?.typeAnswer ?? false) {
+        _answerFocus.requestFocus();
+      } else {
+        _answerFocus.unfocus();
+      }
     });
   }
 

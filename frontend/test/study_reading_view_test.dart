@@ -24,13 +24,13 @@ import "support/fixtures.dart";
 ContentSnapshot _content() => contentOf(
   [
     contentDeck("d1", const [
-      {"kr": "학생", "vi": "học sinh"},
-      {"kr": "학교", "vi": "trường học"},
+      {"back": "학생", "front": "học sinh"},
+      {"back": "학교", "front": "trường học"},
     ], name: "Bộ Sep1"),
     contentDeck(
       "d2",
       const [
-        {"kr": "사과", "vi": "quả táo"},
+        {"back": "사과", "front": "quả táo"},
       ],
       groupId: "g2",
       name: "Bộ Sep2",
@@ -127,9 +127,10 @@ class _FakeApi implements ContentApi {
             id: shift(c.id),
             position: c.position + offset,
             parentId: c.parentId == null ? null : shift(c.parentId!),
-            kr: c.kr,
-            vi: c.vi,
+            back: c.back,
+            front: c.front,
             hint: c.hint,
+            typeAnswer: c.typeAnswer,
           ),
       ],
     );
@@ -140,16 +141,22 @@ class _FakeApi implements ContentApi {
   @override
   Future<ContentCard> updateCard(
     String cardId, {
-    required String kr,
-    required String vi,
+    required String front,
+    required String back,
+    required bool typeAnswer,
     String? hint,
     List<String> altAnswers = const [],
   }) async {
     _check();
     server = server.updateCard(
       cardId,
-      (c) =>
-          c.copyWith(kr: kr, vi: vi, hint: () => hint, altAnswers: altAnswers),
+      (c) => c.copyWith(
+        front: front,
+        back: back,
+        typeAnswer: typeAnswer,
+        hint: () => hint,
+        altAnswers: altAnswers,
+      ),
     );
     return server.decks
         .expand((d) => d.cards)
@@ -598,7 +605,7 @@ void main() {
       await LocalStore(kv).saveContent(
         contentOf([
           contentDeck("d1", const [
-            {"kr": "나무", "vi": "cây"},
+            {"back": "나무", "front": "cây"},
           ], name: "Bộ đã cache"),
         ]),
       );
@@ -610,7 +617,7 @@ void main() {
     testWidgets("có mạng thì tải nội dung mới về, lưu cache", (tester) async {
       final server = _content().updateCard(
         "d1-0",
-        (c) => c.copyWith(vi: "học sinh (sửa trên Mac)"),
+        (c) => c.copyWith(front: "học sinh (sửa trên Mac)"),
       );
       final h = await pumpApp(
         tester,
@@ -656,13 +663,34 @@ void main() {
       );
       await tester.enterText(
         fields.at(1),
-        '```json\n{"name": "Bài 12", "words": [{"kr": "나무", "vi": "cây"}, '
-        '{"kr": "학교", "vi": "trường"}]}\n```',
+        '```json\n{"name": "Bài 12", "words": [{"back": "나무", "front": "cây"}, '
+        '{"back": "학교", "front": "trường"}, '
+        '{"back": "쓰레기는 줄이고 재활용은 늘리다", "front": "giảm rác"}]}\n```',
       );
       await tester.pump();
-      expect(find.text("✓ 2 từ (2 thẻ)"), findsOneWidget);
+      // Đáp án ngắn tick sẵn "Nhập đáp án", câu dài thì không.
+      expect(
+        find.text("✓ 3 từ (3 thẻ · 2 nhập đáp án, còn lại tự chấm)"),
+        findsOneWidget,
+      );
       expect(
         find.textContaining("Đã có sẵn trong các bộ khác"),
+        findsOneWidget,
+      );
+      final boxes = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(Checkbox),
+      );
+      expect(
+        [for (final c in tester.widgetList<Checkbox>(boxes)) c.value],
+        [true, true, false],
+      );
+
+      // Bỏ tick thẻ đầu -> thành thẻ tự chấm.
+      await tester.tap(boxes.first);
+      await tester.pump();
+      expect(
+        find.text("✓ 3 từ (3 thẻ · 1 nhập đáp án, còn lại tự chấm)"),
         findsOneWidget,
       );
 
@@ -671,8 +699,12 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
       expect(h.api.server.decks.last.name, "Bài 12");
+      expect(
+        [for (final c in h.api.server.decks.last.cards) c.typeAnswer],
+        [false, true, false],
+      );
       expect(find.text("Bài 12"), findsOneWidget); // ô chọn bộ đã sang bộ mới
-      expect(find.textContaining("Thuộc 0/2"), findsOneWidget);
+      expect(find.textContaining("Thuộc 0/3"), findsOneWidget);
     }, variant: desktop);
 
     testWidgets("offline: báo cần có mạng, không đóng hộp thoại", (
@@ -739,7 +771,7 @@ void main() {
 
       expect(find.text("$vi (mới)"), findsOneWidget);
       expect(
-        h.api.server.decks.first.cards.where((c) => c.vi == "$vi (mới)"),
+        h.api.server.decks.first.cards.where((c) => c.front == "$vi (mới)"),
         hasLength(1),
       );
     }, variant: desktop);
@@ -995,6 +1027,133 @@ void main() {
       await focusAndSettle(tester);
       expect(pageOffset(tester), 0);
     }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+  });
+
+  group("thẻ tự chấm", () {
+    /// Bộ hai thẻ tự chấm, nạp qua cache trên máy (ưu tiên hơn bản đóng gói).
+    Future<_Harness> pumpSelfGraded(
+      WidgetTester tester, {
+      _FakeApi? api,
+    }) async {
+      final kv = MemoryStore();
+      await LocalStore(kv).saveContent(
+        contentOf([
+          contentDeck("f1", const [
+            {"back": "나무", "front": "cây", "typeAnswer": false},
+            {"back": "학교", "front": "trường học", "typeAnswer": false},
+          ], name: "Bộ tự chấm"),
+        ]),
+      );
+      return pumpApp(tester, kv: kv, api: api);
+    }
+
+    bool backVisible() =>
+        find.text("나무").evaluate().isNotEmpty ||
+        find.text("학교").evaluate().isNotEmpty;
+
+    testWidgets(
+      "không có ô nhập; lật rồi bấm Nhớ -> tính đúng, sang thẻ tiếp",
+      (tester) async {
+        await pumpSelfGraded(tester);
+        expect(find.byType(TextField), findsNothing);
+        expect(find.text("Xem đáp án"), findsNothing);
+        expect(backVisible(), isFalse);
+
+        await tester.tap(find.widgetWithText(OutlinedButton, "Lật thẻ"));
+        await tester.pump();
+        expect(backVisible(), isTrue);
+        expect(
+          find.textContaining("Đúng 0/0"),
+          findsOneWidget,
+        ); // lật chưa tính
+
+        await tester.tap(find.widgetWithText(OutlinedButton, "✓ Nhớ"));
+        await tester.pump();
+        expect(find.textContaining("Đúng 1/1"), findsOneWidget);
+        // Đã sang lượt hỏi mới, chưa lật.
+        expect(backVisible(), isFalse);
+        expect(find.widgetWithText(OutlinedButton, "Lật thẻ"), findsOneWidget);
+      },
+    );
+
+    testWidgets("chạm vào ô trên thẻ cũng lật; Chưa nhớ không khoá 2 giây", (
+      tester,
+    ) async {
+      await pumpSelfGraded(tester);
+      await tester.tap(find.textContaining("chạm để lật thẻ"));
+      await tester.pump();
+      expect(backVisible(), isTrue);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, "✕ Chưa nhớ"));
+      await tester.pump();
+      expect(find.textContaining("Đúng 0/1"), findsOneWidget);
+      expect(find.text("Thẻ tiếp (chờ…)"), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, "Lật thẻ"), findsOneWidget);
+    });
+
+    testWidgets("'Đã thuộc' trước khi lật vẫn hiện đáp án và chờ Thẻ tiếp", (
+      tester,
+    ) async {
+      await pumpSelfGraded(tester);
+      await tester.tap(find.widgetWithText(OutlinedButton, "✓ Đã thuộc"));
+      await tester.pump();
+      expect(find.textContaining("Đã đánh dấu thuộc"), findsOneWidget);
+      expect(find.textContaining("Thuộc 1/2"), findsOneWidget);
+    });
+
+    testWidgets("phím tắt: Space/Enter lật, 1 = Nhớ, 0 = Chưa nhớ", (
+      tester,
+    ) async {
+      await pumpSelfGraded(tester);
+
+      // Chưa lật thì 1/0 không làm gì.
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+      await tester.pump();
+      expect(find.textContaining("Đúng 0/0"), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.pump();
+      expect(backVisible(), isTrue);
+      // Đã lật thì Enter không chấm (bấm Enter hai lần không lỡ tay).
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(find.textContaining("Đúng 0/0"), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
+      await tester.pump();
+      expect(find.textContaining("Đúng 0/1"), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(backVisible(), isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+      await tester.pump();
+      expect(find.textContaining("Đúng 1/2"), findsOneWidget);
+    }, variant: desktop);
+
+    testWidgets("sửa thẻ: bỏ tick 'Nhập đáp án' -> thành thẻ tự chấm", (
+      tester,
+    ) async {
+      final h = await pumpApp(tester, api: _FakeApi(online: true));
+      expect(find.byType(TextField), findsOneWidget);
+
+      await openCardMenu(tester);
+      await tester.tap(find.text("✎ Sửa / xoá thẻ"));
+      await tester.pumpAndSettle();
+      final box = find.widgetWithText(CheckboxListTile, "Nhập đáp án");
+      expect(tester.widget<CheckboxListTile>(box).value, isTrue);
+      await tester.tap(box);
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, "Lật thẻ"), findsOneWidget);
+      expect(
+        h.api.server.decks.first.cards.where((c) => !c.typeAnswer),
+        hasLength(1),
+      );
+    }, variant: desktop);
   });
 
   group("phím tắt", () {

@@ -1,10 +1,12 @@
 import "dart:math";
 
+import "package:flashcard_app/features/study_reading/domain/deck_import.dart";
 import "package:flashcard_app/features/study_reading/domain/study_engine.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 
 /// Dựng một bộ giống hệt server làm từ JSON nhập bộ: thẻ gốc rồi tới các thẻ
-/// ngữ cảnh (`followUp`/`followUps`, thiếu `kr` thì mượn của thẻ gốc), id
+/// ngữ cảnh (`followUp`/`followUps`, thiếu `back` thì mượn của thẻ gốc; không ghi
+/// `typeAnswer` thì theo `defaultTypeAnswer` — đáp án ngắn là gõ đáp án), id
 /// `<deckId>-<vị trí>`, thẻ ngữ cảnh trỏ `parentId` về thẻ gốc.
 ContentDeck contentDeck(
   String id,
@@ -16,16 +18,18 @@ ContentDeck contentDeck(
   Set<int> hanja = const {},
 }) {
   final cards = <ContentCard>[];
-  ContentCard card(Map<String, dynamic> w, {String? parentId, String? kr}) {
+  ContentCard card(Map<String, dynamic> w, {String? parentId, String? back}) {
     final i = cards.length;
+    final b = (w["back"] as String?) ?? back!;
     return ContentCard(
       id: "$id-$i",
       position: i,
       parentId: parentId,
-      kr: (w["kr"] as String?) ?? kr!,
-      vi: w["vi"] as String,
+      back: b,
+      front: w["front"] as String,
       hint: w["hint"] as String?,
       altAnswers: (w["altAnswers"] as List?)?.cast<String>() ?? const [],
+      typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
       marked: marked.contains(i),
       hanja: hanja.contains(i),
     );
@@ -40,7 +44,7 @@ ContentDeck contentDeck(
         w["followUp"] as Map<String, dynamic>,
     ];
     for (final f in chain) {
-      cards.add(card(f, parentId: parent.id, kr: parent.kr));
+      cards.add(card(f, parentId: parent.id, back: parent.back));
     }
   }
   return ContentDeck(
@@ -60,9 +64,9 @@ ContentSnapshot contentOf(
 }) => ContentSnapshot(groups: groups, decks: decks);
 
 const threeWords = [
-  {"kr": "학생", "vi": "học sinh"},
-  {"kr": "선생님", "vi": "giáo viên"},
-  {"kr": "학교", "vi": "trường học"},
+  {"back": "학생", "front": "học sinh"},
+  {"back": "선생님", "front": "giáo viên"},
+  {"back": "학교", "front": "trường học"},
 ];
 
 /// Engine trên nội dung cho sẵn, hạt giống cố định để thứ tự lặp lại được.

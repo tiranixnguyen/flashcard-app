@@ -3,6 +3,7 @@ import "dart:typed_data";
 
 import "package:dio/dio.dart";
 import "package:flashcard_app/features/study_reading/data/content_api.dart";
+import "package:flashcard_app/features/study_reading/models/content.dart";
 import "package:flashcard_app/features/study_reading/models/study_session_record.dart";
 import "package:flutter_test/flutter_test.dart";
 
@@ -69,10 +70,11 @@ void main() {
                 "id": "ds1-0",
                 "position": 0,
                 "parentId": null,
-                "kr": "가다",
-                "vi": "đi",
+                "back": "가다",
+                "front": "đi",
                 "hint": null,
                 "altAnswers": [],
+                "typeAnswer": true,
                 "marked": true,
                 "hanja": false,
               },
@@ -80,10 +82,11 @@ void main() {
                 "id": "ds1-1",
                 "position": 1,
                 "parentId": "ds1-0",
-                "kr": "가다",
-                "vi": "đi học",
+                "back": "가다",
+                "front": "đi học",
                 "hint": "ngữ cảnh",
                 "altAnswers": ["갑니다"],
+                "typeAnswer": false,
                 "marked": false,
                 "hanja": true,
               },
@@ -99,6 +102,57 @@ void main() {
     expect(cards[1].parentId, "ds1-0");
     expect(cards[1].altAnswers, ["갑니다"]);
     expect(cards[1].hanja, isTrue);
+    expect([cards[0].typeAnswer, cards[1].typeAnswer], [true, false]);
+  });
+
+  test("cache cũ kr/vi (trước khi có thẻ tự chấm) vẫn đọc được", () {
+    final c = ContentCard.fromJson({
+      "id": "ds1-0",
+      "position": 0,
+      "parentId": null,
+      "kr": "가다",
+      "vi": "đi",
+      "hint": null,
+      "altAnswers": [],
+      "marked": false,
+      "hanja": false,
+    });
+    expect([c.front, c.back], ["đi", "가다"]);
+    expect(c.typeAnswer, isTrue); // thẻ cũ đều là thẻ gõ đáp án
+    expect(c.toJson().keys, containsAll(["front", "back", "typeAnswer"]));
+    expect(c.toJson().keys, isNot(contains("kr")));
+  });
+
+  test("PATCH /cards/:id gửi front/back/typeAnswer", () async {
+    final (api, adapter) = _api(
+      (_) => _json(200, {
+        "id": "c1",
+        "position": 0,
+        "parentId": null,
+        "front": "đi",
+        "back": "가다",
+        "hint": null,
+        "altAnswers": [],
+        "typeAnswer": false,
+        "marked": false,
+        "hanja": false,
+      }),
+    );
+    final card = await api.updateCard(
+      "c1",
+      front: "đi",
+      back: "가다",
+      typeAnswer: false,
+    );
+    expect(card.typeAnswer, isFalse);
+    expect(adapter.requests.single.method, "PATCH");
+    expect(adapter.requests.single.data, {
+      "front": "đi",
+      "back": "가다",
+      "typeAnswer": false,
+      "hint": null,
+      "altAnswers": <String>[],
+    });
   });
 
   test("không tới được server -> ApiException(offline)", () async {

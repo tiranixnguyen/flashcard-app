@@ -6,9 +6,13 @@ import "../models/study_word.dart";
 
 /// Kết quả của thẻ vừa trả lời.
 enum AnswerOutcome {
-  /// Chưa trả lời — đang chờ nhập.
+  /// Chưa trả lời — đang chờ nhập (thẻ tự chấm: chờ lật / chờ tự chấm).
   pending,
+
+  /// Gõ đúng, hoặc thẻ tự chấm bấm "Nhớ".
   correct,
+
+  /// Gõ sai / "Xem đáp án", hoặc thẻ tự chấm bấm "Chưa nhớ".
   wrong,
 
   /// Người học tự bấm "Đã thuộc" thay vì gõ đáp án.
@@ -72,6 +76,7 @@ class StudyEngine {
   AnswerOutcome _outcome = AnswerOutcome.pending;
   bool _canOverride = false;
   bool _overridden = false;
+  bool _flipped = false;
   CardProgress? _answerSnapshot;
   int _cardSerial = 0;
 
@@ -97,6 +102,9 @@ class StudyEngine {
   /// Lượt này đúng nhờ người học tự xác nhận ([overrideAsCorrect]) chứ không
   /// phải gõ khớp — UI vẫn hiện đáp án chuẩn để đối chiếu chính tả.
   bool get overridden => _overridden;
+
+  /// Thẻ tự chấm đã lật (đang hiện mặt sau, chờ tự chấm).
+  bool get flipped => _flipped;
 
   List<Deck> get visibleDecks => _decks
       .where((d) => d.group == _currentVocabGroup)
@@ -218,6 +226,7 @@ class StudyEngine {
     _outcome = AnswerOutcome.pending;
     _canOverride = false;
     _overridden = false;
+    _flipped = false;
     _answerSnapshot = rt.cardState[_currentId!].copy();
   }
 
@@ -231,7 +240,9 @@ class StudyEngine {
   bool checkAnswer(String input) {
     final rt = _runtime;
     final word = currentWord;
-    if (rt == null || word == null || answered) return false;
+    if (rt == null || word == null || !word.typeAnswer || answered) {
+      return false;
+    }
 
     final answer = normalize(input);
     if (answer.isEmpty) return false;
@@ -247,12 +258,40 @@ class StudyEngine {
   }
 
   /// "Xem đáp án": tính là một lần trả lời sai, nhưng không cho tự xác nhận đúng.
+  /// Chỉ cho thẻ gõ đáp án — thẻ tự chấm dùng [flipCard].
   void revealAnswer() {
     final rt = _runtime;
-    if (rt == null || currentWord == null || answered) return;
+    final word = currentWord;
+    if (rt == null || word == null || !word.typeAnswer || answered) return;
     rt.attemptedCount++;
     _applySchedule(false);
     _outcome = AnswerOutcome.wrong;
+    _canOverride = false;
+  }
+
+  /// Thẻ tự chấm: lật sang mặt sau. Lật **không** phải là trả lời — chưa tính
+  /// đúng/sai, chưa đụng tới hàng đợi; người học còn phải tự chấm
+  /// ([gradeSelf]).
+  void flipCard() {
+    final word = currentWord;
+    if (word == null || word.typeAnswer || answered) return;
+    _flipped = true;
+  }
+
+  /// Thẻ tự chấm, sau khi lật: "Nhớ" ([remembered]) đi đúng nhánh gõ đúng,
+  /// "Chưa nhớ" đi đúng nhánh gõ sai — cùng lịch ôn, cùng cách tính tỉ lệ
+  /// đúng cho gợi ý ôn lại. Không có "Đã trả lời đúng?" (tự chấm rồi còn gì
+  /// để sửa).
+  void gradeSelf({required bool remembered}) {
+    final rt = _runtime;
+    final word = currentWord;
+    if (rt == null || word == null || word.typeAnswer || !_flipped) return;
+    if (answered) return;
+
+    rt.attemptedCount++;
+    if (remembered) rt.correctCount++;
+    _applySchedule(remembered);
+    _outcome = remembered ? AnswerOutcome.correct : AnswerOutcome.wrong;
     _canOverride = false;
   }
 

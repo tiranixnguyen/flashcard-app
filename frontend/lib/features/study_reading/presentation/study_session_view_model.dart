@@ -38,6 +38,7 @@ class StudySessionState {
     required this.outcome,
     required this.canOverride,
     required this.overridden,
+    required this.flipped,
     required this.isNewCard,
     required this.streak,
     required this.isMarked,
@@ -79,6 +80,9 @@ class StudySessionState {
 
   /// Xem [StudyEngine.overridden].
   final bool overridden;
+
+  /// Thẻ tự chấm đang hiện mặt sau — xem [StudyEngine.flipped].
+  final bool flipped;
   final bool isNewCard;
   final int streak;
   final bool isMarked;
@@ -226,6 +230,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       outcome: e.outcome,
       canOverride: e.canOverride,
       overridden: e.overridden,
+      flipped: e.flipped,
       isNewCard:
           progress == null || (progress.box == 0 && progress.streak == 0),
       streak: progress?.streak ?? 0,
@@ -486,6 +491,28 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     unawaited(_recordAnswer());
   }
 
+  /// Thẻ tự chấm: lật sang mặt sau (chưa tính là trả lời).
+  void flipCard() {
+    final e = _engine;
+    if (e == null || e.answered || e.flipped) return;
+    e.flipCard();
+    _emit();
+  }
+
+  /// Thẻ tự chấm: tự chấm rồi sang thẻ tiếp luôn — mặt sau đã hiện trước khi
+  /// chấm nên không cần dừng lại xem đáp án (và không khoá 2 giây như gõ sai).
+  void gradeSelf({required bool remembered}) {
+    final e = _engine;
+    if (e == null || e.answered || !e.flipped) return;
+    e.gradeSelf(remembered: remembered);
+    if (!e.answered) return;
+    remembered ? HapticFeedback.lightImpact() : HapticFeedback.heavyImpact();
+    e.nextCard();
+    _cancelNextLock();
+    _emit();
+    unawaited(_recordAnswer());
+  }
+
   void markKnown() {
     final e = _engine;
     if (e == null || e.answered) return;
@@ -639,22 +666,24 @@ class StudySessionViewModel extends _$StudySessionViewModel {
 
   /// Sửa thẻ đang hiển thị (thẻ trong bộ ảo trỏ về thẻ gốc qua id).
   Future<String?> editCurrentCard({
-    required String vi,
-    required String kr,
+    required String front,
+    required String back,
+    required bool typeAnswer,
     String? hint,
     List<String> altAnswers = const [],
   }) async {
     final cardId = _engine?.currentWord?.id;
     if (cardId == null) return "Không có thẻ nào đang mở.";
-    if (vi.trim().isEmpty || kr.trim().isEmpty) {
-      return "Cần đủ nghĩa tiếng Việt và từ tiếng Hàn.";
+    if (front.trim().isEmpty || back.trim().isEmpty) {
+      return "Cần đủ mặt trước và mặt sau.";
     }
     final cleanHint = hint?.trim();
     return _author(() async {
       final card = await _api.updateCard(
         cardId,
-        kr: kr.trim(),
-        vi: vi.trim(),
+        front: front.trim(),
+        back: back.trim(),
+        typeAnswer: typeAnswer,
         hint: cleanHint == null || cleanHint.isEmpty ? null : cleanHint,
         altAnswers: altAnswers,
       );

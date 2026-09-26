@@ -28,11 +28,11 @@ void main() {
     expect(ids.toSet(), hasLength(ids.length));
   });
 
-  test("mọi thẻ có nghĩa tiếng Việt và từ tiếng Hàn", () {
+  test("mọi thẻ có đủ mặt trước và mặt sau", () {
     for (final d in content.decks) {
       for (final c in d.cards) {
-        expect(c.kr.trim(), isNotEmpty, reason: c.id);
-        expect(c.vi.trim(), isNotEmpty, reason: c.id);
+        expect(c.back.trim(), isNotEmpty, reason: c.id);
+        expect(c.front.trim(), isNotEmpty, reason: c.id);
       }
     }
   });

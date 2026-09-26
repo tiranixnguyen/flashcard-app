@@ -83,10 +83,10 @@ class ContentSnapshot {
     ],
   );
 
-  /// Mọi từ tiếng Hàn đang có — để báo trùng khi tạo bộ mới.
+  /// Mọi mặt sau (từ tiếng Hàn) đang có — để báo trùng khi tạo bộ mới.
   Set<String> get allKorean => {
     for (final d in decks)
-      for (final c in d.cards) c.kr.trim(),
+      for (final c in d.cards) c.back.trim(),
   };
 }
 
@@ -160,11 +160,12 @@ class ContentCard {
   const ContentCard({
     required this.id,
     required this.position,
-    required this.kr,
-    required this.vi,
+    required this.front,
+    required this.back,
     this.parentId,
     this.hint,
     this.altAnswers = const [],
+    this.typeAnswer = false,
     this.marked = false,
     this.hanja = false,
   });
@@ -174,21 +175,28 @@ class ContentCard {
 
   /// Thẻ gốc, nếu đây là thẻ ngữ cảnh.
   final String? parentId;
-  final String kr;
-  final String vi;
+  final String front;
+  final String back;
   final String? hint;
   final List<String> altAnswers;
+
+  /// Xem [StudyWord.typeAnswer].
+  final bool typeAnswer;
   final bool marked;
   final bool hanja;
 
+  /// Còn đọc được định dạng cũ `kr`/`vi` (chưa có kiểu thẻ): cache trên máy
+  /// từ trước bản có thẻ tự chấm — phải mở được app offline ngay sau khi cập
+  /// nhật. Thẻ cũ đều là thẻ gõ đáp án; lần đồng bộ sau sẽ thay bằng bản mới.
   factory ContentCard.fromJson(Map<String, dynamic> json) => ContentCard(
     id: json["id"] as String,
     position: json["position"] as int,
     parentId: json["parentId"] as String?,
-    kr: json["kr"] as String,
-    vi: json["vi"] as String,
+    front: (json["front"] ?? json["vi"]) as String,
+    back: (json["back"] ?? json["kr"]) as String,
     hint: json["hint"] as String?,
     altAnswers: (json["altAnswers"] as List?)?.cast<String>() ?? const [],
+    typeAnswer: json["typeAnswer"] as bool? ?? json.containsKey("kr"),
     marked: json["marked"] as bool? ?? false,
     hanja: json["hanja"] as bool? ?? false,
   );
@@ -197,29 +205,32 @@ class ContentCard {
     "id": id,
     "position": position,
     "parentId": parentId,
-    "kr": kr,
-    "vi": vi,
+    "front": front,
+    "back": back,
     "hint": hint,
     "altAnswers": altAnswers,
+    "typeAnswer": typeAnswer,
     "marked": marked,
     "hanja": hanja,
   };
 
   ContentCard copyWith({
-    String? kr,
-    String? vi,
+    String? front,
+    String? back,
     String? Function()? hint,
     List<String>? altAnswers,
+    bool? typeAnswer,
     bool? marked,
     bool? hanja,
   }) => ContentCard(
     id: id,
     position: position,
     parentId: parentId,
-    kr: kr ?? this.kr,
-    vi: vi ?? this.vi,
+    front: front ?? this.front,
+    back: back ?? this.back,
     hint: hint != null ? hint() : this.hint,
     altAnswers: altAnswers ?? this.altAnswers,
+    typeAnswer: typeAnswer ?? this.typeAnswer,
     marked: marked ?? this.marked,
     hanja: hanja ?? this.hanja,
   );
@@ -265,10 +276,11 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
       words.add(
         StudyWord(
           id: c.id,
-          kr: c.kr,
-          vi: c.vi,
+          front: c.front,
+          back: c.back,
           hint: c.hint,
           altAnswers: c.altAnswers.isEmpty ? null : c.altAnswers,
+          typeAnswer: c.typeAnswer,
           isFollowUp: c.parentId != null,
           impliesIndex: c.parentId == null ? null : indexOf[c.parentId],
         ),

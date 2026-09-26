@@ -98,6 +98,9 @@ class MasteryProgressBar extends StatelessWidget {
   }
 }
 
+/// Thẻ tự chấm: "Xem đáp án" thành "Lật thẻ"; lật rồi thì hàng trên là
+/// "Chưa nhớ"/"Nhớ".
+///
 /// Hai hàng thay vì ba nút ngang: trên màn hình điện thoại, ba nút chia đều
 /// chỉ còn ~110pt mỗi nút nên nhãn bị xuống dòng và cao thấp lệch nhau.
 /// "Thẻ tiếp" được cho nguyên một hàng vì đây là thao tác lặp nhiều nhất và
@@ -120,25 +123,41 @@ class StudyControls extends ConsumerWidget {
       minimumSize: const Size(0, 46),
     );
 
+    final selfGraded = !(s.word?.typeAnswer ?? true);
+    Widget button(String label, Color color, VoidCallback? onPressed) =>
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: style(color),
+            child: Text(label),
+          ),
+        );
+
     return Column(
       children: [
         Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: s.answered ? null : vm.markKnown,
-                style: style(p.correct),
-                child: const Text("✓ Đã thuộc"),
+            // Thẻ tự chấm đã lật: hàng trên thành hai nút tự chấm (cùng chỗ
+            // với "Đã thuộc"/"Lật thẻ" để ngón tay không phải dời đi).
+            if (selfGraded && s.flipped && !s.answered) ...[
+              button(
+                "✕ Chưa nhớ",
+                p.wrong,
+                () => vm.gradeSelf(remembered: false),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: s.answered ? null : vm.revealAnswer,
-                style: style(p.ink),
-                child: const Text("Xem đáp án"),
-              ),
-            ),
+              const SizedBox(width: 10),
+              button("✓ Nhớ", p.correct, () => vm.gradeSelf(remembered: true)),
+            ] else ...[
+              button("✓ Đã thuộc", p.correct, s.answered ? null : vm.markKnown),
+              const SizedBox(width: 10),
+              selfGraded
+                  ? button("Lật thẻ", p.ink, s.answered ? null : vm.flipCard)
+                  : button(
+                      "Xem đáp án",
+                      p.ink,
+                      s.answered ? null : vm.revealAnswer,
+                    ),
+            ],
           ],
         ),
         const SizedBox(height: 10),
