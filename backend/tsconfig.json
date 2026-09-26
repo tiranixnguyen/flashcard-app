@@ -1,0 +1,62 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    // "rootDir": "./src",
+    // "outDir": "./dist",
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "target": "ES2020",
+    "module": "commonjs",
+    // Không phải "src": `src/config/db.ts` import trực tiếp
+    // `prisma/generated/prisma/client.ts` (mã Prisma sinh ra, nằm ngoài
+    // src/) — rootDir phải bao trọn mọi file thật sự nằm trong chương trình
+    // biên dịch, không chỉ những file coi là "của mình". Đặt "." (thư mục
+    // backend/) để bao cả hai. Hệ quả: `dist/` giờ mirror từ backend/, tức
+    // `dist/src/index.js` chứ không phải `dist/index.js` — xem "start" trong
+    // package.json.
+    "rootDir": ".",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "types": [],
+    // For nodejs:
+    // "lib": ["esnext"],
+    // "types": ["node"],
+    // and npm install -D @types/node
+
+    // Other Outputs
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    // Stricter Typechecking Options
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Style Options
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // Recommended Options
+    "strict": true,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+  },
+
+  // Liệt kê tường minh, không dùng mặc định "**/*": mặc định sẽ kéo cả
+  // prisma.config.ts, vitest.config.ts, vitest.setup.ts vào chương trình biên
+  // dịch của backend, dù chúng có pipeline nạp riêng (Prisma CLI tự nạp
+  // prisma.config.ts; Vitest tự nạp *.config.ts/*.setup.ts qua esbuild) và
+  // không nên bị áp `rootDir`/`outDir` của app. `prisma/generated` được thêm
+  // riêng vì đó là mã Prisma sinh ra mà `src/` thật sự import tới — không thể
+  // bỏ qua như hai loại file config kia.
+  "include": ["src/**/*", "prisma/generated/**/*"],
+}
