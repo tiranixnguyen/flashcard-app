@@ -24,7 +24,7 @@ App học từ vựng Hàn → Việt (thẻ gõ đáp án hoặc tự chấm, �
 # frontend/ — LUÔN dùng `fvm flutter` (SDK ghim ở .fvmrc), không dùng flutter toàn cục
 fvm flutter pub get
 fvm dart run build_runner build   # sau khi sửa @riverpod; *.g.dart CÓ commit
-fvm flutter analyze               # phải sạch
+fvm dart analyze                  # phải sạch (flutter analyze không chạy riverpod_lint)
 fvm flutter test
 fvm flutter run -d macos          # điện thoại thật: --dart-define=API_BASE_URL=http://<IP-LAN>:3000
 

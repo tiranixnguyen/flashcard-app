@@ -16,8 +16,12 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
-  plugins:
-    - riverpod_lint
+
+# Hệ analyzer plugin mới (analysis_server_plugin) — khoá cấp trên cùng, kèm
+# version; không đặt trong `analyzer: plugins:` (hệ cũ, đã deprecated).
+plugins:
+  riverpod_lint: ^3.1.9
+
 include: package:flutter_lints/flutter.yaml
 
 linter:
