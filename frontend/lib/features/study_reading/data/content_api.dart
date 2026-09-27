@@ -28,8 +28,8 @@ abstract class ContentApi {
   Future<ContentGroup> createGroup(String name);
   Future<ContentGroup> renameGroup(String groupId, String name);
 
-  /// [words] đúng định dạng nhập bộ từ: `{front, back, hint?, altAnswers?,
-  /// typeAnswer?, followUp?/followUps?}` — server tự làm phẳng thẻ ngữ cảnh.
+  /// [words] đúng định dạng nhập bộ từ: `{front, back, hint?, note?,
+  /// altAnswers?, typeAnswer?, followUp?/followUps?}` — server tự làm phẳng thẻ ngữ cảnh.
   Future<ContentDeck> createDeck({
     required String groupId,
     required String name,
@@ -46,6 +46,7 @@ abstract class ContentApi {
     required String back,
     required bool typeAnswer,
     String? hint,
+    String? note,
     List<String> altAnswers = const [],
   });
   Future<void> deleteCard(String cardId);
@@ -144,6 +145,7 @@ class DioContentApi implements ContentApi {
     required String back,
     required bool typeAnswer,
     String? hint,
+    String? note,
     List<String> altAnswers = const [],
   }) => _request(
     "PATCH",
@@ -153,6 +155,8 @@ class DioContentApi implements ContentApi {
       "back": back,
       "typeAnswer": typeAnswer,
       "hint": hint,
+      // Luôn gửi (kể cả null = xoá): server hiểu thiếu trường là "giữ nguyên".
+      "note": note,
       "altAnswers": altAnswers,
     },
     parse: ContentCard.fromJson,

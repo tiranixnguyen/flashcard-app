@@ -164,6 +164,7 @@ class ContentCard {
     required this.back,
     this.parentId,
     this.hint,
+    this.note,
     this.altAnswers = const [],
     this.typeAnswer = false,
     this.marked = false,
@@ -178,6 +179,9 @@ class ContentCard {
   final String front;
   final String back;
   final String? hint;
+
+  /// Xem [StudyWord.note].
+  final String? note;
   final List<String> altAnswers;
 
   /// Xem [StudyWord.typeAnswer].
@@ -195,6 +199,7 @@ class ContentCard {
     front: (json["front"] ?? json["vi"]) as String,
     back: (json["back"] ?? json["kr"]) as String,
     hint: json["hint"] as String?,
+    note: json["note"] as String?,
     altAnswers: (json["altAnswers"] as List?)?.cast<String>() ?? const [],
     typeAnswer: json["typeAnswer"] as bool? ?? json.containsKey("kr"),
     marked: json["marked"] as bool? ?? false,
@@ -208,6 +213,7 @@ class ContentCard {
     "front": front,
     "back": back,
     "hint": hint,
+    "note": note,
     "altAnswers": altAnswers,
     "typeAnswer": typeAnswer,
     "marked": marked,
@@ -218,6 +224,7 @@ class ContentCard {
     String? front,
     String? back,
     String? Function()? hint,
+    String? Function()? note,
     List<String>? altAnswers,
     bool? typeAnswer,
     bool? marked,
@@ -229,6 +236,7 @@ class ContentCard {
     front: front ?? this.front,
     back: back ?? this.back,
     hint: hint != null ? hint() : this.hint,
+    note: note != null ? note() : this.note,
     altAnswers: altAnswers ?? this.altAnswers,
     typeAnswer: typeAnswer ?? this.typeAnswer,
     marked: marked ?? this.marked,
@@ -279,6 +287,7 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
           front: c.front,
           back: c.back,
           hint: c.hint,
+          note: c.note,
           altAnswers: c.altAnswers.isEmpty ? null : c.altAnswers,
           typeAnswer: c.typeAnswer,
           isFollowUp: c.parentId != null,

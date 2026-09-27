@@ -9,6 +9,7 @@ class StudyWord {
     required this.front,
     required this.back,
     this.hint,
+    this.note,
     this.altAnswers,
     this.typeAnswer = false,
     this.isFollowUp = false,
@@ -27,6 +28,9 @@ class StudyWord {
   /// Mặt sau — đáp án (thường là từ tiếng Hàn).
   final String back;
   final String? hint;
+
+  /// Giải thích cho đáp án (Markdown), hiện sau khi lộ mặt sau.
+  final String? note;
   final List<String>? altAnswers;
 
   /// `true` = gõ đáp án rồi chấm; `false` = thẻ tự chấm (lật thẻ rồi tự bấm
@@ -54,6 +58,7 @@ class StudyWord {
     front: front,
     back: back,
     hint: hint,
+    note: note,
     altAnswers: altAnswers,
     typeAnswer: typeAnswer,
   );

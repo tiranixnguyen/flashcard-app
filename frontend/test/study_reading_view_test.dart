@@ -130,6 +130,7 @@ class _FakeApi implements ContentApi {
             back: c.back,
             front: c.front,
             hint: c.hint,
+            note: c.note,
             typeAnswer: c.typeAnswer,
           ),
       ],
@@ -145,6 +146,7 @@ class _FakeApi implements ContentApi {
     required String back,
     required bool typeAnswer,
     String? hint,
+    String? note,
     List<String> altAnswers = const [],
   }) async {
     _check();
@@ -155,6 +157,7 @@ class _FakeApi implements ContentApi {
         back: back,
         typeAnswer: typeAnswer,
         hint: () => hint,
+        note: () => note,
         altAnswers: altAnswers,
       ),
     );
@@ -797,7 +800,7 @@ void main() {
       expect(h.api.server.decks.first.cards, isEmpty);
     }, variant: desktop);
 
-    testWidgets("ô gợi ý trong dialog sửa thẻ cao 3 dòng, giãn tới 5 dòng", (
+    testWidgets("ô gợi ý cao 3 dòng, giãn tới 5; ô giải thích 4 -> 12 dòng", (
       tester,
     ) async {
       await pumpApp(tester);
@@ -806,18 +809,58 @@ void main() {
       await tester.pumpAndSettle();
 
       // Thứ tự ô trong dialog: nghĩa Việt, từ Hàn, (đáp án phụ — thẻ giả không
-      // có), gợi ý -> ô gợi ý là TextField cuối cùng trong dialog.
-      final hintField = tester.widget<TextField>(
-        find
-            .descendant(
+      // có), gợi ý, giải thích -> hai ô cuối cùng trong dialog.
+      final fields = tester
+          .widgetList<TextField>(
+            find.descendant(
               of: find.byType(AlertDialog),
               matching: find.byType(TextField),
-            )
-            .last,
-      );
+            ),
+          )
+          .toList();
+      final hintField = fields[fields.length - 2];
+      final noteField = fields.last;
       expect(hintField.minLines, 3);
       expect(hintField.maxLines, 5);
+      expect(noteField.minLines, 4);
+      expect(noteField.maxLines, 12);
     }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
+    testWidgets("sửa giải thích: giữ nguyên Markdown gửi lên, rỗng là xoá", (
+      tester,
+    ) async {
+      final h = await pumpApp(tester, api: _FakeApi(online: true));
+      Future<void> saveNote(String text) async {
+        await openCardMenu(tester);
+        await tester.tap(find.text("✎ Sửa / xoá thẻ"));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find
+              .descendant(
+                of: find.byType(AlertDialog),
+                matching: find.byType(TextField),
+              )
+              .last,
+          text,
+        );
+        await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+        await tester.pumpAndSettle();
+      }
+
+      const md = "## Vì sao\n\n    code thụt lề\n- **ý 1**\n  - ý lồng";
+      await saveNote(md);
+      final notes = [
+        for (final c in h.api.server.decks.first.cards)
+          if (c.note != null) c.note,
+      ];
+      expect(notes, [md]);
+
+      await saveNote("   \n ");
+      expect(
+        h.api.server.decks.first.cards.where((c) => c.note != null),
+        isEmpty,
+      );
+    }, variant: desktop);
   });
 
   testWidgets(
@@ -1089,6 +1132,51 @@ void main() {
       expect(find.textContaining("Đúng 0/1"), findsOneWidget);
       expect(find.text("Thẻ tiếp (chờ…)"), findsNothing);
       expect(find.widgetWithText(OutlinedButton, "Lật thẻ"), findsOneWidget);
+    });
+
+    testWidgets("giải thích (Markdown) chỉ hiện sau khi lật / chấm", (
+      tester,
+    ) async {
+      final kv = MemoryStore();
+      const note = "**Chú ý:** dùng với 가다";
+      await LocalStore(kv).saveContent(
+        contentOf([
+          contentDeck("n1", const [
+            {"back": "나무", "front": "cây", "typeAnswer": false, "note": note},
+            {"back": "학교", "front": "trường học", "note": note},
+          ], name: "Bộ có giải thích"),
+        ]),
+      );
+      await pumpApp(tester, kv: kv);
+      Finder noteText() => find.textContaining("Chú ý:", findRichText: true);
+      bool selfGraded() =>
+          find.widgetWithText(OutlinedButton, "Lật thẻ").evaluate().isNotEmpty;
+
+      // Thứ tự thẻ ngẫu nhiên — xử lý cả hai thẻ, mỗi thẻ theo đúng kiểu.
+      for (var i = 0; i < 2; i++) {
+        expect(find.text("Giải thích"), findsNothing);
+        expect(noteText(), findsNothing);
+        if (selfGraded()) {
+          await tester.tap(find.widgetWithText(OutlinedButton, "Lật thẻ"));
+          await tester.pump();
+          expect(find.text("Giải thích"), findsOneWidget);
+          expect(noteText(), findsOneWidget);
+          await tester.ensureVisible(find.text("✕ Chưa nhớ"));
+          await tester.tap(find.widgetWithText(OutlinedButton, "✕ Chưa nhớ"));
+          await tester.pump();
+        } else {
+          await tester.enterText(find.byType(TextField).first, "sai");
+          await tester.tap(find.widgetWithText(ElevatedButton, "Kiểm tra"));
+          await tester.pump();
+          expect(find.text("Giải thích"), findsOneWidget);
+          expect(noteText(), findsOneWidget);
+          await tester.pump(const Duration(seconds: 2));
+          await tester.ensureVisible(find.text("Thẻ tiếp →"));
+          await tester.tap(find.text("Thẻ tiếp →"));
+          await tester.pump();
+        }
+      }
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets("'Đã thuộc' trước khi lật vẫn hiện đáp án và chờ Thẻ tiếp", (

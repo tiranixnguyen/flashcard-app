@@ -7,13 +7,14 @@ import "../../../../core/platform/platform.dart";
 import "../../../../core/theme/app_palette.dart";
 import "../../domain/study_engine.dart";
 import "../study_session_view_model.dart";
+import "answer_note.dart";
 import "dashed_line.dart";
 import "edit_card_dialog.dart";
 import "hint_box.dart";
 
 /// Thẻ đang hỏi: trạng thái thẻ + menu •••, mặt trước, chú thích, rồi ô trả
-/// lời (thẻ gõ đáp án) hoặc mặt sau lúc lật (thẻ tự chấm), và phản hồi sau khi
-/// trả lời. Ô nhập (controller/focus) do màn học giữ vì phím
+/// lời (thẻ gõ đáp án) hoặc mặt sau lúc lật (thẻ tự chấm), phản hồi sau khi
+/// trả lời, và giải thích đáp án (nếu có) khi đã lộ mặt sau. Ô nhập (controller/focus) do màn học giữ vì phím
 /// tắt, tự cuộn và việc dọn ô khi sang thẻ mới đều cần tới chúng.
 class StudyCard extends ConsumerWidget {
   const StudyCard({
@@ -108,6 +109,16 @@ class StudyCard extends ConsumerWidget {
                     _Feedback(state: s, palette: p, isCorrect: isCorrect)
                   else
                     _FlipSide(key: answerRowKey, state: s, palette: p),
+                  // Giải thích chỉ hiện khi đã lộ mặt sau (chấm xong / lật).
+                  if (word.note != null && (s.answered || s.flipped)) ...[
+                    const SizedBox(height: 18),
+                    AnswerNote(
+                      key: ValueKey(s.cardSerial),
+                      note: word.note!,
+                      title: word.front,
+                      palette: p,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -375,6 +386,7 @@ class _CardMeta extends ConsumerWidget {
         :final back,
         :final typeAnswer,
         :final hint,
+        :final note,
         :final altAnswers,
       ) =>
         await vm.editCurrentCard(
@@ -382,6 +394,7 @@ class _CardMeta extends ConsumerWidget {
           back: back,
           typeAnswer: typeAnswer,
           hint: hint,
+          note: note,
           altAnswers: altAnswers,
         ),
       EditCardDeleted() => await vm.deleteCurrentCard(),

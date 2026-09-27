@@ -670,6 +670,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     required String back,
     required bool typeAnswer,
     String? hint,
+    String? note,
     List<String> altAnswers = const [],
   }) async {
     final cardId = _engine?.currentWord?.id;
@@ -685,6 +686,8 @@ class StudySessionViewModel extends _$StudySessionViewModel {
         back: back.trim(),
         typeAnswer: typeAnswer,
         hint: cleanHint == null || cleanHint.isEmpty ? null : cleanHint,
+        // Không trim: Markdown dán từ AI, server tự dọn (cleanNote).
+        note: note == null || note.trim().isEmpty ? null : note,
         altAnswers: altAnswers,
       );
       return _content.updateCard(cardId, (_) => card);

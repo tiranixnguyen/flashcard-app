@@ -28,6 +28,7 @@ ContentDeck contentDeck(
       back: b,
       front: w["front"] as String,
       hint: w["hint"] as String?,
+      note: w["note"] as String?,
       altAnswers: (w["altAnswers"] as List?)?.cast<String>() ?? const [],
       typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
       marked: marked.contains(i),

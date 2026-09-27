@@ -123,7 +123,7 @@ void main() {
     expect(c.toJson().keys, isNot(contains("kr")));
   });
 
-  test("PATCH /cards/:id gửi front/back/typeAnswer", () async {
+  test("PATCH /cards/:id gửi front/back/typeAnswer/note", () async {
     final (api, adapter) = _api(
       (_) => _json(200, {
         "id": "c1",
@@ -151,6 +151,7 @@ void main() {
       "back": "가다",
       "typeAnswer": false,
       "hint": null,
+      "note": null,
       "altAnswers": <String>[],
     });
   });

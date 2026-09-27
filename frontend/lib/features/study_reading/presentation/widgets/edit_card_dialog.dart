@@ -16,6 +16,7 @@ class EditCardSaved extends EditCardResult {
     required this.back,
     required this.typeAnswer,
     this.hint,
+    this.note,
     this.altAnswers = const [],
   });
 
@@ -23,6 +24,7 @@ class EditCardSaved extends EditCardResult {
   final String back;
   final bool typeAnswer;
   final String? hint;
+  final String? note;
   final List<String> altAnswers;
 }
 
@@ -58,6 +60,9 @@ class _EditCardDialogState extends State<_EditCardDialog> {
   late final _hintController = TextEditingController(
     text: widget.word.hint ?? "",
   );
+  late final _noteController = TextEditingController(
+    text: widget.word.note ?? "",
+  );
   late final List<TextEditingController> _altControllers = [
     for (final alt in widget.word.altAnswers ?? const <String>[])
       TextEditingController(text: alt),
@@ -71,6 +76,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
     _frontController.dispose();
     _backController.dispose();
     _hintController.dispose();
+    _noteController.dispose();
     for (final c in _altControllers) {
       c.dispose();
     }
@@ -89,6 +95,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
         back: _backController.text,
         typeAnswer: _typeAnswer,
         hint: _hintController.text,
+        note: _noteController.text,
         altAnswers: [for (final c in _altControllers) c.text],
       ),
     );
@@ -172,6 +179,17 @@ class _EditCardDialogState extends State<_EditCardDialog> {
               // Cao sẵn 3 dòng, giãn tới 5 dòng rồi cuộn bên trong — gợi ý
               // thật trong dữ liệu có cái dài hơn chục dòng (chiết tự Hán tự).
               _field(p, _hintController, minLines: 3, maxLines: 5),
+              const SizedBox(height: 14),
+              _label(p, "Giải thích đáp án (không bắt buộc)"),
+              Text(
+                "Dán thẳng từ AI — giữ nguyên định dạng Markdown (tiêu đề, "
+                "**đậm**, danh sách, bảng…). Hiện sau khi lộ đáp án.",
+                style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
+              ),
+              const SizedBox(height: 6),
+              // Giải thích có thể rất dài: cao sẵn 4 dòng, giãn tới 12 dòng
+              // rồi cuộn bên trong.
+              _field(p, _noteController, minLines: 4, maxLines: 12),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!, style: TextStyle(color: p.wrong, fontSize: 13)),

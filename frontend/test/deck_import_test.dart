@@ -1,3 +1,5 @@
+import "dart:convert";
+
 import "package:flashcard_app/features/study_reading/domain/deck_import.dart";
 import "package:flutter_test/flutter_test.dart";
 
@@ -19,6 +21,23 @@ void main() {
         "hint": "kiện khang",
       },
     ]);
+  });
+
+  test("note (Markdown) giữ nguyên thụt lề/xuống dòng; rỗng thì bỏ", () {
+    const md = "    code\n\n- **ý 1**\n  - ý lồng\n";
+    final r = parseDeckImport(
+      jsonEncode([
+        {
+          "back": "가다",
+          "front": "đi",
+          "note": md,
+          "followUp": {"front": "đi học", "note": " \n "},
+        },
+      ]),
+    );
+    expect(r.ok, isTrue);
+    expect(r.cards[0]["note"], md);
+    expect(r.cards[1].containsKey("note"), isFalse);
   });
 
   test("chấp nhận mảng trần và khối ```json của AI", () {

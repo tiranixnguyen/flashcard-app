@@ -32,7 +32,7 @@ class DeckImport {
   final String? name;
 
   /// Các từ hợp lệ, đúng định dạng gửi lên server (`front`, `back`, `hint`?,
-  /// `altAnswers`?, `followUps`?). Mỗi thẻ (kể cả thẻ ngữ cảnh) luôn có sẵn
+  /// `note`?, `altAnswers`?, `followUps`?). Mỗi thẻ (kể cả thẻ ngữ cảnh) luôn có sẵn
   /// `typeAnswer` — ghi rõ trong JSON, không thì theo [defaultTypeAnswer] —
   /// để trình tạo bộ hiện ô "Nhập đáp án" cho người dùng đổi trước khi gửi.
   final List<Map<String, dynamic>> words;
@@ -109,6 +109,9 @@ DeckImport parseDeckImport(String text) {
   final words = <Map<String, dynamic>>[];
   String? str(Object? v) =>
       v is String && v.trim().isNotEmpty ? v.trim() : null;
+  // Giải thích là Markdown: giữ nguyên thụt lề/xuống dòng, server tự dọn hai
+  // đầu (cleanNote) — trim ở đây sẽ phá khối code thụt lề ở dòng đầu.
+  String? note(Object? v) => v is String && v.trim().isNotEmpty ? v : null;
   bool typeAnswerOf(Map<dynamic, dynamic> m, String back) =>
       m["typeAnswer"] is bool
       ? m["typeAnswer"] as bool
@@ -133,6 +136,7 @@ DeckImport parseDeckImport(String text) {
       "typeAnswer": typeAnswerOf(w, back),
     };
     if (str(w["hint"]) case final hint?) out["hint"] = hint;
+    if (note(w["note"]) case final n?) out["note"] = n;
     if (w["altAnswers"] case final List alts) {
       final clean = [for (final a in alts) ?str(a)];
       if (clean.isNotEmpty) out["altAnswers"] = clean;
@@ -153,6 +157,7 @@ DeckImport parseDeckImport(String text) {
           "front": fFront,
           "back": ?fBack,
           "hint": ?str(f["hint"]),
+          "note": ?note(f["note"]),
           "typeAnswer": typeAnswerOf(f, fBack ?? back),
         });
       }
