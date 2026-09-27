@@ -142,6 +142,24 @@ describe("bộ từ và thẻ", () => {
     expect(bad.status).toBe(400);
   });
 
+  it("giải thích: nhập bộ giữ nguyên Markdown; PATCH bỏ trống thì giữ, rỗng thì xoá", async () => {
+    const g = await makeGroup();
+    const md = "## Vì sao\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n- ý 1\n  - ý lồng";
+    const deck = await makeDeck(g.id, [{ back: "가다", front: "đi", note: `\n${md}\n\n` }]);
+    const id = deck.cards[0].id;
+    expect(deck.cards[0].note).toBe(md);
+
+    const kept = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi (sửa)" });
+    expect(kept.json.note).toBe(md);
+    const changed = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi", note: "mới" });
+    expect(changed.json.note).toBe("mới");
+    const cleared = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi", note: "  " });
+    expect(cleared.json.note).toBeNull();
+
+    const bad = await api("PATCH", `/cards/${id}`, { back: "가다", front: "đi", note: 1 });
+    expect(bad.status).toBe(400);
+  });
+
   it("thẻ không tồn tại -> 404", async () => {
     expect((await api("PATCH", "/cards/khong-co", { back: "a", front: "b" })).status).toBe(404);
     expect((await api("DELETE", "/cards/khong-co")).status).toBe(404);

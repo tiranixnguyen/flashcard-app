@@ -71,6 +71,10 @@ model Card {
   /// Mặt sau — đáp án (thường là từ tiếng Hàn).
   back       String
   hint       String?
+  /// Giải thích cho đáp án (không bắt buộc), hiện sau khi lộ đáp án. Markdown
+  /// dán thẳng từ AI — giữ nguyên xuống dòng/thụt lề, chỉ bỏ dòng trống ở hai
+  /// đầu (xem cleanNote trong wordInput.ts).
+  note       String?
   altAnswers String[] @default([])
   /// `true` = gõ đáp án (chấm theo `back`/`altAnswers`); `false` = thẻ tự
   /// chấm: lật thẻ rồi tự bấm "Nhớ"/"Chưa nhớ". Nhập bộ mà không ghi rõ thì

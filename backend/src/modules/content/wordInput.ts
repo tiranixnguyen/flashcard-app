@@ -4,6 +4,7 @@
  *
  *   { "front": "đi", "back": "가다", "hint": "...", "altAnswers": ["..."],
  *     "typeAnswer": true,                            // không bắt buộc
+ *     "note": "**Markdown** giải thích đáp án",      // không bắt buộc
  *     "followUp": { "front": "...", "back": "..." } } // hoặc "followUps": [...]
  *
  * `front` là mặt hiện ra (câu hỏi), `back` là đáp án.
@@ -12,6 +13,7 @@ export interface FollowUpInput {
   back?: string;
   front: string;
   hint?: string | null;
+  note?: string | null;
   typeAnswer?: boolean | null;
 }
 
@@ -19,6 +21,7 @@ export interface WordInput {
   back: string;
   front: string;
   hint?: string | null;
+  note?: string | null;
   altAnswers?: string[] | null;
   typeAnswer?: boolean | null;
   followUp?: FollowUpInput | null;
@@ -31,6 +34,7 @@ export interface ExpandedCard {
   back: string;
   front: string;
   hint: string | null;
+  note: string | null;
   altAnswers: string[];
   typeAnswer: boolean;
   parentOffset: number | null;
@@ -64,6 +68,7 @@ export function expandWordInputs(words: WordInput[]): ExpandedCard[] {
       back,
       front: w.front.trim(),
       hint: cleanHint(w.hint),
+      note: cleanNote(w.note),
       altAnswers: cleanAlts(w.altAnswers, back),
       typeAnswer: w.typeAnswer ?? defaultTypeAnswer(back),
       parentOffset: null,
@@ -75,6 +80,7 @@ export function expandWordInputs(words: WordInput[]): ExpandedCard[] {
         back: fuBack,
         front: fu.front.trim(),
         hint: cleanHint(fu.hint),
+        note: cleanNote(fu.note),
         altAnswers: [],
         typeAnswer: fu.typeAnswer ?? defaultTypeAnswer(fuBack),
         parentOffset,
@@ -87,6 +93,19 @@ export function expandWordInputs(words: WordInput[]): ExpandedCard[] {
 function cleanHint(hint: string | null | undefined): string | null {
   const h = hint?.trim();
   return h ? h : null;
+}
+
+/**
+ * Giải thích là Markdown dán từ AI: thụt lề / dòng trống ở giữa là định dạng
+ * (danh sách lồng, khối code) nên giữ nguyên — không `trim()` như gợi ý. Chỉ
+ * đổi CRLF -> LF, bỏ dòng trống ở đầu và khoảng trắng ở cuối.
+ */
+export function cleanNote(note: string | null | undefined): string | null {
+  if (!note?.trim()) return null;
+  return note
+    .replace(/\r\n?/g, "\n")
+    .replace(/^(?:[ \t]*\n)+/, "")
+    .trimEnd();
 }
 
 /** Bỏ rỗng, bỏ trùng, bỏ đáp án phụ trùng đáp án chính — giống dialog sửa thẻ. */
@@ -121,6 +140,7 @@ function checkFollowUp(v: unknown, path: string): string | null {
     return `${path}.back: phải là chuỗi không rỗng`;
   if (!nonEmptyString(v.front)) return `${path}.front: thiếu mặt trước`;
   if (!optionalString(v.hint)) return `${path}.hint: phải là chuỗi`;
+  if (!optionalString(v.note)) return `${path}.note: phải là chuỗi`;
   if (!optionalBoolean(v.typeAnswer)) return `${path}.typeAnswer: phải là true/false`;
   return null;
 }
@@ -138,6 +158,7 @@ export function parseWordInputs(input: unknown): ParseResult<WordInput[]> {
     if (!nonEmptyString(w.front)) return { ok: false, error: `${path}.front: thiếu mặt trước` };
     if (!nonEmptyString(w.back)) return { ok: false, error: `${path}.back: thiếu mặt sau` };
     if (!optionalString(w.hint)) return { ok: false, error: `${path}.hint: phải là chuỗi` };
+    if (!optionalString(w.note)) return { ok: false, error: `${path}.note: phải là chuỗi` };
     if (!optionalBoolean(w.typeAnswer))
       return { ok: false, error: `${path}.typeAnswer: phải là true/false` };
     if (

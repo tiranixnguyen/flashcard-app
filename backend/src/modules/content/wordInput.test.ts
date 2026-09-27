@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultTypeAnswer, expandWordInputs, parseWordInputs } from "./wordInput";
+import { cleanNote, defaultTypeAnswer, expandWordInputs, parseWordInputs } from "./wordInput";
 
 describe("expandWordInputs — phải giống hệt expandWords bên Dart", () => {
   it("thẻ ngữ cảnh nằm ngay sau thẻ gốc và trỏ về nó", () => {
@@ -77,11 +77,33 @@ describe("defaultTypeAnswer", () => {
   });
 });
 
+describe("cleanNote — giữ nguyên Markdown dán từ AI", () => {
+  it("giữ thụt lề và dòng trống ở giữa; bỏ dòng trống hai đầu, đổi CRLF", () => {
+    const md = "\r\n\r\n## Cách dùng\r\n\r\n- **가다**: đi\r\n  - lồng\r\n\r\n    code\r\n  \n";
+    expect(cleanNote(md)).toBe("## Cách dùng\n\n- **가다**: đi\n  - lồng\n\n    code");
+  });
+
+  it("dòng đầu thụt lề (khối code) không bị trim", () => {
+    expect(cleanNote("    x = 1\n")).toBe("    x = 1");
+  });
+
+  it.each([[null], [undefined], [""], ["  \n\t "]])("%j -> null", (v) => {
+    expect(cleanNote(v)).toBeNull();
+  });
+
+  it("nhập bộ: note theo từng thẻ, kể cả thẻ ngữ cảnh", () => {
+    const out = expandWordInputs([
+      { back: "가다", front: "đi", note: "gốc", followUp: { front: "đi học", note: "\nngữ cảnh" } },
+    ]);
+    expect(out.map((c) => c.note)).toEqual(["gốc", "ngữ cảnh"]);
+  });
+});
+
 describe("parseWordInputs", () => {
   it("chấp nhận đúng định dạng prompt tách từ trả về", () => {
     const r = parseWordInputs([
       { back: "치아", front: "răng", hint: "xỉ nha" },
-      { back: "눈", front: "mắt", typeAnswer: false },
+      { back: "눈", front: "mắt", typeAnswer: false, note: "**giải thích**" },
     ]);
     expect(r.ok).toBe(true);
   });
@@ -94,6 +116,8 @@ describe("parseWordInputs", () => {
     [[{ back: "x", front: "y", altAnswers: [1] }], "altAnswers"],
     [[{ back: "x", front: "y", typeAnswer: "có" }], "words[0].typeAnswer"],
     [[{ back: "x", front: "y", followUp: { back: "z" } }], "followUp.front"],
+    [[{ back: "x", front: "y", note: 1 }], "words[0].note"],
+    [[{ back: "x", front: "y", followUp: { front: "z", note: [] } }], "followUp.note"],
     [[{ kr: "x", vi: "y" }], "words[0].front"],
   ])("từ chối %j — báo đúng chỗ sai", (input, expected) => {
     const r = parseWordInputs(input);

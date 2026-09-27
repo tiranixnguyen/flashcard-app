@@ -100,7 +100,7 @@ contentRouter.patch(
   "/cards/:id",
   handle(async (req, res, userId) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
-    const { front, back, hint, altAnswers, typeAnswer } = body;
+    const { front, back, hint, note, altAnswers, typeAnswer } = body;
     if (typeof front !== "string" || !front.trim() || typeof back !== "string" || !back.trim()) {
       res.status(400).json({ error: "Cần đủ mặt trước và mặt sau." });
       return;
@@ -111,6 +111,10 @@ contentRouter.patch(
     }
     if (hint !== undefined && hint !== null && typeof hint !== "string") {
       res.status(400).json({ error: "hint phải là chuỗi." });
+      return;
+    }
+    if (note !== undefined && note !== null && typeof note !== "string") {
+      res.status(400).json({ error: "note phải là chuỗi." });
       return;
     }
     if (
@@ -125,6 +129,7 @@ contentRouter.patch(
         front,
         back,
         hint: (hint as string | null | undefined) ?? null,
+        note: note as string | null | undefined,
         altAnswers: (altAnswers as string[] | undefined) ?? [],
         typeAnswer,
       }),

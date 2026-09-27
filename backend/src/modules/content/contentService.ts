@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../../../prisma/generated/prisma/client";
 import { HttpError } from "../common/httpError";
-import { cleanAlts, expandWordInputs, type WordInput } from "./wordInput";
+import { cleanAlts, cleanNote, expandWordInputs, type WordInput } from "./wordInput";
 
 export interface CardDto {
   id: string;
@@ -10,6 +10,7 @@ export interface CardDto {
   front: string;
   back: string;
   hint: string | null;
+  note: string | null;
   altAnswers: string[];
   typeAnswer: boolean;
   marked: boolean;
@@ -42,6 +43,7 @@ const cardSelect = {
   front: true,
   back: true,
   hint: true,
+  note: true,
   altAnswers: true,
   typeAnswer: true,
   marked: true,
@@ -135,6 +137,7 @@ async function insertCards(
     front: c.front,
     back: c.back,
     hint: c.hint,
+    note: c.note,
     altAnswers: c.altAnswers,
     typeAnswer: c.typeAnswer,
   }));
@@ -214,6 +217,9 @@ export async function updateCard(
     front: string;
     back: string;
     hint: string | null;
+    /** Bỏ trống (`undefined`) thì giữ nguyên giải thích hiện tại — bản app
+     * cũ chưa biết trường này không vô tình xoá mất; `null`/rỗng là xoá. */
+    note?: string | null | undefined;
     altAnswers: string[];
     /** Bỏ trống thì giữ nguyên kiểu thẻ hiện tại. */
     typeAnswer?: boolean | undefined;
@@ -228,6 +234,7 @@ export async function updateCard(
       back: input.back.trim(),
       hint: hint ? hint : null,
       altAnswers: cleanAlts(input.altAnswers, input.back),
+      ...(input.note === undefined ? {} : { note: cleanNote(input.note) }),
       ...(input.typeAnswer === undefined ? {} : { typeAnswer: input.typeAnswer }),
     },
     select: cardSelect,
