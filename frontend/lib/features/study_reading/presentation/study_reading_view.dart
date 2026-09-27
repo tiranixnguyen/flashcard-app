@@ -210,6 +210,18 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     });
   }
 
+  /// Nhả focus ô nhập ngay khi thẻ đã trả lời, TRƯỚC khi TextField bị vô hiệu
+  /// hoá. Nếu để TextField tự nhả (khi `enabled` thành false), Flutter dùng
+  /// `UnfocusDisposition.previouslyFocusedChild` -> focus nhảy về widget được
+  /// focus trước đó trong lịch sử của scope — thường là ô chọn bộ từ (sau khi
+  /// chọn deck, menu đóng trả focus về nó) -> ô chọn bộ từ sáng viền focus.
+  /// Enter không bị vì TextField tự `unfocus()` khi submit (xoá lịch sử);
+  /// `Cmd+Enter`/`Cmd+/`/bấm nút thì bị, và chỉ khi ô chọn bộ từ có trong lịch
+  /// sử — nên lỗi lúc có lúc không. `unfocus()` mặc định (scope) xoá lịch sử.
+  void _releaseAnswerFocusIfAnswered(StudySessionState s) {
+    if (s.answered && _answerFocus.hasFocus) _answerFocus.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = ref.watch(paletteProvider);
@@ -250,6 +262,7 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
 
   Widget _body(AppPalette p, bool isDark, StudySessionState s) {
     _syncInputWithCard(s);
+    _releaseAnswerFocusIfAnswered(s);
 
     // Trên màn hẹp, padding màn hình 20 cộng padding thẻ 24 ăn mất 44pt mỗi
     // bên; thu lại để chữ có chỗ thở.

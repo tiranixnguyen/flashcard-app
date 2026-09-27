@@ -1307,6 +1307,31 @@ void main() {
       expect(find.text("Thẻ mới"), findsOneWidget);
     });
 
+    testWidgets("Cmd+Enter không đẩy focus sang ô chọn bộ từ", (tester) async {
+      await pumpApp(tester);
+      // Ô chọn bộ từ từng được focus (vd vừa chọn deck xong) -> nằm trong lịch
+      // sử focus của scope, rồi người học quay lại ô nhập.
+      final picker = tester
+          .widget<Focus>(
+            find
+                .descendant(
+                  of: find.byType(DropdownButton<String>),
+                  matching: find.byType(Focus),
+                )
+                .first,
+          )
+          .focusNode!;
+      picker.requestFocus();
+      await tester.pump();
+      await tester.showKeyboard(find.byType(TextField).first);
+      await tester.pump();
+      expect(picker.hasFocus, isFalse);
+
+      await pressWithCmd(tester, LogicalKeyboardKey.enter);
+      expect(find.textContaining("Đã đánh dấu thuộc"), findsOneWidget);
+      expect(picker.hasFocus, isFalse);
+    });
+
     testWidgets("Enter vẫn tôn trọng khoá 2 giây sau khi trả lời sai", (
       tester,
     ) async {
