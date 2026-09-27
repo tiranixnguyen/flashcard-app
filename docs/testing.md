@@ -29,6 +29,10 @@
   hạn `hintVisibleLines` dòng rồi cuộn; điện thoại cắt bớt, bấm mở bảng đầy đủ.
   Dựng trong `IntrinsicHeight` như thẻ thật — đừng dùng `LayoutBuilder` trong
   `HintBox` (ném lỗi dưới `IntrinsicHeight`).
+- `note_format_test.dart` — dựng lại cấp lồng danh sách bị mất thụt lề.
+- `answer_note_test.dart` — giải thích Markdown (bảng, code, xuống dòng đơn)
+  layout được trong `IntrinsicHeight`; máy tính cuộn trong khung, điện thoại
+  cắt bớt + bảng đầy đủ.
 - `bundled_fonts_test.dart` — 6 file font có trong `AssetManifest` (đúng API
   `google_fonts` dùng).
 

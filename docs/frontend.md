@@ -31,6 +31,7 @@ lib/features/study_reading/
 | `study_card.dart` | thẻ đang hỏi: badge/cờ/menu •••, ô trả lời, phản hồi |
 | `study_panels.dart` | thống kê, thanh tiến độ, nút điều khiển, màn hoàn thành/trống/lỗi |
 | `hint_box.dart`, `dashed_line.dart` | chú thích trên thẻ, đường kẻ đứt bên trái thẻ |
+| `answer_note.dart` | giải thích đáp án (Markdown) sau khi lộ mặt sau |
 | `deck_editor_dialog.dart`, `edit_card_dialog.dart`, `history_sheet.dart` | hộp thoại soạn bộ/nhóm, sửa thẻ, bảng lịch sử |
 
 Widget nhận `state` + `palette` qua tham số, gọi view model bằng
@@ -97,11 +98,21 @@ tới) rồi truyền vào `StudyCard`.
 - **Soạn nội dung chỉ trên Mac/web** (`!isPhone`): "+ Nhóm", "✎" đổi tên nhóm,
   "+ Bộ mới", "+ Thêm từ vào bộ này", "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
   ⭐/漢 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
-  back, hint?, altAnswers?, typeAnswer?, followUp?/followUps?}]}` hoặc mảng
+  back, hint?, note?, altAnswers?, typeAnswer?, followUp?/followUps?}]}` hoặc mảng
   trần, kể cả còn bọc trong ` ```json `; nút "Sao chép prompt tách từ" chép
   `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô "Nhập đáp án" (tick
   sẵn theo `defaultTypeAnswer`: mặt sau ≤ 3 từ), đổi được trước khi gửi. Dialog
-  sửa thẻ có checkbox "Nhập đáp án".
+  sửa thẻ có checkbox "Nhập đáp án" và ô "Giải thích đáp án".
+- **Giải thích đáp án** (`note`, không bắt buộc): Markdown dán từ AI, render
+  bằng `flutter_markdown_plus` trong `answer_note.dart`, chỉ hiện khi đã lộ
+  mặt sau (`answered || flipped`). **Không trim** ở client (thụt lề/dòng trống
+  là định dạng) — server dọn hai đầu (`cleanNote`). `softLineBreak: true` để
+  giữ xuống dòng đơn. Copy từ giao diện chat (không phải Markdown gốc) làm
+  mất thụt lề danh sách — `nestFlattenedLists` (`domain/note_format.dart`)
+  dựng lại lúc hiển thị: mục chỉ gồm chữ đậm kết thúc `:` là mục cha, các mục
+  sau nó tới dòng trống thành mục con; có thụt lề thật thì bỏ qua. Đậm/tiêu đề là w600 (font chỉ bundle SemiBold). Khung
+  cao tối đa `answerNoteMaxHeight`: máy tính cuộn trong khung, điện thoại cắt
+  bớt + bấm mở bảng đầy đủ (giống `HintBox`, không dùng `LayoutBuilder`).
 
 ## Mạng
 

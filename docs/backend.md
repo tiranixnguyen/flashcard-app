@@ -35,7 +35,9 @@ khởi đầu / bản sao:
   `typeAnswer` cho thẻ có `back` ≤ 3 từ. JSON nhập bộ (`POST /decks`,
   `/decks/:id/cards`) dùng `front`/`back`, `typeAnswer` không bắt buộc (thiếu
   thì theo `defaultTypeAnswer` trong `wordInput.ts`). `PATCH /cards/:id` không
-  gửi `typeAnswer` thì giữ nguyên. App vẫn đọc được cache cũ `kr`/`vi` trên
+  gửi `typeAnswer` thì giữ nguyên. `note` (giải thích đáp án, Markdown, không
+  bắt buộc): lưu nguyên văn, chỉ bỏ dòng trống đầu + khoảng trắng cuối và đổi
+  CRLF (`cleanNote`); PATCH thiếu `note` thì giữ nguyên, `null`/rỗng là xoá. App vẫn đọc được cache cũ `kr`/`vi` trên
   máy (coi là thẻ gõ đáp án) tới lần đồng bộ sau.
 - `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm), **định dạng cũ
   `kr`/`vi`** (`importContent.ts` tự chuyển sang `back`/`front`). Chỉ `npm run
