@@ -17,11 +17,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "../config/db";
 import { ensureDefaultUser } from "../modules/common/defaultUser";
-import {
-  cleanWordInputs,
-  defaultTypeAnswer,
-  type WordInput,
-} from "../modules/content/wordInput";
+import { cleanWordInputs, defaultTypeAnswer, type WordInput } from "../modules/content/wordInput";
 
 /** Định dạng cũ của seed-data/decks.json: `kr` là đáp án, `vi` là câu hỏi. */
 interface LegacyFollowUp {

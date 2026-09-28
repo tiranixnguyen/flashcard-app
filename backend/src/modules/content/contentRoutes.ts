@@ -4,6 +4,8 @@ import { handle } from "../common/handle";
 import {
   appendCards,
   applyFlagChanges,
+  AUDIO_FIELDS,
+  type AudioField,
   createDeck,
   createGroup,
   deleteCard,
@@ -124,6 +126,16 @@ contentRouter.patch(
       res.status(400).json({ error: "altAnswers phải là mảng chuỗi." });
       return;
     }
+    const audio: Partial<Record<AudioField, string | null>> = {};
+    for (const field of AUDIO_FIELDS) {
+      const v = body[field];
+      if (v === undefined) continue;
+      if (v !== null && (typeof v !== "string" || !v)) {
+        res.status(400).json({ error: `${field} phải là id file nghe hoặc null.` });
+        return;
+      }
+      audio[field] = v;
+    }
     res.json(
       await updateCard(prisma, userId, String(req.params.id), {
         front,
@@ -132,6 +144,7 @@ contentRouter.patch(
         note: note as string | null | undefined,
         altAnswers: (altAnswers as string[] | undefined) ?? [],
         typeAnswer,
+        audio,
       }),
     );
   }),

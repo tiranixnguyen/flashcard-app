@@ -14,7 +14,8 @@
     "lint": "eslint src",
     "test": "vitest run",
     "import-content": "node -r ts-node/register/transpile-only src/scripts/importContent.ts",
-    "export-content": "node -r ts-node/register/transpile-only src/scripts/exportContent.ts"
+    "export-content": "node -r ts-node/register/transpile-only src/scripts/exportContent.ts",
+    "prune-audio": "node -r ts-node/register/transpile-only src/scripts/pruneAudio.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

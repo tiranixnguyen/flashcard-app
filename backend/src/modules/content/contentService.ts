@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../../../prisma/generated/prisma/client";
+import { missingAudioIds } from "../audio/audioService";
 import { HttpError } from "../common/httpError";
 import { cleanAlts, cleanNote, cleanWordInputs, type WordInput } from "./wordInput";
 
@@ -14,7 +15,15 @@ export interface CardDto {
   typeAnswer: boolean;
   marked: boolean;
   hanja: boolean;
+  frontAudioId: string | null;
+  backAudioId: string | null;
+  hintAudioId: string | null;
+  noteAudioId: string | null;
 }
+
+/** Các trường thẻ được gắn file nghe. */
+export const AUDIO_FIELDS = ["frontAudioId", "backAudioId", "hintAudioId", "noteAudioId"] as const;
+export type AudioField = (typeof AUDIO_FIELDS)[number];
 
 export interface DeckDto {
   id: string;
@@ -46,6 +55,10 @@ const cardSelect = {
   typeAnswer: true,
   marked: true,
   hanja: true,
+  frontAudioId: true,
+  backAudioId: true,
+  hintAudioId: true,
+  noteAudioId: true,
 } as const;
 
 const deckInclude = {
@@ -211,9 +224,18 @@ export async function updateCard(
     altAnswers: string[];
     /** Bỏ trống thì giữ nguyên kiểu thẻ hiện tại. */
     typeAnswer?: boolean | undefined;
+    /** File nghe từng trường: bỏ trống thì giữ, `null` là gỡ. */
+    audio?: Partial<Record<AudioField, string | null>>;
   },
 ): Promise<CardDto> {
   await findOwnedCard(prisma, userId, cardId);
+  const audio = input.audio ?? {};
+  const missing = await missingAudioIds(
+    prisma,
+    userId,
+    Object.values(audio).filter((id): id is string => typeof id === "string"),
+  );
+  if (missing.length) throw new HttpError(400, "Không tìm thấy file nghe — tải lên lại.");
   const hint = input.hint?.trim();
   return prisma.card.update({
     where: { id: cardId },
@@ -224,6 +246,7 @@ export async function updateCard(
       altAnswers: cleanAlts(input.altAnswers, input.back),
       ...(input.note === undefined ? {} : { note: cleanNote(input.note) }),
       ...(input.typeAnswer === undefined ? {} : { typeAnswer: input.typeAnswer }),
+      ...audio,
     },
     select: cardSelect,
   });

@@ -18,6 +18,7 @@ model User {
 
   groups    Group[]
   decks     Deck[]
+  audios    Audio[]
   sessions  StudySession[]
   syncState SyncState?
 }
@@ -61,23 +62,23 @@ model Deck {
 /// Một thẻ. Thẻ của bộ gốc có id cố định "<deckId>-<vị trí>" (vd "ds2-7"),
 /// khớp với bản đóng gói trong app.
 model Card {
-  id         String   @id @default(cuid())
-  deckId     String
-  position   Int
+  id              String    @id @default(cuid())
+  deckId          String
+  position        Int
   /// Mặt trước — câu hỏi hiện ra (thường là nghĩa tiếng Việt).
-  front      String
+  front           String
   /// Mặt sau — đáp án (thường là từ tiếng Hàn).
-  back       String
-  hint       String?
+  back            String
+  hint            String?
   /// Giải thích cho đáp án (không bắt buộc), hiện sau khi lộ đáp án. Markdown
   /// dán thẳng từ AI — giữ nguyên xuống dòng/thụt lề, chỉ bỏ dòng trống ở hai
   /// đầu (xem cleanNote trong wordInput.ts).
-  note       String?
-  altAnswers String[] @default([])
+  note            String?
+  altAnswers      String[]  @default([])
   /// `true` = gõ đáp án (chấm theo `back`/`altAnswers`); `false` = thẻ tự
   /// chấm: lật thẻ rồi tự bấm "Nhớ"/"Chưa nhớ". Nhập bộ mà không ghi rõ thì
   /// `back` ngắn (≤ 3 từ) là gõ đáp án — xem wordInput.ts.
-  typeAnswer Boolean  @default(false)
+  typeAnswer      Boolean   @default(false)
   /// ⭐ khó nhớ / 漢 Hán Hàn — điện thoại vẫn được bật/tắt (kể cả offline).
   /// Nhiều máy cùng đổi thì lần đổi muộn nhất thắng, so theo thời điểm bấm do
   /// client gửi lên (không phải lúc tới server). Mỗi cờ một mốc riêng: dùng
@@ -86,12 +87,44 @@ model Card {
   markedChangedAt DateTime?
   hanja           Boolean   @default(false)
   hanjaChangedAt  DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  /// File nghe (MP3) gắn vào từng trường — nút ▶︎ hiện cạnh trường đó. Chỉ
+  /// Mac/web phát; điện thoại bỏ qua. Xoá Audio thì thẻ chỉ mất file nghe.
+  frontAudioId    String?
+  backAudioId     String?
+  hintAudioId     String?
+  noteAudioId     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deck       Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  frontAudio Audio? @relation("FrontAudio", fields: [frontAudioId], references: [id], onDelete: SetNull)
+  backAudio  Audio? @relation("BackAudio", fields: [backAudioId], references: [id], onDelete: SetNull)
+  hintAudio  Audio? @relation("HintAudio", fields: [hintAudioId], references: [id], onDelete: SetNull)
+  noteAudio  Audio? @relation("NoteAudio", fields: [noteAudioId], references: [id], onDelete: SetNull)
 
   @@index([deckId, position])
+}
+
+/// File nghe ngắn (MP3), lưu thẳng trong Postgres để `pg_dump` sao lưu luôn.
+/// Không bao giờ sửa: tải lên cùng nội dung thì trả lại bản cũ (trùng
+/// `sha256`), nên client cache theo id mãi mãi được. Không còn thẻ nào trỏ tới
+/// thì dọn bằng `npm run prune-audio`.
+model Audio {
+  id        String   @id @default(cuid())
+  userId    String
+  sha256    String
+  mime      String
+  size      Int
+  bytes     Bytes
+  createdAt DateTime @default(now())
+
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frontCards Card[] @relation("FrontAudio")
+  backCards  Card[] @relation("BackAudio")
+  hintCards  Card[] @relation("HintAudio")
+  noteCards  Card[] @relation("NoteAudio")
+
+  @@unique([userId, sha256])
 }
 
 /// Một lần học một bộ, trên bất kỳ máy nào. Chỉ thêm, không bao giờ sửa: id do
