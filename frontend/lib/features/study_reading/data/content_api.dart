@@ -1,7 +1,10 @@
+import "dart:typed_data";
+
 import "package:dio/dio.dart";
 import "package:riverpod_annotation/riverpod_annotation.dart";
 
 import "../../../core/api/api_client.dart";
+import "../models/card_audio.dart";
 import "../models/content.dart";
 import "../models/study_session_record.dart";
 
@@ -48,8 +51,18 @@ abstract class ContentApi {
     String? hint,
     String? note,
     List<String> altAnswers = const [],
+
+    /// `null` = giữ nguyên file nghe hiện có.
+    CardAudio? audio,
   });
   Future<void> deleteCard(String cardId);
+
+  /// Tải lên một file MP3, trả về id để gắn vào thẻ. Cùng nội dung thì server
+  /// trả lại id cũ.
+  Future<String> uploadAudio(Uint8List bytes);
+
+  /// Địa chỉ phát file nghe [audioId] (trình phát tự tải, không qua Dio).
+  String audioUrl(String audioId);
 
   Future<void> pushFlagChanges(List<FlagChange> changes);
   Future<void> pushSessions(List<StudySessionRecord> sessions);
@@ -68,13 +81,14 @@ class DioContentApi implements ContentApi {
     String method,
     String path, {
     Object? body,
+    String? contentType,
     required T Function(Map<String, dynamic> json) parse,
   }) async {
     try {
       final res = await _dio.request<Object?>(
         path,
         data: body,
-        options: Options(method: method),
+        options: Options(method: method, contentType: contentType),
       );
       final data = res.data;
       return parse(data is Map<String, dynamic> ? data : const {});
@@ -147,6 +161,7 @@ class DioContentApi implements ContentApi {
     String? hint,
     String? note,
     List<String> altAnswers = const [],
+    CardAudio? audio,
   }) => _request(
     "PATCH",
     "/cards/$cardId",
@@ -158,9 +173,23 @@ class DioContentApi implements ContentApi {
       // Luôn gửi (kể cả null = xoá): server hiểu thiếu trường là "giữ nguyên".
       "note": note,
       "altAnswers": altAnswers,
+      ...?audio?.toJson(),
     },
     parse: ContentCard.fromJson,
   );
+
+  @override
+  Future<String> uploadAudio(Uint8List bytes) => _request(
+    "POST",
+    "/audio",
+    body: bytes,
+    contentType: "audio/mpeg",
+    parse: (json) => json["id"] as String,
+  );
+
+  @override
+  String audioUrl(String audioId) =>
+      "${_dio.options.baseUrl}/audio/${Uri.encodeComponent(audioId)}";
 
   @override
   Future<void> deleteCard(String cardId) =>

@@ -1,3 +1,4 @@
+import "card_audio.dart";
 import "deck.dart";
 import "study_word.dart";
 
@@ -168,6 +169,7 @@ class ContentCard {
     this.typeAnswer = false,
     this.marked = false,
     this.hanja = false,
+    this.audio = CardAudio.none,
   });
 
   final String id;
@@ -185,6 +187,9 @@ class ContentCard {
   final bool marked;
   final bool hanja;
 
+  /// Xem [StudyWord.audio].
+  final CardAudio audio;
+
   /// Còn đọc được định dạng cũ `kr`/`vi` (chưa có kiểu thẻ): cache trên máy
   /// từ trước bản có thẻ tự chấm — phải mở được app offline ngay sau khi cập
   /// nhật. Thẻ cũ đều là thẻ gõ đáp án; lần đồng bộ sau sẽ thay bằng bản mới.
@@ -201,6 +206,7 @@ class ContentCard {
     typeAnswer: json["typeAnswer"] as bool? ?? json.containsKey("kr"),
     marked: json["marked"] as bool? ?? false,
     hanja: json["hanja"] as bool? ?? false,
+    audio: CardAudio.fromJson(json),
   );
 
   Map<String, dynamic> toJson() => {
@@ -214,6 +220,7 @@ class ContentCard {
     "typeAnswer": typeAnswer,
     "marked": marked,
     "hanja": hanja,
+    ...audio.toJson(),
   };
 
   ContentCard copyWith({
@@ -225,6 +232,7 @@ class ContentCard {
     bool? typeAnswer,
     bool? marked,
     bool? hanja,
+    CardAudio? audio,
   }) => ContentCard(
     id: id,
     position: position,
@@ -236,6 +244,7 @@ class ContentCard {
     typeAnswer: typeAnswer ?? this.typeAnswer,
     marked: marked ?? this.marked,
     hanja: hanja ?? this.hanja,
+    audio: audio ?? this.audio,
   );
 }
 
@@ -281,6 +290,7 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
           note: c.note,
           altAnswers: c.altAnswers.isEmpty ? null : c.altAnswers,
           typeAnswer: c.typeAnswer,
+          audio: c.audio,
         ),
       );
     }

@@ -9,6 +9,8 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../../core/platform/platform.dart";
 import "../../../core/theme/app_palette.dart";
 import "../../../core/theme/theme_provider.dart";
+import "../data/content_api.dart";
+import "audio_playback.dart";
 import "study_session_view_model.dart";
 import "widgets/deck_navigation.dart";
 import "widgets/study_card.dart";
@@ -115,6 +117,8 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
   }
 
   /// Phím tắt (macOS + web):
+  /// - `Cmd+.` = nghe / tạm dừng file nghe của trường đang hiện, ưu tiên mặt
+  ///   sau khi đã lộ đáp án, mặt trước khi chưa (xem [visibleAudioFields]).
   /// - Chưa trả lời: `Cmd+Enter` = Đã thuộc, `Cmd+/` = Xem đáp án,
   ///   `Enter` = chấm bài (do chính TextField xử lý, handler này bỏ qua).
   /// - Đã trả lời: `Enter` hoặc `Cmd+Enter` = Thẻ tiếp (vẫn tôn trọng khoá
@@ -138,6 +142,7 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     final keyboard = HardwareKeyboard.instance;
     final withCmd = keyboard.isMetaPressed || keyboard.isControlPressed;
     final key = event.logicalKey;
+    if (withCmd && key == LogicalKeyboardKey.period) return _toggleAudio(s);
     final isEnter =
         key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter;
@@ -192,6 +197,19 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     return false;
   }
 
+  bool _toggleAudio(StudySessionState s) {
+    final word = s.word!;
+    final fields = visibleAudioFields(word, revealed: s.answered || s.flipped);
+    if (isPhone || fields.isEmpty || s.syncStatus == SyncStatus.offline) {
+      return false;
+    }
+    final url = ref
+        .read(contentApiProvider)
+        .audioUrl(word.audio[fields.first]!);
+    ref.read(audioPlaybackProvider.notifier).toggle(url);
+    return true;
+  }
+
   /// Dọn ô nhập khi engine chuyển sang thẻ mới. Không dùng `nextCard()` để làm
   /// việc này vì thẻ còn đổi qua nhiều đường khác: xoá thẻ, đổi deck, đổi nhóm,
   /// học lại từ đầu, nội dung tải lại từ server.
@@ -200,6 +218,9 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     _shownCardSerial = s.cardSerial;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // Tiếng của thẻ cũ không được đè sang thẻ mới. Sau frame vì không được
+      // đổi provider ngay trong lúc build.
+      if (!isPhone) ref.read(audioPlaybackProvider.notifier).stop();
       _answerController.clear();
       // Thẻ tự chấm không có ô nhập: bỏ focus để điện thoại cụp bàn phím.
       if (s.word?.typeAnswer ?? false) {

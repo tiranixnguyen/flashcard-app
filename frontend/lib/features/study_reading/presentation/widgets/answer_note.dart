@@ -23,9 +23,13 @@ class AnswerNote extends StatefulWidget {
     required this.note,
     required this.title,
     required this.palette,
+    this.headerTrailing,
   });
 
   final String note;
+
+  /// Đặt cạnh tiêu đề "Giải thích" (nút nghe giải thích).
+  final Widget? headerTrailing;
 
   /// Tiêu đề của bảng xem đầy đủ trên điện thoại (nghĩa tiếng Việt của thẻ).
   final String title;
@@ -75,9 +79,17 @@ class _AnswerNoteState extends State<AnswerNote> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Giải thích",
-          style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
+        Row(
+          children: [
+            Text(
+              "Giải thích",
+              style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
+            ),
+            if (widget.headerTrailing case final trailing?) ...[
+              const SizedBox(width: 4),
+              trailing,
+            ],
+          ],
         ),
         const SizedBox(height: 4),
         if (!isPhone)

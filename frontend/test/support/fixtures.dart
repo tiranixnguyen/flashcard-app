@@ -2,11 +2,12 @@ import "dart:math";
 
 import "package:flashcard_app/features/study_reading/domain/deck_import.dart";
 import "package:flashcard_app/features/study_reading/domain/study_engine.dart";
+import "package:flashcard_app/features/study_reading/models/card_audio.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 
 /// Dựng một bộ giống hệt server làm từ JSON nhập bộ: mỗi từ một thẻ, không ghi
 /// `typeAnswer` thì theo `defaultTypeAnswer` (đáp án ngắn là gõ đáp án), id
-/// `<deckId>-<vị trí>`.
+/// `<deckId>-<vị trí>`. File nghe ghi thẳng như JSON server (`"backAudioId"`…).
 ContentDeck contentDeck(
   String id,
   List<Map<String, dynamic>> words, {
@@ -31,6 +32,7 @@ ContentDeck contentDeck(
         typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
         marked: marked.contains(i),
         hanja: hanja.contains(i),
+        audio: CardAudio.fromJson(w),
       ),
     );
   }

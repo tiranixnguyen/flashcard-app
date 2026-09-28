@@ -1,5 +1,6 @@
 import "dart:async";
 import "dart:convert";
+import "dart:typed_data";
 
 import "package:flutter/services.dart" show HapticFeedback;
 import "package:riverpod_annotation/riverpod_annotation.dart";
@@ -12,6 +13,7 @@ import "../data/content_api.dart";
 import "../data/local_store.dart";
 import "../domain/review_schedule.dart";
 import "../domain/study_engine.dart";
+import "../models/card_audio.dart";
 import "../models/content.dart";
 import "../models/deck.dart";
 import "../models/study_session_record.dart";
@@ -672,6 +674,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     String? hint,
     String? note,
     List<String> altAnswers = const [],
+    CardAudio? audio,
   }) async {
     final cardId = _engine?.currentWord?.id;
     if (cardId == null) return "Không có thẻ nào đang mở.";
@@ -689,9 +692,26 @@ class StudySessionViewModel extends _$StudySessionViewModel {
         // Không trim: Markdown dán từ AI, server tự dọn (cleanNote).
         note: note == null || note.trim().isEmpty ? null : note,
         altAnswers: altAnswers,
+        audio: audio,
       );
       return _content.updateCard(cardId, (_) => card);
     });
+  }
+
+  /// Tải một file nghe lên server (cần mạng) để gắn vào thẻ khi lưu. Trả về
+  /// id, hoặc thông báo lỗi. File tải lên mà không lưu thẻ thì thành file mồ
+  /// côi — `npm run prune-audio` bên backend dọn.
+  Future<({String? id, String? error})> uploadAudio(Uint8List bytes) async {
+    try {
+      return (id: await _api.uploadAudio(bytes), error: null);
+    } on ApiException catch (e) {
+      return (
+        id: null,
+        error: e.offline
+            ? "Cần có mạng để tải file nghe lên — kiểm tra kết nối rồi thử lại."
+            : e.message,
+      );
+    }
   }
 
   /// Xoá thẻ đang hiển thị.

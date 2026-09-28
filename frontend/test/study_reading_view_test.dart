@@ -1,12 +1,15 @@
 import "dart:async";
 import "dart:convert";
+import "dart:typed_data";
 
 import "package:flashcard_app/core/clock/clock.dart";
 import "package:flashcard_app/core/theme/theme_provider.dart";
+import "package:flashcard_app/features/study_reading/data/audio_gateway.dart";
 import "package:flashcard_app/features/study_reading/data/bundled_content.dart";
 import "package:flashcard_app/features/study_reading/data/connectivity_gateway.dart";
 import "package:flashcard_app/features/study_reading/data/content_api.dart";
 import "package:flashcard_app/features/study_reading/data/local_store.dart";
+import "package:flashcard_app/features/study_reading/models/card_audio.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 import "package:flashcard_app/features/study_reading/models/study_session_record.dart";
 import "package:flashcard_app/main.dart";
@@ -17,6 +20,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:google_fonts/google_fonts.dart";
 
+import "support/fake_audio.dart";
 import "support/fixtures.dart";
 
 /// Nội dung nhỏ, cố định — widget test chỉ kiểm tra phần ráp nối UI, còn
@@ -55,6 +59,7 @@ class _FakeApi implements ContentApi {
   final pushedSessions = <StudySessionRecord>[];
   final pushedFlags = <FlagChange>[];
   final remoteSessions = <StudySessionRecord>[];
+  final uploadedAudio = <Uint8List>[];
   var _n = 0;
 
   void _check() {
@@ -147,6 +152,7 @@ class _FakeApi implements ContentApi {
     String? hint,
     String? note,
     List<String> altAnswers = const [],
+    CardAudio? audio,
   }) async {
     _check();
     server = server.updateCard(
@@ -158,6 +164,7 @@ class _FakeApi implements ContentApi {
         hint: () => hint,
         note: () => note,
         altAnswers: altAnswers,
+        audio: audio,
       ),
     );
     return server.decks
@@ -170,6 +177,16 @@ class _FakeApi implements ContentApi {
     _check();
     server = server.removeCard(cardId);
   }
+
+  @override
+  Future<String> uploadAudio(Uint8List bytes) async {
+    _check();
+    uploadedAudio.add(bytes);
+    return "up${uploadedAudio.length}";
+  }
+
+  @override
+  String audioUrl(String audioId) => "http://test/audio/$audioId";
 
   @override
   Future<void> pushFlagChanges(List<FlagChange> changes) async {
@@ -219,6 +236,8 @@ class _Harness {
   final _FakeApi api;
   final MemoryStore kv;
   final _FakeConnectivityGateway connectivity;
+  final player = FakeAudioGateway();
+  final picker = FakeAudioPicker();
 
   LocalStore get store => LocalStore(kv);
 }
@@ -253,6 +272,8 @@ void main() {
           contentApiProvider.overrideWithValue(h.api),
           connectivityGatewayProvider.overrideWithValue(h.connectivity),
           clockProvider.overrideWithValue(() => _now),
+          audioPlayerGatewayProvider.overrideWithValue(h.player),
+          audioFilePickerProvider.overrideWithValue(h.picker),
           if (isDark) isDarkModeProvider.overrideWith(_ForcedDarkMode.new),
         ],
         // Dùng chính [FlashcardApp] để test phủ luôn phần cấp ThemeData ở
@@ -1411,5 +1432,202 @@ void main() {
     expect(find.text("Bộ Sep2"), findsOneWidget);
     expect(find.text("Bộ Sep1"), findsNothing);
     expect(find.text("Nghĩa tiếng Việt"), findsOneWidget);
+  });
+
+  group("file nghe (chỉ Mac/web)", () {
+    const fullHint = "gợi ý nè";
+    ContentSnapshot audioContent() => contentOf([
+      contentDeck("a", const [
+        {
+          "back": "학생",
+          "front": "học sinh",
+          "hint": fullHint,
+          "note": "**giải thích**",
+          "frontAudioId": "fa",
+          "backAudioId": "ba",
+          "hintAudioId": "ha",
+          "noteAudioId": "na",
+        },
+        {"back": "학교", "front": "trường học", "frontAudioId": "fb"},
+      ], name: "Bộ có file nghe"),
+    ]);
+
+    /// Nội dung có file nghe có sẵn trong cache và trên server (để lần đồng
+    /// bộ lúc mở app không thay mất).
+    Future<_Harness> pumpAudio(
+      WidgetTester tester, {
+      bool online = true,
+    }) async {
+      final kv = MemoryStore();
+      await LocalStore(kv).saveContent(audioContent());
+      final h = await pumpApp(
+        tester,
+        kv: kv,
+        api: _FakeApi(online: online, server: audioContent()),
+      );
+      await tester.pump();
+      return h;
+    }
+
+    /// Thứ tự thẻ ngẫu nhiên — học qua thẻ kia nếu thẻ đủ 4 file chưa hiện.
+    Future<void> showFullCard(WidgetTester tester) async {
+      if (find.text(fullHint).evaluate().isNotEmpty) return;
+      await tapKnown(tester);
+      await tapNext(tester);
+      expect(find.text(fullHint), findsOneWidget);
+    }
+
+    Future<void> reveal(WidgetTester tester) =>
+        tapVisible(tester, find.widgetWithText(OutlinedButton, "Xem đáp án"));
+
+    testWidgets("nút nghe cạnh từng trường; mặt sau/giải thích chờ lộ đáp án", (
+      tester,
+    ) async {
+      await pumpAudio(tester);
+      await showFullCard(tester);
+      expect(find.byTooltip("Nghe mặt trước"), findsOneWidget);
+      expect(find.byTooltip("Nghe gợi ý"), findsOneWidget);
+      expect(find.byTooltip("Nghe mặt sau"), findsNothing);
+      expect(find.byTooltip("Nghe giải thích"), findsNothing);
+
+      await reveal(tester);
+      expect(find.byTooltip("Nghe mặt sau"), findsOneWidget);
+      expect(find.byTooltip("Nghe giải thích"), findsOneWidget);
+    }, variant: desktop);
+
+    testWidgets("bấm mới phát, bấm lại tạm dừng; sang thẻ khác thì dừng", (
+      tester,
+    ) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      expect(h.player.loaded, isNull); // không tự phát
+
+      await tapVisible(tester, find.byTooltip("Nghe mặt trước"));
+      await tester.pump();
+      expect(h.player.loaded, "http://test/audio/fa");
+      expect(h.player.playing, isTrue);
+
+      await tapVisible(tester, find.byTooltip("Tạm dừng"));
+      await tester.pump();
+      expect(h.player.playing, isFalse);
+
+      await tapVisible(tester, find.byTooltip("Nghe mặt trước"));
+      await tester.pump();
+      expect(h.player.playing, isTrue);
+
+      await tapKnown(tester);
+      await tapNext(tester);
+      await tester.pump();
+      expect(h.player.stops, 1);
+      expect(find.byTooltip("Tạm dừng"), findsNothing);
+    }, variant: desktop);
+
+    testWidgets("Cmd+. nghe mặt trước; lộ đáp án rồi thì nghe mặt sau", (
+      tester,
+    ) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      Future<void> cmdPeriod() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.period);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+        await tester.pump();
+      }
+
+      await cmdPeriod();
+      expect(h.player.loaded, "http://test/audio/fa");
+      await reveal(tester);
+      await cmdPeriod();
+      expect(h.player.loaded, "http://test/audio/ba");
+    }, variant: desktop);
+
+    testWidgets("mất mạng: nút nghe bị tắt", (tester) async {
+      final h = await pumpAudio(tester, online: false);
+      await showFullCard(tester);
+      expect(find.byTooltip("Cần có mạng để nghe"), findsWidgets);
+      await tapVisible(tester, find.byTooltip("Cần có mạng để nghe").first);
+      expect(h.player.loaded, isNull);
+    }, variant: desktop);
+
+    testWidgets("điện thoại: không có nút nghe", (tester) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      await reveal(tester);
+      expect(find.byIcon(Icons.play_arrow_rounded), findsNothing);
+      expect(h.player.stops, 0);
+    });
+
+    Future<void> openEditor(WidgetTester tester) async {
+      await openCardMenu(tester);
+      await tester.tap(find.text("✎ Sửa / xoá thẻ"));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("sửa thẻ: gỡ rồi thêm file nghe mặt trước -> tải lên, lưu id", (
+      tester,
+    ) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      await openEditor(tester);
+      expect(find.text("Thêm file nghe"), findsNothing); // đủ 4 file
+
+      await tester.tap(find.byTooltip("Gỡ file nghe mặt trước"));
+      await tester.pump();
+      await tester.tap(find.text("Thêm file nghe"));
+      await tester.pumpAndSettle();
+      expect(h.picker.picks, 1);
+      expect(h.api.uploadedAudio.single, h.picker.next!.bytes);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+      await tester.pumpAndSettle();
+      final card = h.api.server.decks.single.cards.firstWhere(
+        (c) => c.back == "학생",
+      );
+      expect(card.audio[CardField.front], "up1");
+      expect(card.audio[CardField.back], "ba");
+    }, variant: desktop);
+
+    testWidgets("sửa thẻ: huỷ chọn file thì không tải gì; offline báo lỗi", (
+      tester,
+    ) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      await openEditor(tester);
+      await tester.tap(find.byTooltip("Gỡ file nghe mặt sau"));
+      await tester.pump();
+
+      h.picker.next = null;
+      await tester.tap(find.text("Thêm file nghe"));
+      await tester.pumpAndSettle();
+      expect(h.api.uploadedAudio, isEmpty);
+
+      h.picker.next = PickedAudio(name: "x.mp3", bytes: Uint8List(4));
+      h.api.online = false;
+      await tester.tap(find.text("Thêm file nghe"));
+      await tester.pumpAndSettle();
+      expect(find.textContaining("Chưa tải được file nghe"), findsOneWidget);
+      expect(find.text("Thêm file nghe"), findsOneWidget); // vẫn chưa gắn
+    }, variant: desktop);
+
+    testWidgets("sửa thẻ: gợi ý có file nghe mà xoá chữ -> báo lỗi, chưa lưu", (
+      tester,
+    ) async {
+      final h = await pumpAudio(tester);
+      await showFullCard(tester);
+      await openEditor(tester);
+      final fields = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(fields.at(2), " "); // ô gợi ý
+      await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+      await tester.pumpAndSettle();
+      expect(
+        find.text("Có file nghe gợi ý thì cần nhập cả chữ — hoặc gỡ file."),
+        findsOneWidget,
+      );
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(h.api.server.decks.single.cards.first.hint, fullHint);
+    }, variant: desktop);
   });
 }

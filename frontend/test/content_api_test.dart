@@ -3,6 +3,7 @@ import "dart:typed_data";
 
 import "package:dio/dio.dart";
 import "package:flashcard_app/features/study_reading/data/content_api.dart";
+import "package:flashcard_app/features/study_reading/models/card_audio.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 import "package:flashcard_app/features/study_reading/models/study_session_record.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -164,6 +165,96 @@ void main() {
       "hint": null,
       "note": null,
       "altAnswers": <String>[],
+    });
+  });
+
+  group("file nghe", () {
+    Map<String, Object?> cardJson(Map<String, Object?> extra) => {
+      "id": "c1",
+      "position": 0,
+      "front": "đi",
+      "back": "가다",
+      "typeAnswer": true,
+      ...extra,
+    };
+
+    test(
+      "thẻ đọc/ghi id file nghe từng trường; cache cũ không có thì rỗng",
+      () {
+        final c = ContentCard.fromJson(
+          cardJson({
+            "backAudioId": "a1",
+            "noteAudioId": "a2",
+            "hintAudioId": "",
+          }),
+        );
+        expect(c.audio[CardField.back], "a1");
+        expect(c.audio[CardField.note], "a2");
+        expect(c.audio[CardField.hint], isNull); // chuỗi rỗng coi như không có
+        expect(ContentCard.fromJson(c.toJson()).audio, c.audio);
+        expect(ContentCard.fromJson(cardJson({})).audio.isEmpty, isTrue);
+      },
+    );
+
+    test("withField gắn/gỡ đúng một trường", () {
+      final a = CardAudio.none
+          .withField(CardField.front, "f")
+          .withField(CardField.back, "b");
+      final removed = a.withField(CardField.front, null);
+      expect(removed[CardField.front], isNull);
+      expect(removed[CardField.back], "b");
+      expect(a[CardField.front], "f"); // bản gốc không đổi
+    });
+
+    test("POST /audio gửi bytes MP3 thô, trả về id", () async {
+      final (api, adapter) = _api((_) => _json(201, {"id": "a9", "size": 4}));
+      final bytes = Uint8List.fromList([0x49, 0x44, 0x33, 0x04]);
+      expect(await api.uploadAudio(bytes), "a9");
+      final req = adapter.requests.single;
+      expect([req.method, req.path], ["POST", "/audio"]);
+      expect(req.contentType, "audio/mpeg");
+      expect(req.data, bytes);
+    });
+
+    test("server từ chối file -> ApiException kèm thông báo", () async {
+      final (api, _) = _api((_) => _json(415, {"error": "Chỉ nhận file MP3."}));
+      await expectLater(
+        api.uploadAudio(Uint8List(4)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.message,
+            "message",
+            "Chỉ nhận file MP3.",
+          ),
+        ),
+      );
+    });
+
+    test(
+      "PATCH /cards/:id: có audio thì gửi đủ 4 trường (null = gỡ)",
+      () async {
+        final (api, adapter) = _api(
+          (_) => _json(200, cardJson({"backAudioId": "b"})),
+        );
+        await api.updateCard(
+          "c1",
+          front: "đi",
+          back: "가다",
+          typeAnswer: true,
+          audio: CardAudio.none.withField(CardField.back, "b"),
+        );
+        expect(adapter.requests.single.data, containsPair("backAudioId", "b"));
+        expect(
+          adapter.requests.single.data,
+          containsPair("frontAudioId", null),
+        );
+        expect(adapter.requests.single.data, containsPair("noteAudioId", null));
+      },
+    );
+
+    test("địa chỉ phát theo baseUrl", () {
+      final (api, _) = _api((_) => null);
+      expect(api.audioUrl("a 1"), "http://test/audio/a%201");
     });
   });
 

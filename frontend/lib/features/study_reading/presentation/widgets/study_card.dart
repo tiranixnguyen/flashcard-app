@@ -6,16 +6,20 @@ import "../../../../core/platform/keyboard_language.dart";
 import "../../../../core/platform/platform.dart";
 import "../../../../core/theme/app_palette.dart";
 import "../../domain/study_engine.dart";
+import "../../models/card_audio.dart";
 import "../study_session_view_model.dart";
 import "answer_note.dart";
+import "audio_button.dart";
 import "dashed_line.dart";
 import "edit_card_dialog.dart";
 import "hint_box.dart";
 
 /// Thẻ đang hỏi: trạng thái thẻ + menu •••, mặt trước, chú thích, rồi ô trả
 /// lời (thẻ gõ đáp án) hoặc mặt sau lúc lật (thẻ tự chấm), phản hồi sau khi
-/// trả lời, và giải thích đáp án (nếu có) khi đã lộ mặt sau. Ô nhập (controller/focus) do màn học giữ vì phím
-/// tắt, tự cuộn và việc dọn ô khi sang thẻ mới đều cần tới chúng.
+/// trả lời, và giải thích đáp án (nếu có) khi đã lộ mặt sau. Trường nào có
+/// file nghe thì có nút ▶︎ ngay cạnh (chỉ Mac/web). Ô nhập (controller/focus)
+/// do màn học giữ vì phím tắt, tự cuộn và việc dọn ô khi sang thẻ mới đều cần
+/// tới chúng.
 class StudyCard extends ConsumerWidget {
   const StudyCard({
     super.key,
@@ -77,12 +81,17 @@ class StudyCard extends ConsumerWidget {
                     style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    word.front,
-                    style: GoogleFonts.notoSans(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: p.ink,
+                  _withAudio(
+                    s,
+                    CardField.front,
+                    p,
+                    Text(
+                      word.front,
+                      style: GoogleFonts.notoSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        color: p.ink,
+                      ),
                     ),
                   ),
                   if (word.hint != null) ...[
@@ -91,11 +100,16 @@ class StudyCard extends ConsumerWidget {
                     // thái "tràn" được làm mới, không mang theo từ thẻ trước.
                     // Key phải khác của AnswerNote (cùng Column): trùng key thì
                     // sang thẻ mới element gợi ý cũ không được gỡ, vẫn hiện.
-                    HintBox(
-                      key: ValueKey(("hint", s.cardSerial)),
-                      hint: word.hint!,
-                      title: word.front,
-                      palette: p,
+                    _withAudio(
+                      s,
+                      CardField.hint,
+                      p,
+                      HintBox(
+                        key: ValueKey(("hint", s.cardSerial)),
+                        hint: word.hint!,
+                        title: word.front,
+                        palette: p,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 22),
@@ -119,6 +133,7 @@ class StudyCard extends ConsumerWidget {
                       note: word.note!,
                       title: word.front,
                       palette: p,
+                      headerTrailing: _audioButton(s, CardField.note, p),
                     ),
                   ],
                 ],
@@ -232,12 +247,17 @@ class _FlipSide extends ConsumerWidget {
           style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
         ),
         const SizedBox(height: 4),
-        Text(
-          word.back,
-          style: GoogleFonts.notoSansKr(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: p.ink,
+        _withAudio(
+          state,
+          CardField.back,
+          p,
+          Text(
+            word.back,
+            style: GoogleFonts.notoSansKr(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: p.ink,
+            ),
           ),
         ),
         if (alts.isNotEmpty)
@@ -390,6 +410,7 @@ class _CardMeta extends ConsumerWidget {
         :final hint,
         :final note,
         :final altAnswers,
+        :final audio,
       ) =>
         await vm.editCurrentCard(
           front: front,
@@ -398,6 +419,7 @@ class _CardMeta extends ConsumerWidget {
           hint: hint,
           note: note,
           altAnswers: altAnswers,
+          audio: audio,
         ),
       EditCardDeleted() => await vm.deleteCurrentCard(),
     };
@@ -481,6 +503,11 @@ class _Feedback extends ConsumerWidget {
                 ),
               ),
             ),
+            // Cả khi chỉ hiện "맞아" (không nhắc lại đáp án) vẫn nghe được.
+            if (_audioButton(state, CardField.back, p) case final button?) ...[
+              const SizedBox(width: 8),
+              button,
+            ],
           ],
         ),
         if (state.canOverride) ...[
@@ -507,4 +534,36 @@ class _Feedback extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Nút nghe [field] của thẻ đang hỏi; `null` nếu trường đó không có file nghe.
+Widget? _audioButton(StudySessionState s, CardField field, AppPalette p) {
+  final id = s.word?.audio[field];
+  if (id == null) return null;
+  return AudioButton(
+    audioId: id,
+    label: field.label,
+    palette: p,
+    // Phát thẳng từ server: biết chắc mất mạng thì tắt nút, đỡ bấm rồi lỗi.
+    enabled: s.syncStatus != SyncStatus.offline,
+  );
+}
+
+/// [child] kèm nút nghe [field] bên phải (nếu trường đó có file nghe).
+Widget _withAudio(
+  StudySessionState s,
+  CardField field,
+  AppPalette p,
+  Widget child,
+) {
+  final button = _audioButton(s, field, p);
+  if (button == null) return child;
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(child: child),
+      const SizedBox(width: 8),
+      button,
+    ],
+  );
 }

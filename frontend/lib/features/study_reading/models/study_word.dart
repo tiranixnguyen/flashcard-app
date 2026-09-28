@@ -1,3 +1,5 @@
+import "card_audio.dart";
+
 /// Một thẻ trong lúc học.
 ///
 /// Bất biến về nội dung: sửa/xoá/thêm thẻ thì dựng lại cả danh sách rồi đưa
@@ -12,6 +14,7 @@ class StudyWord {
     this.note,
     this.altAnswers,
     this.typeAnswer = false,
+    this.audio = CardAudio.none,
   });
 
   /// Id thẻ trên server (bộ gốc: `<deckId>-<vị trí>`, vd `ds2-7`). Thẻ trong
@@ -33,6 +36,9 @@ class StudyWord {
   /// `true` = gõ đáp án rồi chấm; `false` = thẻ tự chấm (lật thẻ rồi tự bấm
   /// "Nhớ"/"Chưa nhớ").
   final bool typeAnswer;
+
+  /// File nghe theo từng trường — chỉ Mac/web phát.
+  final CardAudio audio;
 
   bool matches(String answer) =>
       answer == back || (altAnswers?.contains(answer) ?? false);

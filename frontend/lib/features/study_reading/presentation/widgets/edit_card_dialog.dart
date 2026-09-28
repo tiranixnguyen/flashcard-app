@@ -1,9 +1,15 @@
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:google_fonts/google_fonts.dart";
 
 import "../../../../core/platform/keyboard_language.dart";
 import "../../../../core/theme/app_palette.dart";
+import "../../data/audio_gateway.dart";
+import "../../models/card_audio.dart";
 import "../../models/study_word.dart";
+import "../audio_playback.dart";
+import "../study_session_view_model.dart";
+import "audio_button.dart";
 
 /// Kết quả người dùng chọn trong hộp thoại sửa thẻ.
 sealed class EditCardResult {
@@ -18,6 +24,7 @@ class EditCardSaved extends EditCardResult {
     this.hint,
     this.note,
     this.altAnswers = const [],
+    this.audio = CardAudio.none,
   });
 
   final String front;
@@ -26,6 +33,9 @@ class EditCardSaved extends EditCardResult {
   final String? hint;
   final String? note;
   final List<String> altAnswers;
+
+  /// File nghe từng trường sau khi sửa (đã tải lên server).
+  final CardAudio audio;
 }
 
 class EditCardDeleted extends EditCardResult {
@@ -43,17 +53,17 @@ Future<EditCardResult?> showEditCardDialog({
   );
 }
 
-class _EditCardDialog extends StatefulWidget {
+class _EditCardDialog extends ConsumerStatefulWidget {
   const _EditCardDialog({required this.palette, required this.word});
 
   final AppPalette palette;
   final StudyWord word;
 
   @override
-  State<_EditCardDialog> createState() => _EditCardDialogState();
+  ConsumerState<_EditCardDialog> createState() => _EditCardDialogState();
 }
 
-class _EditCardDialogState extends State<_EditCardDialog> {
+class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
   late final _frontController = TextEditingController(text: widget.word.front);
   late final _backController = TextEditingController(text: widget.word.back);
   late bool _typeAnswer = widget.word.typeAnswer;
@@ -67,6 +77,11 @@ class _EditCardDialogState extends State<_EditCardDialog> {
     for (final alt in widget.word.altAnswers ?? const <String>[])
       TextEditingController(text: alt),
   ];
+
+  late CardAudio _audio = widget.word.audio;
+
+  /// Trường đang tải file nghe lên (mỗi lúc một file).
+  CardField? _uploading;
 
   String? _error;
   bool _confirmingDelete = false;
@@ -83,13 +98,55 @@ class _EditCardDialogState extends State<_EditCardDialog> {
     super.dispose();
   }
 
+  /// Chọn MP3 rồi tải lên ngay (cần mạng) — lưu thẻ chỉ gửi id. Huỷ dialog
+  /// thì file đã tải thành mồ côi, backend có `prune-audio` dọn.
+  Future<void> _pickAudio(CardField field) async {
+    final picked = await ref.read(audioFilePickerProvider).pickMp3();
+    if (picked == null || !mounted) return;
+    setState(() {
+      _uploading = field;
+      _error = null;
+    });
+    final result = await ref
+        .read(studySessionViewModelProvider.notifier)
+        .uploadAudio(picked.bytes);
+    if (!mounted) return;
+    setState(() {
+      _uploading = null;
+      if (result.id case final id?) {
+        _audio = _audio.withField(field, id);
+      } else {
+        _error = "Chưa tải được file nghe: ${result.error}";
+      }
+    });
+  }
+
+  /// Đóng dialog; dừng file đang nghe thử để tiếng không kéo dài sang màn học.
+  void _close([EditCardResult? result]) {
+    ref.read(audioPlaybackProvider.notifier).stop();
+    Navigator.of(context).pop(result);
+  }
+
   void _submit() {
     if (_frontController.text.trim().isEmpty ||
         _backController.text.trim().isEmpty) {
       setState(() => _error = "Vui lòng nhập đủ mặt trước và mặt sau.");
       return;
     }
-    Navigator.of(context).pop(
+    // Nút nghe nằm cạnh chữ của trường; trường trống thì thẻ không hiện gì.
+    for (final (field, controller) in [
+      (CardField.hint, _hintController),
+      (CardField.note, _noteController),
+    ]) {
+      if (_audio[field] != null && controller.text.trim().isEmpty) {
+        setState(
+          () => _error =
+              "Có file nghe ${field.label} thì cần nhập cả chữ — hoặc gỡ file.",
+        );
+        return;
+      }
+    }
+    _close(
       EditCardSaved(
         front: _frontController.text,
         back: _backController.text,
@@ -97,6 +154,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
         hint: _hintController.text,
         note: _noteController.text,
         altAnswers: [for (final c in _altControllers) c.text],
+        audio: _audio,
       ),
     );
   }
@@ -121,10 +179,14 @@ class _EditCardDialogState extends State<_EditCardDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _label(p, "Mặt trước — nghĩa tiếng Việt"),
+              _label(p, "Mặt trước — nghĩa tiếng Việt", audio: CardField.front),
               _field(p, _frontController),
               const SizedBox(height: 14),
-              _label(p, "Mặt sau — tiếng Hàn (đáp án chính)"),
+              _label(
+                p,
+                "Mặt sau — tiếng Hàn (đáp án chính)",
+                audio: CardField.back,
+              ),
               _field(p, _backController, korean: true),
               const SizedBox(height: 6),
               CheckboxListTile(
@@ -175,12 +237,16 @@ class _EditCardDialogState extends State<_EditCardDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              _label(p, "Gợi ý (không bắt buộc)"),
+              _label(p, "Gợi ý (không bắt buộc)", audio: CardField.hint),
               // Cao sẵn 3 dòng, giãn tới 5 dòng rồi cuộn bên trong — gợi ý
               // thật trong dữ liệu có cái dài hơn chục dòng (chiết tự Hán tự).
               _field(p, _hintController, minLines: 3, maxLines: 5),
               const SizedBox(height: 14),
-              _label(p, "Giải thích đáp án (không bắt buộc)"),
+              _label(
+                p,
+                "Giải thích đáp án (không bắt buộc)",
+                audio: CardField.note,
+              ),
               Text(
                 "Dán thẳng từ AI — giữ nguyên định dạng Markdown (tiêu đề, "
                 "**đậm**, danh sách, bảng…). Hiện sau khi lộ đáp án.",
@@ -213,9 +279,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
                     Row(
                       children: [
                         TextButton(
-                          onPressed: () => Navigator.of(
-                            context,
-                          ).pop(const EditCardDeleted()),
+                          onPressed: () => _close(const EditCardDeleted()),
                           child: Text("Xoá", style: TextStyle(color: p.wrong)),
                         ),
                         TextButton(
@@ -236,7 +300,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _close,
           child: Text("Huỷ", style: TextStyle(color: p.inkSoft)),
         ),
         ElevatedButton(
@@ -251,17 +315,69 @@ class _EditCardDialogState extends State<_EditCardDialog> {
     );
   }
 
-  Widget _label(AppPalette p, String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
+  /// Nhãn trường; có [audio] thì bên phải là nút gắn/nghe/gỡ file nghe.
+  Widget _label(AppPalette p, String text, {CardField? audio}) {
+    final label = Text(
       text,
       style: GoogleFonts.notoSans(
         fontSize: 12.5,
         fontWeight: FontWeight.w600,
         color: p.inkSoft,
       ),
-    ),
-  );
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: audio == null
+          ? label
+          : Row(
+              children: [
+                Expanded(child: label),
+                _audioControl(p, audio),
+              ],
+            ),
+    );
+  }
+
+  Widget _audioControl(AppPalette p, CardField field) {
+    if (_uploading == field) {
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: SizedBox.square(
+          dimension: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: p.blue),
+        ),
+      );
+    }
+    final id = _audio[field];
+    if (id == null) {
+      return TextButton.icon(
+        // Mỗi lúc tải một file — đỡ lẫn lỗi của file nào.
+        onPressed: _uploading == null ? () => _pickAudio(field) : null,
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          foregroundColor: p.blue,
+        ),
+        icon: const Icon(Icons.music_note_outlined, size: 16),
+        label: Text(
+          "Thêm file nghe",
+          style: GoogleFonts.notoSans(fontSize: 12.5),
+        ),
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AudioButton(audioId: id, label: field.label, palette: p),
+        IconButton(
+          tooltip: "Gỡ file nghe ${field.label}",
+          visualDensity: VisualDensity.compact,
+          onPressed: () =>
+              setState(() => _audio = _audio.withField(field, null)),
+          icon: Icon(Icons.close, size: 16, color: p.wrong),
+        ),
+      ],
+    );
+  }
 
   Widget _field(
     AppPalette p,
