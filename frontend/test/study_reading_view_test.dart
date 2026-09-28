@@ -1179,6 +1179,42 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    // Gợi ý và giải thích từng dùng chung key trong cùng Column -> sang thẻ
+    // mới, element gợi ý cũ không được gỡ và vẫn hiện ở thẻ sau.
+    testWidgets("gợi ý của thẻ trước không dính sang thẻ sau", (tester) async {
+      final kv = MemoryStore();
+      await LocalStore(kv).saveContent(
+        contentOf([
+          contentDeck("h1", const [
+            {
+              "back": "나무",
+              "front": "cây",
+              "hint": "Gợi ý của cây",
+              "note": "**Chú ý:** giải thích",
+            },
+            {"back": "학교", "front": "trường học"},
+          ], name: "Bộ có gợi ý"),
+        ]),
+      );
+      await pumpApp(tester, kv: kv);
+
+      for (var i = 0; i < 3; i++) {
+        final onHintCard = find.text("cây").evaluate().isNotEmpty;
+        expect(
+          find.text("Gợi ý của cây"),
+          onHintCard ? findsOneWidget : findsNothing,
+        );
+        await tester.enterText(find.byType(TextField).first, "sai");
+        await tester.tap(find.widgetWithText(ElevatedButton, "Kiểm tra"));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 2));
+        await tester.ensureVisible(find.text("Thẻ tiếp →"));
+        await tester.tap(find.text("Thẻ tiếp →"));
+        await tester.pump();
+      }
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets("'Đã thuộc' trước khi lật vẫn hiện đáp án và chờ Thẻ tiếp", (
       tester,
     ) async {

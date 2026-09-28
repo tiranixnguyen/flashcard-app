@@ -72,6 +72,10 @@ tới) rồi truyền vào `StudyCard`.
 - **Ô nhập dọn theo `cardSerial`**, không theo đối tượng thẻ (`replaceContent`
   tạo đối tượng mới cho cùng thẻ đang hỏi). Sang thẻ tự chấm thì `unfocus()` để
   điện thoại cụp bàn phím.
+- **Widget con trong thẻ key theo `cardSerial` phải kèm tên riêng**
+  (`ValueKey(("hint", serial))`, `("note", serial)`): `HintBox` và `AnswerNote`
+  cùng nằm trong một `Column`, trùng key thì bản release không báo lỗi mà giữ
+  lại element cũ — gợi ý thẻ trước vẫn hiện ở thẻ sau.
 - **Thẻ tự chấm** (`typeAnswer == false`): `StudyCard` thay ô nhập bằng
   `_FlipSide` (chưa lật: ô "chạm để lật"; lật rồi: mặt sau + đáp án phụ);
   `StudyControls` đổi "Xem đáp án" thành "Lật thẻ", lật rồi thì hàng trên là

@@ -89,8 +89,10 @@ class StudyCard extends ConsumerWidget {
                     const SizedBox(height: 12),
                     // Key theo thẻ để sang thẻ mới thì vị trí cuộn / trạng
                     // thái "tràn" được làm mới, không mang theo từ thẻ trước.
+                    // Key phải khác của AnswerNote (cùng Column): trùng key thì
+                    // sang thẻ mới element gợi ý cũ không được gỡ, vẫn hiện.
                     HintBox(
-                      key: ValueKey(s.cardSerial),
+                      key: ValueKey(("hint", s.cardSerial)),
                       hint: word.hint!,
                       title: word.front,
                       palette: p,
@@ -113,7 +115,7 @@ class StudyCard extends ConsumerWidget {
                   if (word.note != null && (s.answered || s.flipped)) ...[
                     const SizedBox(height: 18),
                     AnswerNote(
-                      key: ValueKey(s.cardSerial),
+                      key: ValueKey(("note", s.cardSerial)),
                       note: word.note!,
                       title: word.front,
                       palette: p,
