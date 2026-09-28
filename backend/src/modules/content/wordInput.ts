@@ -4,19 +4,10 @@
  *
  *   { "front": "đi", "back": "가다", "hint": "...", "altAnswers": ["..."],
  *     "typeAnswer": true,                            // không bắt buộc
- *     "note": "**Markdown** giải thích đáp án",      // không bắt buộc
- *     "followUp": { "front": "...", "back": "..." } } // hoặc "followUps": [...]
+ *     "note": "**Markdown** giải thích đáp án" }     // không bắt buộc
  *
  * `front` là mặt hiện ra (câu hỏi), `back` là đáp án.
  */
-export interface FollowUpInput {
-  back?: string;
-  front: string;
-  hint?: string | null;
-  note?: string | null;
-  typeAnswer?: boolean | null;
-}
-
 export interface WordInput {
   back: string;
   front: string;
@@ -24,20 +15,16 @@ export interface WordInput {
   note?: string | null;
   altAnswers?: string[] | null;
   typeAnswer?: boolean | null;
-  followUp?: FollowUpInput | null;
-  followUps?: FollowUpInput[] | null;
 }
 
-/** Một thẻ sau khi làm phẳng. `parentOffset` là vị trí (trong cùng lô) của
- * thẻ gốc nếu đây là thẻ ngữ cảnh. */
-export interface ExpandedCard {
+/** Một thẻ đã dọn sạch, sẵn sàng ghi vào DB. */
+export interface CleanCard {
   back: string;
   front: string;
   hint: string | null;
   note: string | null;
   altAnswers: string[];
   typeAnswer: boolean;
-  parentOffset: number | null;
 }
 
 /** Mặt sau tối đa bấy nhiêu từ thì coi là "ngắn". */
@@ -53,41 +40,19 @@ export function defaultTypeAnswer(back: string): boolean {
   return back.trim().split(/\s+/).length <= SHORT_ANSWER_MAX_WORDS;
 }
 
-/**
- * Làm phẳng chuỗi thẻ ngữ cảnh: thẻ gốc rồi tới các thẻ ngữ cảnh theo thứ tự;
- * `followUps` được ưu tiên hơn `followUp`; thẻ ngữ cảnh thiếu `back` thì mượn
- * `back` của thẻ gốc. `scripts/importContent.ts` dựng id bộ gốc ("ds2-7") từ
- * vị trí sau khi làm phẳng — đổi thứ tự ở đây là id lệch với DB đang có.
- */
-export function expandWordInputs(words: WordInput[]): ExpandedCard[] {
-  const out: ExpandedCard[] = [];
-  for (const w of words) {
-    const parentOffset = out.length;
+/** Dọn từng từ: trim, bỏ đáp án phụ thừa, `typeAnswer` mặc định theo độ dài. */
+export function cleanWordInputs(words: WordInput[]): CleanCard[] {
+  return words.map((w) => {
     const back = w.back.trim();
-    out.push({
+    return {
       back,
       front: w.front.trim(),
       hint: cleanHint(w.hint),
       note: cleanNote(w.note),
       altAnswers: cleanAlts(w.altAnswers, back),
       typeAnswer: w.typeAnswer ?? defaultTypeAnswer(back),
-      parentOffset: null,
-    });
-    const chain = w.followUps?.length ? w.followUps : w.followUp ? [w.followUp] : [];
-    for (const fu of chain) {
-      const fuBack = (fu.back ?? w.back).trim();
-      out.push({
-        back: fuBack,
-        front: fu.front.trim(),
-        hint: cleanHint(fu.hint),
-        note: cleanNote(fu.note),
-        altAnswers: [],
-        typeAnswer: fu.typeAnswer ?? defaultTypeAnswer(fuBack),
-        parentOffset,
-      });
-    }
-  }
-  return out;
+    };
+  });
 }
 
 function cleanHint(hint: string | null | undefined): string | null {
@@ -134,17 +99,6 @@ function optionalBoolean(v: unknown): boolean {
   return v === undefined || v === null || typeof v === "boolean";
 }
 
-function checkFollowUp(v: unknown, path: string): string | null {
-  if (!isRecord(v)) return `${path}: phải là object`;
-  if (v.back !== undefined && !nonEmptyString(v.back))
-    return `${path}.back: phải là chuỗi không rỗng`;
-  if (!nonEmptyString(v.front)) return `${path}.front: thiếu mặt trước`;
-  if (!optionalString(v.hint)) return `${path}.hint: phải là chuỗi`;
-  if (!optionalString(v.note)) return `${path}.note: phải là chuỗi`;
-  if (!optionalBoolean(v.typeAnswer)) return `${path}.typeAnswer: phải là true/false`;
-  return null;
-}
-
 /** Kiểm tra mảng từ gửi lên; thông báo lỗi chỉ rõ từ thứ mấy để người dùng sửa JSON. */
 export function parseWordInputs(input: unknown): ParseResult<WordInput[]> {
   if (!Array.isArray(input)) return { ok: false, error: "words phải là mảng" };
@@ -168,17 +122,12 @@ export function parseWordInputs(input: unknown): ParseResult<WordInput[]> {
     ) {
       return { ok: false, error: `${path}.altAnswers: phải là mảng chuỗi` };
     }
-    if (w.followUp !== undefined && w.followUp !== null) {
-      const err = checkFollowUp(w.followUp, `${path}.followUp`);
-      if (err) return { ok: false, error: err };
-    }
-    if (w.followUps !== undefined && w.followUps !== null) {
-      if (!Array.isArray(w.followUps))
-        return { ok: false, error: `${path}.followUps: phải là mảng` };
-      for (let j = 0; j < w.followUps.length; j++) {
-        const err = checkFollowUp(w.followUps[j], `${path}.followUps[${j}]`);
-        if (err) return { ok: false, error: err };
-      }
+    // Thẻ ngữ cảnh đã bỏ: báo lỗi thay vì lặng lẽ vứt mất phần JSON đó.
+    if (w.followUp != null || w.followUps != null) {
+      return {
+        ok: false,
+        error: `${path}: không còn hỗ trợ followUp/followUps — tách thành từ riêng`,
+      };
     }
   }
   return { ok: true, value: input as WordInput[] };

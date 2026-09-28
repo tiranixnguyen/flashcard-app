@@ -32,8 +32,7 @@ class DeckImport {
   final String? name;
 
   /// Các từ hợp lệ, đúng định dạng gửi lên server (`front`, `back`, `hint`?,
-  /// `note`?, `altAnswers`?, `followUps`?). Mỗi thẻ (kể cả thẻ ngữ cảnh) luôn có sẵn
-  /// `typeAnswer` — ghi rõ trong JSON, không thì theo [defaultTypeAnswer] —
+  /// `note`?, `altAnswers`?), mỗi từ một thẻ. Luôn có sẵn `typeAnswer` — ghi rõ trong JSON, không thì theo [defaultTypeAnswer] —
   /// để trình tạo bộ hiện ô "Nhập đáp án" cho người dùng đổi trước khi gửi.
   final List<Map<String, dynamic>> words;
 
@@ -42,27 +41,8 @@ class DeckImport {
 
   bool get ok => errors.isEmpty && words.isNotEmpty;
 
-  /// Số thẻ sau khi làm phẳng (tính cả thẻ ngữ cảnh).
-  int get cardCount => words.fold(
-    0,
-    (n, w) =>
-        n +
-        1 +
-        ((w["followUps"] as List?)?.length ?? (w["followUp"] != null ? 1 : 0)),
-  );
-
-  /// Mọi thẻ sau khi làm phẳng (thẻ gốc rồi các thẻ ngữ cảnh), theo thứ tự.
-  /// Trả về chính các map trong [words] — đổi `typeAnswer` ở đây là đổi thứ
-  /// sẽ gửi lên server.
-  List<Map<String, dynamic>> get cards => [
-    for (final w in words) ...[
-      w,
-      ...?(w["followUps"] as List?)?.cast<Map<String, dynamic>>(),
-    ],
-  ];
-
   /// Số thẻ gõ đáp án (còn lại là thẻ tự chấm).
-  int get typeAnswerCount => cards.where((c) => c["typeAnswer"] == true).length;
+  int get typeAnswerCount => words.where((c) => c["typeAnswer"] == true).length;
 
   /// Mặt sau (từ tiếng Hàn) đã có trong [known] (để cảnh báo trùng, không chặn).
   List<String> duplicatesOf(Set<String> known) => [
@@ -141,27 +121,12 @@ DeckImport parseDeckImport(String text) {
       final clean = [for (final a in alts) ?str(a)];
       if (clean.isNotEmpty) out["altAnswers"] = clean;
     }
-    final chain = w["followUps"] ?? w["followUp"];
-    if (chain != null) {
-      final items = chain is List ? chain : [chain];
-      final ups = <Map<String, dynamic>>[];
-      for (final f in items) {
-        final fFront = f is Map ? str(f["front"]) : null;
-        if (fFront == null) {
-          errors.add("$label: thẻ ngữ cảnh thiếu \"front\".");
-          continue;
-        }
-        // Thiếu `back` thì mượn của thẻ gốc (server cũng làm vậy).
-        final fBack = str((f as Map)["back"]);
-        ups.add({
-          "front": fFront,
-          "back": ?fBack,
-          "hint": ?str(f["hint"]),
-          "note": ?note(f["note"]),
-          "typeAnswer": typeAnswerOf(f, fBack ?? back),
-        });
-      }
-      if (ups.isNotEmpty) out["followUps"] = ups;
+    // Thẻ ngữ cảnh đã bỏ: báo lỗi thay vì lặng lẽ vứt mất (server cũng vậy).
+    if (w["followUp"] != null || w["followUps"] != null) {
+      errors.add(
+        "$label: không còn hỗ trợ \"followUp\"/\"followUps\" — tách thành từ riêng.",
+      );
+      continue;
     }
     words.add(out);
   }

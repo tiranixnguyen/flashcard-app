@@ -29,7 +29,7 @@ abstract class ContentApi {
   Future<ContentGroup> renameGroup(String groupId, String name);
 
   /// [words] đúng định dạng nhập bộ từ: `{front, back, hint?, note?,
-  /// altAnswers?, typeAnswer?, followUp?/followUps?}` — server tự làm phẳng thẻ ngữ cảnh.
+  /// altAnswers?, typeAnswer?}`.
   Future<ContentDeck> createDeck({
     required String groupId,
     required String name,

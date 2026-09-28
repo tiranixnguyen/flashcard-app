@@ -10,15 +10,16 @@
  *
  * Id giữ ổn định để khớp bản đóng gói trong app khi máy chưa từng có mạng:
  * nhóm "g1".."g3", bộ "ds1".."ds30", thẻ "<deckId>-<vị trí sau khi làm phẳng>".
+ * Định dạng cũ còn thẻ ngữ cảnh (followUp) — giờ chúng thành thẻ thường nằm
+ * ngay sau thẻ gốc, nhưng vẫn phải đếm vào vị trí để id khớp DB đang có.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { prisma } from "../config/db";
 import { ensureDefaultUser } from "../modules/common/defaultUser";
 import {
+  cleanWordInputs,
   defaultTypeAnswer,
-  expandWordInputs,
-  type FollowUpInput,
   type WordInput,
 } from "../modules/content/wordInput";
 
@@ -42,22 +43,33 @@ interface DecksJson {
   decks: { id: string; name: string; group?: string; category?: string; words: LegacyWord[] }[];
 }
 
-const fromLegacyFollowUp = (f: LegacyFollowUp): FollowUpInput => ({
-  front: f.vi,
-  hint: f.hint ?? null,
-  ...(f.kr === undefined ? {} : { back: f.kr }),
-});
+/** Một thẻ sau khi làm phẳng; `parentOffset` là vị trí thẻ gốc nếu đây là thẻ
+ * ngữ cảnh cũ — chỉ để xoá theo khi thẻ gốc đã bị xoá (giống app cũ). */
+type LegacyCard = WordInput & { parentOffset: number | null };
 
-/** kr/vi -> back/front; `typeAnswer` để trống cho quy tắc mặc định tự quyết. */
-export function fromLegacyWord(w: LegacyWord): WordInput {
-  return {
-    front: w.vi,
-    back: w.kr,
-    hint: w.hint ?? null,
-    altAnswers: w.altAnswers ?? null,
-    followUp: w.followUp ? fromLegacyFollowUp(w.followUp) : null,
-    followUps: w.followUps?.map(fromLegacyFollowUp) ?? null,
-  };
+/**
+ * kr/vi -> back/front, làm phẳng chuỗi thẻ ngữ cảnh: thẻ gốc rồi tới các thẻ
+ * ngữ cảnh theo thứ tự; `followUps` được ưu tiên hơn `followUp`; thẻ ngữ cảnh
+ * thiếu `kr` thì mượn của thẻ gốc. `typeAnswer` để trống cho quy tắc mặc định.
+ * Đổi thứ tự ở đây là id lệch với DB đang có.
+ */
+export function flattenLegacyWords(words: LegacyWord[]): LegacyCard[] {
+  const out: LegacyCard[] = [];
+  for (const w of words) {
+    const parentOffset = out.length;
+    out.push({
+      front: w.vi,
+      back: w.kr,
+      hint: w.hint ?? null,
+      altAnswers: w.altAnswers ?? null,
+      parentOffset: null,
+    });
+    const chain = w.followUps?.length ? w.followUps : w.followUp ? [w.followUp] : [];
+    for (const f of chain) {
+      out.push({ front: f.vi, back: f.kr ?? w.kr, hint: f.hint ?? null, parentOffset });
+    }
+  }
+  return out;
 }
 
 interface LegacyEntry {
@@ -85,7 +97,6 @@ export interface ImportPlan {
     id: string;
     deckId: string;
     position: number;
-    parentId: string | null;
     front: string;
     back: string;
     hint: string | null;
@@ -123,9 +134,10 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
     deckPositionInGroup.set(groupId, position + 1);
     decks.push({ id: d.id, groupId, name: d.name, position });
 
-    const expanded = expandWordInputs(d.words.map(fromLegacyWord));
+    const flat = flattenLegacyWords(d.words);
+    const cleaned = cleanWordInputs(flat);
     const deletedIndexes = new Set<number>();
-    expanded.forEach((c, i) => {
+    cleaned.forEach((c, i) => {
       const k = key(d.id, i);
       const matches = (e: LegacyEntry | undefined) => {
         if (!e) return false;
@@ -134,7 +146,8 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
         return false;
       };
 
-      const parentGone = c.parentOffset !== null && deletedIndexes.has(c.parentOffset);
+      const parentOffset = flat[i]!.parentOffset;
+      const parentGone = parentOffset !== null && deletedIndexes.has(parentOffset);
       const edit = overlay.get(k);
       if (parentGone || (matches(edit) && edit!.deleted)) {
         deletedIndexes.add(i);
@@ -152,7 +165,6 @@ export function buildImportPlan(decksJson: DecksJson, legacy: LegacyState): Impo
         id: `${d.id}-${i}`,
         deckId: d.id,
         position: i,
-        parentId: c.parentOffset === null ? null : `${d.id}-${c.parentOffset}`,
         front: isEdited ? edit!.vi : c.front,
         back: isEdited ? edit!.kr : c.back,
         hint: isEdited ? edit!.hint : c.hint,
@@ -193,16 +205,13 @@ async function main() {
   await prisma.$transaction(async (tx) => {
     await tx.group.createMany({ data: plan.groups.map((g) => ({ ...g, userId })) });
     await tx.deck.createMany({ data: plan.decks.map((d) => ({ ...d, userId })) });
-    // Thẻ gốc trước, thẻ ngữ cảnh sau — parentId phải trỏ tới thẻ đã tồn tại.
-    const roots = plan.cards.filter((c) => c.parentId === null);
-    const followUps = plan.cards.filter((c) => c.parentId !== null);
-    const withStamps = (c: ImportPlan["cards"][number]) => ({
-      ...c,
-      markedChangedAt: c.marked ? now : null,
-      hanjaChangedAt: c.hanja ? now : null,
+    await tx.card.createMany({
+      data: plan.cards.map((c) => ({
+        ...c,
+        markedChangedAt: c.marked ? now : null,
+        hanjaChangedAt: c.hanja ? now : null,
+      })),
     });
-    await tx.card.createMany({ data: roots.map(withStamps) });
-    await tx.card.createMany({ data: followUps.map(withStamps) });
   });
 
   const r = plan.report;

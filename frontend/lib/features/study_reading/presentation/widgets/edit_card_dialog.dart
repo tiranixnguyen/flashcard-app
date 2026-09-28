@@ -206,7 +206,7 @@ class _EditCardDialogState extends State<_EditCardDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Xoá thẻ này khỏi bộ từ? Các thẻ ngữ cảnh nối sau nó cũng bị xoá theo.",
+                      "Xoá thẻ này khỏi bộ từ?",
                       style: TextStyle(color: p.inkSoft, fontSize: 13),
                     ),
                     const SizedBox(height: 8),

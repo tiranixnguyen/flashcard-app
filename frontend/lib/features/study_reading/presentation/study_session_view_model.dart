@@ -694,7 +694,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     });
   }
 
-  /// Xoá thẻ đang hiển thị cùng chuỗi thẻ ngữ cảnh nối sau nó.
+  /// Xoá thẻ đang hiển thị.
   Future<String?> deleteCurrentCard() async {
     final cardId = _engine?.currentWord?.id;
     if (cardId == null) return "Không có thẻ nào đang mở.";

@@ -70,14 +70,14 @@ class ContentSnapshot {
     ],
   );
 
-  /// Xoá thẻ cùng các thẻ ngữ cảnh nối sau nó — giống server (onDelete Cascade).
+  /// Xoá một thẻ.
   ContentSnapshot removeCard(String cardId) => copyWith(
     decks: [
       for (final d in decks)
         d.copyWith(
           cards: [
             for (final c in d.cards)
-              if (c.id != cardId && c.parentId != cardId) c,
+              if (c.id != cardId) c,
           ],
         ),
     ],
@@ -162,7 +162,6 @@ class ContentCard {
     required this.position,
     required this.front,
     required this.back,
-    this.parentId,
     this.hint,
     this.note,
     this.altAnswers = const [],
@@ -173,9 +172,6 @@ class ContentCard {
 
   final String id;
   final int position;
-
-  /// Thẻ gốc, nếu đây là thẻ ngữ cảnh.
-  final String? parentId;
   final String front;
   final String back;
   final String? hint;
@@ -192,10 +188,11 @@ class ContentCard {
   /// Còn đọc được định dạng cũ `kr`/`vi` (chưa có kiểu thẻ): cache trên máy
   /// từ trước bản có thẻ tự chấm — phải mở được app offline ngay sau khi cập
   /// nhật. Thẻ cũ đều là thẻ gõ đáp án; lần đồng bộ sau sẽ thay bằng bản mới.
+  /// `parentId` của thẻ ngữ cảnh (đã bỏ) trong cache cũ bị bỏ qua — thẻ con
+  /// thành thẻ thường, giống server.
   factory ContentCard.fromJson(Map<String, dynamic> json) => ContentCard(
     id: json["id"] as String,
     position: json["position"] as int,
-    parentId: json["parentId"] as String?,
     front: (json["front"] ?? json["vi"]) as String,
     back: (json["back"] ?? json["kr"]) as String,
     hint: json["hint"] as String?,
@@ -209,7 +206,6 @@ class ContentCard {
   Map<String, dynamic> toJson() => {
     "id": id,
     "position": position,
-    "parentId": parentId,
     "front": front,
     "back": back,
     "hint": hint,
@@ -232,7 +228,6 @@ class ContentCard {
   }) => ContentCard(
     id: id,
     position: position,
-    parentId: parentId,
     front: front ?? this.front,
     back: back ?? this.back,
     hint: hint != null ? hint() : this.hint,
@@ -259,9 +254,7 @@ class StudyCatalog {
   final Set<String> hanjaIds;
 }
 
-/// Dựng dữ liệu cho engine: sắp nhóm/bộ/thẻ theo `position`, rồi nối chuỗi thẻ
-/// ngữ cảnh qua chỉ số (`followUpIndex`/`impliesIndex`) — đúng cấu trúc phẳng
-/// mà thuật toán học làm việc (server lưu thẻ ngữ cảnh qua `parentId`).
+/// Dựng dữ liệu cho engine: sắp nhóm/bộ/thẻ theo `position`.
 StudyCatalog buildStudyCatalog(ContentSnapshot content) {
   final groups = [...content.groups]
     ..sort((a, b) => a.position.compareTo(b.position));
@@ -275,10 +268,8 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
   for (final d in decks) {
     final cards = [...d.cards]
       ..sort((a, b) => a.position.compareTo(b.position));
-    final indexOf = {for (var i = 0; i < cards.length; i++) cards[i].id: i};
     final words = <StudyWord>[];
-    for (var i = 0; i < cards.length; i++) {
-      final c = cards[i];
+    for (final c in cards) {
       if (c.marked) marked.add(c.id);
       if (c.hanja) hanja.add(c.id);
       words.add(
@@ -290,19 +281,8 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
           note: c.note,
           altAnswers: c.altAnswers.isEmpty ? null : c.altAnswers,
           typeAnswer: c.typeAnswer,
-          isFollowUp: c.parentId != null,
-          impliesIndex: c.parentId == null ? null : indexOf[c.parentId],
         ),
       );
-    }
-    // Nối chuỗi: gốc -> ngữ cảnh 1 -> ngữ cảnh 2 … theo thứ tự vị trí.
-    final lastInChain = <String, int>{};
-    for (var i = 0; i < cards.length; i++) {
-      final parentId = cards[i].parentId;
-      if (parentId == null) continue;
-      final prev = lastInChain[parentId] ?? indexOf[parentId];
-      if (prev != null) words[prev].followUpIndex = i;
-      lastInChain[parentId] = i;
     }
     studyDecks.add(
       Deck(id: d.id, name: d.name, group: d.groupId, words: words),

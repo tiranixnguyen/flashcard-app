@@ -53,7 +53,7 @@ ResponseBody _json(int status, Object? body) => ResponseBody.fromString(
 }
 
 void main() {
-  test("GET /content parse đủ nhóm, bộ, thẻ ngữ cảnh", () async {
+  test("GET /content parse đủ nhóm, bộ, thẻ", () async {
     final (api, _) = _api(
       (_) => _json(200, {
         "groups": [
@@ -69,7 +69,6 @@ void main() {
               {
                 "id": "ds1-0",
                 "position": 0,
-                "parentId": null,
                 "back": "가다",
                 "front": "đi",
                 "hint": null,
@@ -81,10 +80,9 @@ void main() {
               {
                 "id": "ds1-1",
                 "position": 1,
-                "parentId": "ds1-0",
                 "back": "가다",
                 "front": "đi học",
-                "hint": "ngữ cảnh",
+                "hint": "gợi ý",
                 "altAnswers": ["갑니다"],
                 "typeAnswer": false,
                 "marked": false,
@@ -99,7 +97,6 @@ void main() {
     expect(c.groups.single.name, "Sep1");
     final cards = c.decks.single.cards;
     expect(cards[0].marked, isTrue);
-    expect(cards[1].parentId, "ds1-0");
     expect(cards[1].altAnswers, ["갑니다"]);
     expect(cards[1].hanja, isTrue);
     expect([cards[0].typeAnswer, cards[1].typeAnswer], [true, false]);
@@ -109,7 +106,6 @@ void main() {
     final c = ContentCard.fromJson({
       "id": "ds1-0",
       "position": 0,
-      "parentId": null,
       "kr": "가다",
       "vi": "đi",
       "hint": null,
@@ -123,12 +119,27 @@ void main() {
     expect(c.toJson().keys, isNot(contains("kr")));
   });
 
+  test(
+    "cache cũ còn thẻ ngữ cảnh: parentId bị bỏ, thẻ con thành thẻ thường",
+    () {
+      final c = ContentCard.fromJson({
+        "id": "ds2-9",
+        "position": 9,
+        "parentId": "ds2-8",
+        "front": "con của chúng tôi",
+        "back": "우리 아이",
+        "typeAnswer": true,
+      });
+      expect(c.back, "우리 아이");
+      expect(c.toJson().keys, isNot(contains("parentId")));
+    },
+  );
+
   test("PATCH /cards/:id gửi front/back/typeAnswer/note", () async {
     final (api, adapter) = _api(
       (_) => _json(200, {
         "id": "c1",
         "position": 0,
-        "parentId": null,
         "front": "đi",
         "back": "가다",
         "hint": null,

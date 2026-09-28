@@ -298,18 +298,15 @@ class StudyEngine {
   /// "Đã thuộc": đánh dấu thuộc ngay, vẫn hiện đáp án để người học đối chiếu.
   void markKnown() {
     final rt = _runtime;
-    final word = currentWord;
     final id = _currentId;
-    if (rt == null || word == null || id == null || answered) return;
+    if (rt == null || currentWord == null || id == null || answered) return;
 
     final cs = rt.cardState[id];
     if (!cs.mastered) {
       cs.mastered = true;
       cs.streak = masteryStreak;
       rt.masteredCount++;
-      _masterCardAt(word.impliesIndex);
     }
-    _forceFollowUpIfAny();
     _outcome = AnswerOutcome.known;
     _canOverride = false;
   }
@@ -342,8 +339,7 @@ class StudyEngine {
   void _applySchedule(bool isCorrect) {
     final rt = _runtime;
     final id = _currentId;
-    final word = currentWord;
-    if (rt == null || id == null || word == null) return;
+    if (rt == null || id == null || currentWord == null) return;
 
     final cs = rt.cardState[id];
     if (isCorrect) {
@@ -355,43 +351,17 @@ class StudyEngine {
       } else {
         _insertCard(id, boxOffsets[cs.box]);
       }
-      // Đúng thẻ ngữ cảnh nghĩa là đã thuộc thẻ gốc.
-      _masterCardAt(word.impliesIndex);
     } else {
       cs.box = 0;
       cs.streak = 0;
       _insertCard(id, wrongOffset);
     }
-    _forceFollowUpIfAny();
   }
 
   void _insertCard(int id, int offset) {
     final rt = _runtime;
     if (rt == null) return;
     rt.activeQueue.insert(min(offset, rt.activeQueue.length), id);
-  }
-
-  void _masterCardAt(int? id) {
-    final rt = _runtime;
-    if (rt == null || id == null || id >= rt.cardState.length) return;
-    final cs = rt.cardState[id];
-    if (cs.mastered) return;
-    cs.mastered = true;
-    cs.streak = masteryStreak;
-    rt.masteredCount++;
-    rt.activeQueue.remove(id);
-  }
-
-  /// Sau khi trả lời thẻ gốc, đẩy thẻ ngữ cảnh kế tiếp lên đầu hàng đợi để hỏi
-  /// ngay — mục đích là học từ trong ngữ cảnh liền mạch.
-  void _forceFollowUpIfAny() {
-    final rt = _runtime;
-    final target = currentWord?.followUpIndex;
-    if (rt == null || target == null || target >= rt.cardState.length) return;
-    if (rt.cardState[target].mastered) return;
-
-    rt.activeQueue.remove(target);
-    rt.activeQueue.insert(0, target);
   }
 
   // ----------------------------------------------------------- đánh dấu thẻ
@@ -445,7 +415,7 @@ class StudyEngine {
   List<StudyWord> _flaggedWords(Set<String> flags) => [
     for (final deck in visibleDecks)
       for (final w in deck.words)
-        if (flags.contains(w.id)) w.copyAsVirtual(),
+        if (flags.contains(w.id)) w,
   ];
 
   // ----------------------------------------------------------- chuyển deck
@@ -473,14 +443,9 @@ class StudyEngine {
     );
   }
 
-  /// 20 thẻ gốc ngẫu nhiên rút từ mọi deck đang hiển thị. Thẻ ngữ cảnh bị loại
-  /// vì tách khỏi thẻ gốc thì mất nghĩa.
+  /// 20 thẻ ngẫu nhiên rút từ mọi deck đang hiển thị.
   void _buildRandomDeck() {
-    final pool = [
-      for (final deck in visibleDecks)
-        for (final w in deck.words)
-          if (!w.isFollowUp) w.copyAsVirtual(),
-    ];
+    final pool = [for (final deck in visibleDecks) ...deck.words];
     _setRandomDeck(_shuffled(pool).take(20).toList());
   }
 
@@ -552,8 +517,7 @@ class StudyEngine {
         _buildFlaggedDeck(hanjaDeckId, _hanjaIds);
       case randomDeckId:
         _setRandomDeck([
-          for (final w in oldDeck?.words ?? const <StudyWord>[])
-            if (byId[w.id] case final fresh?) fresh.copyAsVirtual(),
+          for (final w in oldDeck?.words ?? const <StudyWord>[]) ?byId[w.id],
         ]);
     }
 

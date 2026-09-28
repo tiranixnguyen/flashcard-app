@@ -52,23 +52,16 @@ Nếu hàng đợi rỗng nhưng chưa thuộc hết, `loadCard()` nạp lại t
 thuộc thay vì báo hoàn thành. Đây là lưới an toàn cho trường hợp có thẻ bị lệch
 khỏi hàng đợi do sửa/xoá.
 
-## Thẻ ngữ cảnh (follow-up)
+## Thẻ ngữ cảnh (follow-up) — đã bỏ
 
-Một số mục trong `decks.json` có `followUp` — một câu dùng chính từ đó trong ngữ
-cảnh. Lúc nạp, `expandWords()` **làm phẳng** chuỗi này vào cùng một mảng:
-
-- thẻ gốc → `followUpIndex` trỏ tới thẻ ngữ cảnh kế tiếp
-- thẻ ngữ cảnh → `impliesIndex` trỏ ngược về thẻ gốc, `isFollowUp = true`
-
-Hai quy tắc đi kèm:
-
-1. Trả lời xong thẻ gốc, thẻ ngữ cảnh được **đẩy lên đầu hàng đợi** để hỏi ngay
-   (`_forceFollowUpIfAny`) — học từ trong ngữ cảnh liền mạch mới có tác dụng.
-2. Trả lời **đúng** thẻ ngữ cảnh → thẻ gốc được đánh dấu thuộc luôn
-   (`_masterCardAt(impliesIndex)`): dùng được từ trong câu thì đã thuộc từ đó.
-
-Xoá một thẻ gốc sẽ xoá cả chuỗi ngữ cảnh nối sau nó — thẻ con mồ côi không còn
-gì để bám vào.
+Trước đây một thẻ có thể kéo theo chuỗi thẻ ngữ cảnh (`parentId`): hỏi ngay
+sau thẻ gốc, đúng thì thẻ gốc thuộc luôn, xoá gốc thì xoá cả chuỗi. Đã bỏ hẳn
+(migration `remove_card_follow_ups`): thẻ con cũ thành thẻ thường, giữ id/vị
+trí/⭐/漢. Mọi thẻ giờ độc lập, `StudyWord` bất biến nên bộ ảo dùng chung đối
+tượng với bộ gốc. Cache cũ trên máy còn `parentId` thì `ContentCard.fromJson`
+bỏ qua. Nhập bộ mà JSON còn `followUp`/`followUps` thì báo lỗi (cả app lẫn
+server) thay vì lặng lẽ bỏ. `scripts/importContent.ts` vẫn làm phẳng
+`followUps` của dữ liệu cũ để id `<deck>-<vị trí>` không lệch.
 
 ## "Thật ra tôi viết đúng"
 
@@ -98,9 +91,8 @@ migration `card_front_back_type_answer` áp cùng quy tắc cho thẻ đã có).
    đúng/sai, không đụng hàng đợi (khác "Xem đáp án" của thẻ gõ, tính là sai).
 2. `gradeSelf(remembered:)` — chỉ sau khi lật. "Nhớ" đi đúng nhánh gõ đúng,
    "Chưa nhớ" đi đúng nhánh gõ sai: cùng `_applySchedule`, cùng cách tính tỉ lệ
-   đúng cho gợi ý ôn lại, thẻ ngữ cảnh "Nhớ" vẫn kéo thẻ gốc thuộc theo. Không
-   có "Đã trả lời đúng?" (tự chấm rồi). View model sang thẻ tiếp luôn, không
-   khoá 2 giây (mặt sau đã hiện trước khi chấm).
+   đúng cho gợi ý ôn lại. Không có "Đã trả lời đúng?" (tự chấm rồi). View
+   model sang thẻ tiếp luôn, không khoá 2 giây (mặt sau đã hiện trước khi chấm).
 3. "Đã thuộc" vẫn dùng được trước khi chấm. `checkAnswer`/`revealAnswer` bỏ
    qua thẻ tự chấm; `flipCard`/`gradeSelf` bỏ qua thẻ gõ đáp án.
 

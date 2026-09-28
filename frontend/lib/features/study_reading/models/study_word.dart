@@ -1,10 +1,10 @@
-/// Một thẻ trong lúc học (đã làm phẳng chuỗi thẻ ngữ cảnh).
+/// Một thẻ trong lúc học.
 ///
 /// Bất biến về nội dung: sửa/xoá/thêm thẻ thì dựng lại cả danh sách rồi đưa
 /// vào `StudyEngine.replaceContent`, engine tự mang tiến trình lượt học đang
 /// dở sang theo [id].
 class StudyWord {
-  StudyWord({
+  const StudyWord({
     required this.id,
     required this.front,
     required this.back,
@@ -12,9 +12,6 @@ class StudyWord {
     this.note,
     this.altAnswers,
     this.typeAnswer = false,
-    this.isFollowUp = false,
-    this.followUpIndex,
-    this.impliesIndex,
   });
 
   /// Id thẻ trên server (bộ gốc: `<deckId>-<vị trí>`, vd `ds2-7`). Thẻ trong
@@ -37,29 +34,6 @@ class StudyWord {
   /// "Nhớ"/"Chưa nhớ").
   final bool typeAnswer;
 
-  /// `true` nếu đây là thẻ ngữ cảnh nối tiếp một thẻ gốc.
-  final bool isFollowUp;
-
-  /// Vị trí thẻ nối tiếp kế sau trong cùng bộ, `null` nếu chuỗi kết thúc.
-  /// Gán sau khi dựng xong cả bộ (xem `buildStudyCatalog`).
-  int? followUpIndex;
-
-  /// Vị trí thẻ gốc mà thẻ này hàm ý: trả lời đúng thẻ ngữ cảnh nghĩa là đã
-  /// thuộc thẻ gốc, nên thẻ gốc được tính là thuộc luôn.
-  final int? impliesIndex;
-
   bool matches(String answer) =>
       answer == back || (altAnswers?.contains(answer) ?? false);
-
-  /// Bản sao đứng một mình cho bộ ảo — bỏ liên kết chuỗi ngữ cảnh vì chỉ số
-  /// chỉ có nghĩa trong bộ gốc.
-  StudyWord copyAsVirtual() => StudyWord(
-    id: id,
-    front: front,
-    back: back,
-    hint: hint,
-    note: note,
-    altAnswers: altAnswers,
-    typeAnswer: typeAnswer,
-  );
 }

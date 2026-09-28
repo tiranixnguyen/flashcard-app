@@ -126,7 +126,6 @@ class _FakeApi implements ContentApi {
           ContentCard(
             id: shift(c.id),
             position: c.position + offset,
-            parentId: c.parentId == null ? null : shift(c.parentId!),
             back: c.back,
             front: c.front,
             hint: c.hint,
@@ -673,7 +672,7 @@ void main() {
       await tester.pump();
       // Đáp án ngắn tick sẵn "Nhập đáp án", câu dài thì không.
       expect(
-        find.text("✓ 3 từ (3 thẻ · 2 nhập đáp án, còn lại tự chấm)"),
+        find.text("✓ 3 thẻ (2 nhập đáp án, còn lại tự chấm)"),
         findsOneWidget,
       );
       expect(
@@ -693,7 +692,7 @@ void main() {
       await tester.tap(boxes.first);
       await tester.pump();
       expect(
-        find.text("✓ 3 từ (3 thẻ · 1 nhập đáp án, còn lại tự chấm)"),
+        find.text("✓ 3 thẻ (1 nhập đáp án, còn lại tự chấm)"),
         findsOneWidget,
       );
 

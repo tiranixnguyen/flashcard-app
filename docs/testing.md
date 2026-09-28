@@ -6,16 +6,17 @@
   `support/fixtures.dart` → `buildStudyCatalog`, đúng đường chạy thật), hạt
   giống cố định. Gồm `replaceContent` (sửa/xoá/thêm thẻ giữa lượt), bỏ cờ
   trong deck ⭐/漢 và thẻ tự chấm (lật không tính điểm, chưa lật không chấm
-  được, "Nhớ"/"Chưa nhớ" đúng nhánh, thẻ ngữ cảnh tự chấm kéo thẻ gốc thuộc).
+  được, "Nhớ"/"Chưa nhớ" đúng nhánh), mỗi thẻ độc lập (thuộc/xoá một thẻ
+  không kéo thẻ khác).
   Fixture `contentDeck` áp `defaultTypeAnswer` như server, nên từ ngắn trong
   test là thẻ gõ đáp án; muốn thẻ tự chấm thì ghi `"typeAnswer": false`.
 - `review_schedule_test.dart` — gợi ý ôn lại: giãn 1→3→7→14→30→60, tụt về đầu
   khi < 80%, học sớm không nhảy bậc, học dở không tính, so theo ngày lịch.
-- `deck_import_test.dart` — JSON dán từ AI (khối ` ```json `, mảng trần, thẻ
-  ngữ cảnh, lỗi đúng vị trí, giới hạn 500 khớp server), `typeAnswer` mặc định
+- `deck_import_test.dart` — JSON dán từ AI (khối ` ```json `, mảng trần,
+  `followUp` cũ bị từ chối, lỗi đúng vị trí, giới hạn 500 khớp server), `typeAnswer` mặc định
   theo độ dài mặt sau / ghi rõ thì giữ.
 - `content_asset_test.dart` — trên chính `assets/content.json`: id không trùng,
-  thẻ ngữ cảnh trỏ đúng thẻ gốc, dựng catalog không rơi thẻ/cờ.
+  không còn `parentId`, dựng catalog không rơi thẻ/cờ.
 - `content_api_test.dart` — `DioContentApi` ở tầng HTTP thật (fake
   `HttpClientAdapter`): parse, `offline` vs server từ chối (thông báo từ body),
   body sai định dạng/HTML vẫn thành `ApiException`, body gửi đi đúng định dạng,
@@ -37,7 +38,7 @@
   `google_fonts` dùng).
 
 Nhánh dễ hỏng nhất của engine (đều có test, đừng làm gãy): tự xác nhận đúng
-(hoàn tác nhánh sai), chuỗi thẻ ngữ cảnh, mang tiến trình theo id khi nội dung
+(hoàn tác nhánh sai), mang tiến trình theo id khi nội dung
 đổi giữa lượt, ⭐/漢 trong hàng đợi áp lại lên nội dung vừa tải, bỏ cờ ngay
 trong deck ⭐/漢 (thẻ ở lại tới khi sang thẻ tiếp rồi rơi hẳn —
 `_pruneUnflagged`), bộ rỗng hiện màn "chưa có thẻ".

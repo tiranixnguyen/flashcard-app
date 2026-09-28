@@ -4,10 +4,9 @@ import "package:flashcard_app/features/study_reading/domain/deck_import.dart";
 import "package:flashcard_app/features/study_reading/domain/study_engine.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 
-/// Dựng một bộ giống hệt server làm từ JSON nhập bộ: thẻ gốc rồi tới các thẻ
-/// ngữ cảnh (`followUp`/`followUps`, thiếu `back` thì mượn của thẻ gốc; không ghi
-/// `typeAnswer` thì theo `defaultTypeAnswer` — đáp án ngắn là gõ đáp án), id
-/// `<deckId>-<vị trí>`, thẻ ngữ cảnh trỏ `parentId` về thẻ gốc.
+/// Dựng một bộ giống hệt server làm từ JSON nhập bộ: mỗi từ một thẻ, không ghi
+/// `typeAnswer` thì theo `defaultTypeAnswer` (đáp án ngắn là gõ đáp án), id
+/// `<deckId>-<vị trí>`.
 ContentDeck contentDeck(
   String id,
   List<Map<String, dynamic>> words, {
@@ -18,35 +17,22 @@ ContentDeck contentDeck(
   Set<int> hanja = const {},
 }) {
   final cards = <ContentCard>[];
-  ContentCard card(Map<String, dynamic> w, {String? parentId, String? back}) {
-    final i = cards.length;
-    final b = (w["back"] as String?) ?? back!;
-    return ContentCard(
-      id: "$id-$i",
-      position: i,
-      parentId: parentId,
-      back: b,
-      front: w["front"] as String,
-      hint: w["hint"] as String?,
-      note: w["note"] as String?,
-      altAnswers: (w["altAnswers"] as List?)?.cast<String>() ?? const [],
-      typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
-      marked: marked.contains(i),
-      hanja: hanja.contains(i),
+  for (final (i, w) in words.indexed) {
+    final b = w["back"] as String;
+    cards.add(
+      ContentCard(
+        id: "$id-$i",
+        position: i,
+        back: b,
+        front: w["front"] as String,
+        hint: w["hint"] as String?,
+        note: w["note"] as String?,
+        altAnswers: (w["altAnswers"] as List?)?.cast<String>() ?? const [],
+        typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
+        marked: marked.contains(i),
+        hanja: hanja.contains(i),
+      ),
     );
-  }
-
-  for (final w in words) {
-    final parent = card(w);
-    cards.add(parent);
-    final chain = [
-      ...?(w["followUps"] as List?)?.cast<Map<String, dynamic>>(),
-      if (w["followUps"] == null && w["followUp"] != null)
-        w["followUp"] as Map<String, dynamic>,
-    ];
-    for (final f in chain) {
-      cards.add(card(f, parentId: parent.id, back: parent.back));
-    }
   }
   return ContentDeck(
     id: id,

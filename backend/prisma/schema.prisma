@@ -58,14 +58,12 @@ model Deck {
   @@index([groupId, position])
 }
 
-/// Một thẻ. Thẻ ngữ cảnh (follow-up) cũng là một dòng riêng, trỏ về thẻ gốc
-/// qua parentId và nằm ngay sau thẻ gốc theo `position`. Thẻ của bộ gốc có id
-/// cố định "<deckId>-<vị trí>" (vd "ds2-7"), khớp với bản đóng gói trong app.
+/// Một thẻ. Thẻ của bộ gốc có id cố định "<deckId>-<vị trí>" (vd "ds2-7"),
+/// khớp với bản đóng gói trong app.
 model Card {
   id         String   @id @default(cuid())
   deckId     String
   position   Int
-  parentId   String?
   /// Mặt trước — câu hỏi hiện ra (thường là nghĩa tiếng Việt).
   front      String
   /// Mặt sau — đáp án (thường là từ tiếng Hàn).
@@ -91,9 +89,7 @@ model Card {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  deck      Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  parent    Card?  @relation("FollowUps", fields: [parentId], references: [id], onDelete: Cascade)
-  followUps Card[] @relation("FollowUps")
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@index([deckId, position])
 }

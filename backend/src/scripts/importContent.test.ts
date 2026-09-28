@@ -54,8 +54,9 @@ describe("buildImportPlan trên dữ liệu thật", () => {
     expect(card("ds30-2")).toBeUndefined(); // 간
   });
 
-  it("thẻ ngữ cảnh trỏ đúng thẻ gốc", () => {
-    expect(card("ds2-9")).toMatchObject({ back: "우리 아이", parentId: "ds2-8" });
+  it("thẻ ngữ cảnh cũ thành thẻ thường ngay sau thẻ gốc", () => {
+    expect(card("ds2-9")).toMatchObject({ back: "우리 아이", position: 9 });
+    expect(card("ds2-9")).not.toHaveProperty("parentId");
   });
 
   it("entry lệch vị trí (baseKr khác) bị bỏ qua, không áp nhầm", () => {

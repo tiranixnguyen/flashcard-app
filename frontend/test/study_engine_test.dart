@@ -1,3 +1,5 @@
+import "dart:math";
+
 import "package:flashcard_app/features/study_reading/domain/study_engine.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
 import "package:flutter_test/flutter_test.dart";
@@ -20,44 +22,8 @@ void skipUntil(StudyEngine e, bool Function(StudyEngine) test) {
   }
 }
 
-const withFollowUp = [
-  {
-    "back": "가다",
-    "front": "đi",
-    "followUp": {"back": "학교에 가다", "front": "đi đến trường"},
-  },
-  {"back": "학생", "front": "học sinh"},
-  {"back": "학교", "front": "trường học"},
-];
-
 void main() {
   group("dựng dữ liệu (buildStudyCatalog)", () {
-    test("nối thẻ ngữ cảnh vào danh sách phẳng và liên kết hai chiều", () {
-      final c = buildStudyCatalog(
-        contentOf([
-          contentDeck("d1", [
-            {
-              "back": "가다",
-              "front": "đi",
-              "followUps": [
-                {"back": "학교에 가다", "front": "đi đến trường"},
-                {"front": "đi thôi"},
-              ],
-            },
-          ]),
-        ]),
-      );
-      final words = c.decks.single.words;
-
-      expect(words, hasLength(3));
-      expect(words[0].followUpIndex, 1);
-      expect(words[1].followUpIndex, 2);
-      expect(words[2].followUpIndex, isNull);
-      expect(words[1].impliesIndex, 0);
-      expect(words[2].impliesIndex, 0);
-      expect(words[2].back, "가다"); // thiếu back thì mượn của thẻ gốc
-    });
-
     test("sắp theo position, không theo thứ tự trong JSON", () {
       final deck = contentDeck("d1", threeWords);
       final shuffled = deck.copyWith(cards: deck.cards.reversed.toList());
@@ -301,32 +267,6 @@ void main() {
       expect(e.masteredCount, 1);
     });
 
-    test("thẻ ngữ cảnh tự chấm 'Nhớ' thì thẻ gốc (gõ đáp án) thuộc luôn", () {
-      final e = buildEngine(
-        words: [
-          {
-            "back": "가다",
-            "front": "đi",
-            "followUp": {
-              "back": "학교에 가서 공부를 하다",
-              "front": "đi đến trường để học",
-            },
-          },
-        ],
-      );
-      skipUntil(e, (e) => !e.currentWord!.isFollowUp);
-      expect(e.currentWord!.typeAnswer, isTrue); // ≤ 3 từ
-      answerCurrentCorrectly(e);
-      e.nextCard();
-
-      expect(e.currentWord!.isFollowUp, isTrue);
-      expect(e.currentWord!.typeAnswer, isFalse); // câu dài -> tự chấm
-      e.flipCard();
-      e.gradeSelf(remembered: true);
-      expect(e.masteredCount, 1);
-      expect(e.currentProgress!.mastered, isFalse);
-    });
-
     test("nội dung tải lại giữa lúc đã lật: vẫn giữ trạng thái lật", () {
       final content = contentOf([contentDeck("d1", selfGraded)]);
       final e = engineFor(content);
@@ -351,27 +291,30 @@ void main() {
     });
   });
 
-  group("thẻ ngữ cảnh", () {
-    test("trả lời xong thẻ gốc thì thẻ ngữ cảnh được hỏi ngay sau đó", () {
-      final e = buildEngine(words: withFollowUp);
-
-      skipUntil(e, (e) => e.currentWord!.followUpIndex != null);
-      answerCurrentCorrectly(e);
+  group("mỗi thẻ độc lập (đã bỏ thẻ ngữ cảnh)", () {
+    test("thuộc một thẻ không làm thuộc thẻ nào khác", () {
+      final e = buildEngine();
+      e.markKnown();
+      expect(e.masteredCount, 1);
       e.nextCard();
-
-      expect(e.currentWord!.isFollowUp, isTrue);
-      expect(e.currentWord!.front, "đi đến trường");
+      answerCurrentCorrectly(e);
+      expect(e.masteredCount, 1);
     });
 
-    test("đúng thẻ ngữ cảnh thì thẻ gốc được tính là đã thuộc", () {
-      final e = buildEngine(words: [withFollowUp.first]);
-
-      answerCurrentCorrectly(e); // thẻ gốc
-      e.nextCard();
-      expect(e.currentWord!.isFollowUp, isTrue);
-
-      answerCurrentCorrectly(e); // thẻ ngữ cảnh -> kéo theo thẻ gốc
-      expect(e.masteredCount, greaterThanOrEqualTo(1));
+    test("bộ ảo dùng chung thẻ với bộ gốc (StudyWord bất biến)", () {
+      final c = buildStudyCatalog(
+        contentOf([
+          contentDeck("d1", threeWords, marked: {1}),
+        ]),
+      );
+      final e = StudyEngine(
+        decks: c.decks,
+        vocabGroups: c.vocabGroups,
+        markedIds: c.markedIds,
+        random: Random(1),
+      )..bootstrap();
+      e.switchDeck(markedDeckId);
+      expect(identical(e.currentWord, c.decks.single.words[1]), isTrue);
     });
   });
 
@@ -573,10 +516,10 @@ void main() {
       expect(seen, isNot(contains(gone)));
     });
 
-    test("xoá thẻ gốc thì thẻ ngữ cảnh của nó cũng rơi ra", () {
-      final content = contentOf([contentDeck("d1", withFollowUp)]);
+    test("xoá một thẻ chỉ rơi đúng thẻ đó", () {
+      final content = contentOf([contentDeck("d1", threeWords)]);
       final e = engineFor(content);
-      expect(e.totalCount, 4);
+      expect(e.totalCount, 3);
       replaceWith(e, content.removeCard("d1-0"));
       expect(e.totalCount, 2);
     });

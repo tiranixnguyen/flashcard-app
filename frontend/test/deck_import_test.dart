@@ -27,17 +27,13 @@ void main() {
     const md = "    code\n\n- **ý 1**\n  - ý lồng\n";
     final r = parseDeckImport(
       jsonEncode([
-        {
-          "back": "가다",
-          "front": "đi",
-          "note": md,
-          "followUp": {"front": "đi học", "note": " \n "},
-        },
+        {"back": "가다", "front": "đi", "note": md},
+        {"back": "오다", "front": "đến", "note": " \n "},
       ]),
     );
     expect(r.ok, isTrue);
-    expect(r.cards[0]["note"], md);
-    expect(r.cards[1].containsKey("note"), isFalse);
+    expect(r.words[0]["note"], md);
+    expect(r.words[1].containsKey("note"), isFalse);
   });
 
   test("chấp nhận mảng trần và khối ```json của AI", () {
@@ -52,17 +48,15 @@ void main() {
     expect(r.words.single["back"], "학교");
   });
 
-  test("thẻ ngữ cảnh: followUp đơn được đổi thành followUps, đếm đủ thẻ", () {
-    final r = parseDeckImport(
-      '''
+  test("thẻ ngữ cảnh (followUp/followUps) đã bỏ -> báo lỗi, không cho gửi", () {
+    final r = parseDeckImport('''
 [{"back": "가다", "front": "đi", "followUp": {"front": "đi học"}},
- {"back": "오다", "front": "đến", "followUps": [{"back": "집에 오다", "front": "về nhà"}, {"front": "đến đây"}]}]''',
-    );
-    expect(r.ok, isTrue);
-    expect(r.words[0]["followUps"], [
-      {"front": "đi học", "typeAnswer": true},
-    ]);
-    expect(r.cardCount, 5);
+ {"back": "오다", "front": "đến", "followUps": []},
+ {"back": "학교", "front": "trường học"}]''');
+    expect(r.ok, isFalse);
+    expect(r.errors, hasLength(2));
+    expect(r.errors.first, startsWith("Từ thứ 1: không còn hỗ trợ"));
+    expect(r.words.single["back"], "학교");
   });
 
   test("từ thiếu front/back -> báo lỗi đúng vị trí, không cho gửi", () {
@@ -106,31 +100,19 @@ void main() {
       "không ghi typeAnswer: mặt sau ≤ 3 từ thì tick sẵn, dài hơn thì không",
       () {
         final r = parseDeckImport('''
-[{"back": "간 이식 수술", "front": "ghép gan", "followUps": [
-   {"back": "간 이식 수술을 하다", "front": "làm phẫu thuật ghép gan"},
-   {"front": "mượn đáp án thẻ gốc"}]},
+[{"back": "간 이식 수술", "front": "ghép gan"},
+ {"back": "간 이식 수술을 하다", "front": "làm phẫu thuật ghép gan"},
  {"back": "1일 2회, 1회 1정 복용", "front": "liều dùng"}]''');
-        expect(r.cards.map((c) => c["typeAnswer"]), [true, false, true, false]);
-        expect(r.typeAnswerCount, 2);
+        expect(r.words.map((c) => c["typeAnswer"]), [true, false, false]);
+        expect(r.typeAnswerCount, 1);
       },
     );
 
-    test("ghi rõ typeAnswer thì giữ nguyên, kể cả thẻ ngữ cảnh", () {
-      final r = parseDeckImport(
-        '''
-[{"back": "가다", "front": "đi", "typeAnswer": false,
-  "followUp": {"back": "학교에 가서 공부를 하다", "front": "đi học", "typeAnswer": true}}]''',
-      );
-      expect(r.cards.map((c) => c["typeAnswer"]), [false, true]);
-    });
-
-    test("đổi ô tick qua cards là đổi đúng thứ gửi lên server", () {
-      final r = parseDeckImport(
-        '[{"back": "가다", "front": "đi", "followUp": {"front": "đi học"}}]',
-      );
-      r.cards[1]["typeAnswer"] = false;
-      final ups = r.words[0]["followUps"] as List;
-      expect((ups.single as Map)["typeAnswer"], isFalse);
+    test("ghi rõ typeAnswer thì giữ nguyên", () {
+      final r = parseDeckImport('''
+[{"back": "가다", "front": "đi", "typeAnswer": false},
+ {"back": "학교에 가서 공부를 하다", "front": "đi học", "typeAnswer": true}]''');
+      expect(r.words.map((c) => c["typeAnswer"]), [false, true]);
     });
 
     test("defaultTypeAnswer đếm từ theo khoảng trắng", () {

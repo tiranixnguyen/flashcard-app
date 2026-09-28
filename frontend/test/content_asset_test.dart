@@ -37,18 +37,9 @@ void main() {
     }
   });
 
-  test("thẻ ngữ cảnh trỏ về thẻ gốc cùng bộ, đứng trước nó", () {
-    for (final d in content.decks) {
-      final byId = {for (final c in d.cards) c.id: c};
-      for (final c in d.cards) {
-        final parentId = c.parentId;
-        if (parentId == null) continue;
-        final parent = byId[parentId];
-        expect(parent, isNotNull, reason: "${c.id} -> $parentId");
-        expect(parent!.parentId, isNull, reason: "chỉ một tầng: ${c.id}");
-        expect(parent.position, lessThan(c.position), reason: c.id);
-      }
-    }
+  test("không còn thẻ ngữ cảnh (parentId) trong bản đóng gói", () {
+    final raw = File("assets/content.json").readAsStringSync();
+    expect(raw, isNot(contains("parentId")));
   });
 
   test("mỗi bộ thuộc một nhóm đã khai báo", () {
@@ -88,7 +79,7 @@ void main() {
     expect(engine.isCompleted, isFalse);
   });
 
-  test("deck ngẫu nhiên rút tối đa 20 thẻ gốc từ nhóm đang học", () {
+  test("deck ngẫu nhiên rút tối đa 20 thẻ từ nhóm đang học", () {
     final engine = StudyEngine(
       decks: catalog.decks,
       vocabGroups: catalog.vocabGroups,
@@ -97,6 +88,5 @@ void main() {
 
     engine.switchDeck(randomDeckId);
     expect(engine.totalCount, lessThanOrEqualTo(20));
-    expect(engine.currentWord!.isFollowUp, isFalse);
   });
 }

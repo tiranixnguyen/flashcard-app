@@ -38,10 +38,11 @@ describe("nhóm", () => {
 });
 
 describe("bộ từ và thẻ", () => {
-  it("tạo bộ từ JSON của prompt tách từ, làm phẳng thẻ ngữ cảnh", async () => {
+  it("tạo bộ từ JSON của prompt tách từ", async () => {
     const g = await makeGroup();
     const deck = await makeDeck(g.id, [
-      { back: "가다", front: "đi", followUp: { back: "학교에 가다", front: "đi đến trường" } },
+      { back: "가다", front: "đi" },
+      { back: "학교에 가다", front: "đi đến trường" },
       { back: "공지하다", front: "thông báo", hint: "công tri", altAnswers: ["공지"] },
     ]);
     expect(deck.cards.map((c) => [c.position, c.back])).toEqual([
@@ -49,8 +50,8 @@ describe("bộ từ và thẻ", () => {
       [1, "학교에 가다"],
       [2, "공지하다"],
     ]);
-    expect(deck.cards[1].parentId).toBe(deck.cards[0].id);
     expect(deck.cards[2]).toMatchObject({ hint: "công tri", altAnswers: ["공지"] });
+    expect(deck.cards[0]).not.toHaveProperty("parentId");
   });
 
   it("JSON sai định dạng -> 400 kèm vị trí từ sai; nhóm không tồn tại -> 404", async () => {
@@ -58,6 +59,15 @@ describe("bộ từ và thẻ", () => {
     const bad = await api("POST", "/decks", { groupId: g.id, name: "x", words: [{ back: "a" }] });
     expect(bad.status).toBe(400);
     expect(bad.json.error).toContain("words[0].front");
+
+    // Thẻ ngữ cảnh đã bỏ — báo lỗi, không lặng lẽ vứt mất.
+    const followUp = await api("POST", "/decks", {
+      groupId: g.id,
+      name: "x",
+      words: [{ back: "a", front: "b", followUp: { front: "c" } }],
+    });
+    expect(followUp.status).toBe(400);
+    expect(followUp.json.error).toContain("followUp");
 
     const noGroup = await api("POST", "/decks", {
       groupId: "khong-co",
@@ -67,19 +77,13 @@ describe("bộ từ và thẻ", () => {
     expect(noGroup.status).toBe(404);
   });
 
-  it("bộ tối đa 500 từ, mỗi từ 2 thẻ ngữ cảnh -> tạo trọn trong một transaction", async () => {
+  it("bộ tối đa 500 từ -> tạo trọn trong một transaction", async () => {
     const g = await makeGroup();
-    const words = Array.from({ length: 500 }, (_, i) => ({
-      back: `단어${i}`,
-      front: `từ ${i}`,
-      followUps: [{ front: `ngữ cảnh ${i}a` }, { front: `ngữ cảnh ${i}b` }],
-    }));
+    const words = Array.from({ length: 500 }, (_, i) => ({ back: `단어${i}`, front: `từ ${i}` }));
     const deck = await makeDeck(g.id, words);
-    expect(deck.cards).toHaveLength(1500);
-    expect(deck.cards.map((c) => c.position)).toEqual([...Array(1500).keys()]);
-    // Thẻ ngữ cảnh trỏ đúng thẻ gốc đứng ngay trước nó trong cùng lô.
-    expect(deck.cards[1499].parentId).toBe(deck.cards[1497].id);
-    expect(deck.cards[1499].back).toBe("단어499");
+    expect(deck.cards).toHaveLength(500);
+    expect(deck.cards.map((c) => c.position)).toEqual([...Array(500).keys()]);
+    expect(deck.cards[499].back).toBe("단어499");
   });
 
   it("thêm từ vào CUỐI bộ, thứ tự cũ giữ nguyên", async () => {
@@ -98,13 +102,13 @@ describe("bộ từ và thẻ", () => {
     ]);
   });
 
-  it("sửa thẻ ghi thẳng lên server; xoá thẻ gốc xoá luôn thẻ ngữ cảnh", async () => {
+  it("sửa thẻ ghi thẳng lên server; xoá thẻ chỉ xoá đúng thẻ đó", async () => {
     const g = await makeGroup();
     const deck = await makeDeck(g.id, [
-      { back: "가다", front: "đi", followUp: { front: "đi đến trường" } },
+      { back: "가다", front: "đi" },
       { back: "오다", front: "đến" },
     ]);
-    const [root, , other] = deck.cards;
+    const [root, other] = deck.cards;
 
     const edited = await api("PATCH", `/cards/${other.id}`, {
       back: "오다",

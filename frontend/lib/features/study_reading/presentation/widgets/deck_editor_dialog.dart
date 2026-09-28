@@ -200,7 +200,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
             _sending
                 ? "Đang lưu…"
                 : _isAppend
-                ? "Thêm ${_parsed.cardCount} thẻ"
+                ? "Thêm ${_parsed.words.length} thẻ"
                 : "Tạo bộ",
           ),
         ),
@@ -224,13 +224,13 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     if (_parsed.words.isEmpty) {
       return Text("Chưa có từ nào.", style: style);
     }
-    final cards = _parsed.cards;
+    final cards = _parsed.words;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "✓ ${_parsed.words.length} từ (${_parsed.cardCount} thẻ · "
-          "${_parsed.typeAnswerCount} nhập đáp án, còn lại tự chấm)",
+          "✓ ${cards.length} thẻ (${_parsed.typeAnswerCount} nhập đáp án, "
+          "còn lại tự chấm)",
           style: style.copyWith(color: p.correct),
         ),
         const SizedBox(height: 6),

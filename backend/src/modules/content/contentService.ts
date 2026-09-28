@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../../../prisma/generated/prisma/client";
 import { HttpError } from "../common/httpError";
-import { cleanAlts, cleanNote, expandWordInputs, type WordInput } from "./wordInput";
+import { cleanAlts, cleanNote, cleanWordInputs, type WordInput } from "./wordInput";
 
 export interface CardDto {
   id: string;
   position: number;
-  parentId: string | null;
   front: string;
   back: string;
   hint: string | null;
@@ -39,7 +38,6 @@ export interface ContentDto {
 const cardSelect = {
   id: true,
   position: true,
-  parentId: true,
   front: true,
   back: true,
   hint: true,
@@ -115,11 +113,9 @@ export async function renameGroup(
 }
 
 /**
- * Ghi các thẻ đã làm phẳng vào cuối bộ. Id sinh sẵn ở đây (không để DB tự
- * sinh) để biết trước `parentId` của thẻ ngữ cảnh — nhờ vậy cả lô chỉ tốn hai
- * câu lệnh (thẻ gốc rồi thẻ ngữ cảnh, vì khoá ngoại), thay vì một câu mỗi thẻ:
- * 500 từ kèm ngữ cảnh từng là ~1000 round-trip trong một transaction, dễ vượt
- * timeout 5 giây mặc định của Prisma.
+ * Ghi các thẻ vào cuối bộ bằng một câu lệnh duy nhất — một câu mỗi thẻ từng là
+ * hàng trăm round-trip trong một transaction, dễ vượt timeout 5 giây mặc định
+ * của Prisma.
  */
 async function insertCards(
   tx: Pick<PrismaClient, "card">,
@@ -127,22 +123,14 @@ async function insertCards(
   words: WordInput[],
   startPosition: number,
 ): Promise<void> {
-  const expanded = expandWordInputs(words);
-  const ids = expanded.map(() => randomUUID());
-  const rows = expanded.map((c, i) => ({
-    id: ids[i]!,
-    deckId,
-    position: startPosition + i,
-    parentId: c.parentOffset === null ? null : ids[c.parentOffset]!,
-    front: c.front,
-    back: c.back,
-    hint: c.hint,
-    note: c.note,
-    altAnswers: c.altAnswers,
-    typeAnswer: c.typeAnswer,
-  }));
-  await tx.card.createMany({ data: rows.filter((r) => r.parentId === null) });
-  await tx.card.createMany({ data: rows.filter((r) => r.parentId !== null) });
+  await tx.card.createMany({
+    data: cleanWordInputs(words).map((c, i) => ({
+      id: randomUUID(),
+      deckId,
+      position: startPosition + i,
+      ...c,
+    })),
+  });
 }
 
 export async function createDeck(
@@ -241,7 +229,7 @@ export async function updateCard(
   });
 }
 
-/** Xoá thẻ; thẻ ngữ cảnh nối sau nó bị xoá theo (onDelete: Cascade). */
+/** Xoá thẻ. */
 export async function deleteCard(
   prisma: PrismaClient,
   userId: string,
