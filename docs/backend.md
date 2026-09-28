@@ -17,12 +17,17 @@
 
 - `src/modules/common/` — `defaultUser` (user cố định, chưa có auth),
   `httpError` (`HttpError(status, message)`), `handle` (bọc route: lấy user,
-  đổi `HttpError` → mã HTTP, lỗi khác → 500 có log).
+  đổi `HttpError` → mã HTTP, lỗi khác → 500 có log). Lỗi ném trước khi vào
+  `handle()` (body-parser: body quá lớn, JSON hỏng) do middleware cuối
+  `app.ts` đổi thành `{ error }` — mặc định Express trả HTML, app không đọc được.
 - `src/modules/content/` — `/content`, `/groups`, `/decks`, `/cards`,
-  `/cards/flags`. `wordInput.ts` kiểm tra + làm phẳng JSON nhập bộ.
+  `/cards/flags`. `wordInput.ts` kiểm tra + dọn JSON nhập bộ.
+- `src/modules/audio/` — `POST /audio`, `GET /audio/:id` (file nghe, xem
+  "File nghe" bên dưới).
 - `src/modules/sessions/` — `/sessions` (chỉ thêm, id do client sinh).
 - `src/scripts/` — `importContent` (một lần, DB mới), `exportContent` (DB →
-  `frontend/assets/content.json`, chỉ đọc).
+  `frontend/assets/content.json`, chỉ đọc), `pruneAudio` (dọn file nghe mồ
+  côi).
 
 ## Dữ liệu
 
@@ -48,10 +53,33 @@ khởi đầu / bản sao:
   sửa tay.
 - Id: bộ gốc cố định (`g1..g3`, `ds1..ds30`, thẻ `<deckId>-<vị trí lúc
   import>`) để bản đóng gói khớp server; nhóm/bộ mới dùng cuid; thẻ mới dùng
-  uuid (server sinh sẵn để ghi cả lô bằng 2 lệnh `createMany`).
+  uuid (ghi cả lô bằng một lệnh `createMany`).
 - Schema cũ SM-2 (`UserCardProgress`, `LanguagePair`…) đã bỏ. `SyncState` chỉ
   còn cho `import-content`; xoá được khi chắc không cần import lại. `pg_dump`
   trước khi đổi schema nằm ở `backups/`.
+
+## File nghe
+
+- Bảng `Audio`: bytes MP3 nằm thẳng trong Postgres (bytea) — `pg_dump` sao lưu
+  luôn, không phải đồng bộ thêm thư mục nào. Clip ~20–30 giây ~400 KB; lên cỡ
+  chục nghìn clip thì nên chuyển sang lưu file trên đĩa (chỉ đổi
+  `audioService.ts`, API giữ nguyên).
+- `POST /audio`: thân request là **bytes thô** `Content-Type: audio/mpeg`
+  (không multipart → không cần `multer`). Chỉ nhận MP3 (đoán theo byte đầu:
+  thẻ `ID3` hoặc khung MPEG), tối đa `AUDIO_MAX_BYTES` (mặc định 2 MB). Trùng
+  sha256 (theo user) thì trả lại id cũ.
+- `GET /audio/:id`: nội dung của id không bao giờ đổi → `Cache-Control:
+  immutable` + `ETag`. **Phải hỗ trợ `Range`/206** — AVPlayer (just_audio trên
+  macOS/iOS) không chịu phát file HTTP nếu server không trả theo byte range.
+- `Card.frontAudioId`/`backAudioId`/`hintAudioId`/`noteAudioId`
+  (`onDelete: SetNull`). `PATCH /cards/:id`: thiếu trường = giữ, `null` = gỡ, id
+  lạ/của user khác = 400.
+- Gỡ file, xoá thẻ, hay tải lên rồi huỷ dialog đều để lại file mồ côi — không
+  route nào tự xoá. `npm run prune-audio -- --dry-run` để xem, bỏ `--dry-run`
+  để xoá (chỉ file > 1 ngày, tránh xoá file vừa tải lên mà dialog còn mở).
+- Dự kiến sau này: nghe chép chính tả từng câu của đoạn hội thoại ngắn — nên là
+  mô hình riêng (vd `Dialogue` → `Line { text, audioId }`) dùng lại bảng
+  `Audio`, không nhét vào `Card`.
 
 ## ⚠ Route ghi trên server dev
 

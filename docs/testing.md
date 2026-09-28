@@ -20,12 +20,18 @@
 - `content_api_test.dart` — `DioContentApi` ở tầng HTTP thật (fake
   `HttpClientAdapter`): parse, `offline` vs server từ chối (thông báo từ body),
   body sai định dạng/HTML vẫn thành `ApiException`, body gửi đi đúng định dạng,
-  cache cũ `kr`/`vi` vẫn đọc được.
+  cache cũ `kr`/`vi` vẫn đọc được. Upload file nghe gửi bytes thô, PATCH thẻ gửi
+  đủ 4 id file nghe.
+- `audio_playback_test.dart` — trình phát dùng chung: phát/tạm dừng/phát lại
+  từ đầu, chuyển file, nạp lỗi, sang thẻ lúc đang nạp thì không phát;
+  `visibleAudioFields` cho `Cmd+.`.
 - `study_reading_view_test.dart` — smoke test UI qua `_FakeApi` (server trong
   bộ nhớ) + `MemoryStore`: ghi lần học (hết bộ / bỏ dở / nháp sót), hàng đợi
   offline tự gửi khi có mạng, ⭐/漢 offline, lịch sử gộp máy khác, soạn nội dung
   chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ), bộ rỗng không
-  crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0).
+  crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0), file nghe (nút
+  theo trường, dừng khi sang thẻ, `Cmd+.`, offline, điện thoại không có, dialog
+  gắn/gỡ/tải lên).
 - `hint_box_test.dart` — chú thích trên thẻ theo nền tảng: máy tính/web giới
   hạn `hintVisibleLines` dòng rồi cuộn; điện thoại cắt bớt, bấm mở bảng đầy đủ.
   Dựng trong `IntrinsicHeight` như thẻ thật — đừng dùng `LayoutBuilder` trong
@@ -47,7 +53,9 @@ trong deck ⭐/漢 (thẻ ở lại tới khi sang thẻ tiếp rồi rơi hẳn
 
 - **Override mọi provider chạm I/O thật:** `bundledContentProvider`,
   `localStoreProvider` (`LocalStore(MemoryStore())`), `contentApiProvider`,
-  `connectivityGatewayProvider`, nên cả `clockProvider`. `testWidgets` chạy
+  `connectivityGatewayProvider`, `audioPlayerGatewayProvider` +
+  `audioFilePickerProvider` (bản giả trong `support/fake_audio.dart`), nên cả
+  `clockProvider`. `testWidgets` chạy
   trong fake-async nên I/O thật (asset qua `rootBundle`, platform channel,
   mạng) không bao giờ xong → kẹt loading, chỉ thấy timeout.
 - **Không `pumpAndSettle` ở màn học** — lúc loading có
@@ -61,7 +69,9 @@ trong deck ⭐/漢 (thẻ ở lại tới khi sang thẻ tiếp rồi rơi hẳn
 
 - `wordInput.test.ts`, `importContent.test.ts` — thuần (import chạy trên
   `seed-data/` thật).
-- `content.integration.test.ts`, `sessions.integration.test.ts` — Express app
+- `audioService.test.ts` — thuần: nhận diện MP3, tách header `Range`.
+- `content.integration.test.ts`, `sessions.integration.test.ts`,
+  `audio.integration.test.ts` — Express app
   thật + Postgres dev thật (`useTestServer()` + `fetch`, không mock Prisma).
   An toàn vì `vitest.setup.ts` đổi `DEFAULT_USER_EMAIL` sang email test trước
   khi module nào nạp; `useTestServer()` từ chối chạy nếu email không chứa

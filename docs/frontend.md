@@ -69,6 +69,7 @@ tới) rồi truyền vào `StudyCard`.
   Thẻ tự chấm (không có ô nhập): chưa lật thì `Space`/`Enter`/`Cmd+/` = Lật
   thẻ, `Cmd+Enter` = Đã thuộc; đã lật thì `1`/`→` = Nhớ, `0`/`←` = Chưa nhớ —
   cố ý không dùng `Enter` để bấm Enter hai lần không lỡ tay chấm "Nhớ".
+  `Cmd+.` = nghe/tạm dừng file nghe (xem "File nghe").
 - **Ô nhập dọn theo `cardSerial`**, không theo đối tượng thẻ (`replaceContent`
   tạo đối tượng mới cho cùng thẻ đang hỏi). Sang thẻ tự chấm thì `unfocus()` để
   điện thoại cụp bàn phím.
@@ -80,6 +81,27 @@ tới) rồi truyền vào `StudyCard`.
   `_FlipSide` (chưa lật: ô "chạm để lật"; lật rồi: mặt sau + đáp án phụ);
   `StudyControls` đổi "Xem đáp án" thành "Lật thẻ", lật rồi thì hàng trên là
   "✕ Chưa nhớ" / "✓ Nhớ". Tự chấm xong sang thẻ tiếp luôn, không khoá 2 giây.
+
+## File nghe (chỉ Mac/web)
+
+- Mỗi trường của thẻ (mặt trước/sau, gợi ý, giải thích) gắn được một MP3
+  (`StudyWord.audio`, `CardAudio`). Nút ▶︎ (`AudioButton`) nằm ngay cạnh trường
+  đó, **chỉ phát khi bấm**; mặt sau/giải thích chỉ hiện khi đã lộ đáp án.
+  Điện thoại không hiện nút, không tải file (chưa hỗ trợ nghe).
+- Phát thẳng từ `GET /audio/:id` (không cache offline); `SyncStatus.offline`
+  thì nút bị tắt. `Cmd+.` phát trường đang hiện, ưu tiên mặt sau khi đã lộ
+  đáp án (`visibleAudioFields`).
+- Một trình phát dùng chung (`AudioPlayback`, keepAlive): bấm file khác thì
+  file cũ dừng; sang thẻ khác (đổi `cardSerial`) thì dừng hẳn — gọi sau frame vì
+  không được đổi provider trong lúc build. Đóng dialog sửa thẻ cũng dừng.
+- `AudioPlayerGateway` bọc just_audio: `play()` của just_audio chỉ xong khi
+  dừng/hết bài — **đừng await**.
+- Dialog sửa thẻ: nút "Thêm file nghe" ở dòng nhãn mỗi trường → chọn MP3
+  (`AudioFilePicker`, file_picker) → **tải lên ngay** → lưu thẻ chỉ gửi id. Gợi
+  ý/giải thích có file nghe thì phải có chữ (nút nằm cạnh chữ).
+- Quyền macOS, đừng gỡ: `files.user-selected.read-only` (chọn file trong
+  sandbox) và `NSAppTransportSecurity` trong `Info.plist` (AVPlayer, khác Dio,
+  chịu ATS khi tải `http://`).
 
 ## Điện thoại
 
