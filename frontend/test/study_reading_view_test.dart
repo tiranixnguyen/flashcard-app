@@ -3,6 +3,7 @@ import "dart:convert";
 import "dart:typed_data";
 
 import "package:flashcard_app/core/clock/clock.dart";
+import "package:flashcard_app/core/theme/card_zoom_provider.dart";
 import "package:flashcard_app/core/theme/theme_provider.dart";
 import "package:flashcard_app/features/study_reading/data/audio_gateway.dart";
 import "package:flashcard_app/features/study_reading/data/bundled_content.dart";
@@ -221,6 +222,15 @@ class _ForcedDarkMode extends IsDarkMode {
   bool build() => true;
 }
 
+/// Cỡ chữ thẻ không chạm SharedPreferences.
+class _MemoryCardZoom extends CardZoom {
+  @override
+  double build() => 1.0;
+
+  @override
+  Future<void> persist(double value) async {}
+}
+
 /// Không đụng EventChannel thật của connectivity_plus; test tự bắn sự kiện
 /// "có mạng trở lại" qua [reconnect].
 class _FakeConnectivityGateway implements ConnectivityGateway {
@@ -275,6 +285,7 @@ void main() {
           audioPlayerGatewayProvider.overrideWithValue(h.player),
           audioFilePickerProvider.overrideWithValue(h.picker),
           if (isDark) isDarkModeProvider.overrideWith(_ForcedDarkMode.new),
+          cardZoomProvider.overrideWith(_MemoryCardZoom.new),
         ],
         // Dùng chính [FlashcardApp] để test phủ luôn phần cấp ThemeData ở
         // main.dart, chứ không dựng một MaterialApp riêng cho test.
@@ -1298,6 +1309,105 @@ void main() {
         hasLength(1),
       );
     }, variant: desktop);
+  });
+
+  group("phóng chữ trên thẻ", () {
+    /// Hệ số cỡ chữ tại chỗ [text] hiển thị (đo kích thước thì bị font dự
+    /// phòng của test làm tròn).
+    double scaleAt(WidgetTester tester, String text) =>
+        MediaQuery.textScalerOf(tester.element(find.text(text))).scale(1);
+
+    Future<void> pressWithCmd(
+      WidgetTester tester,
+      LogicalKeyboardKey key,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pump();
+    }
+
+    testWidgets("Cmd+= phóng chữ thẻ, nút/badge giữ cỡ; Cmd+0 về gốc", (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.0);
+
+      await pressWithCmd(tester, LogicalKeyboardKey.equal);
+      await pressWithCmd(tester, LogicalKeyboardKey.equal);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.2);
+      expect(scaleAt(tester, "Thẻ mới"), 1.0);
+      expect(scaleAt(tester, "Kiểm tra"), 1.0);
+
+      await pressWithCmd(tester, LogicalKeyboardKey.minus);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.1);
+
+      await pressWithCmd(tester, LogicalKeyboardKey.digit0);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.0);
+    });
+
+    testWidgets("đổi cỡ chữ không làm ô trả lời mất chữ đang gõ / focus", (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      await tester.enterText(find.byType(TextField), "학");
+      await pressWithCmd(tester, LogicalKeyboardKey.equal);
+      expect(find.text("학"), findsOneWidget);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.focusNode!.hasFocus, isTrue);
+    });
+
+    testWidgets("nút cỡ chữ: A+ phóng, kẹp ở 160%, Mặc định về 100%", (
+      tester,
+    ) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.byTooltip("Cỡ chữ trên thẻ (Cmd + / − / 0)"));
+      await tester.pump();
+      for (var i = 0; i < 10; i++) {
+        await tester.tap(find.byTooltip("Chữ to hơn"));
+        await tester.pump();
+      }
+      // Bảng vẫn mở sau nhiều lần bấm; dừng ở nấc cao nhất.
+      expect(find.text("160%"), findsOneWidget);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.6);
+
+      await tester.tap(find.text("Mặc định"));
+      await tester.pump();
+      expect(find.text("100%"), findsOneWidget);
+      expect(scaleAt(tester, "Nghĩa tiếng Việt"), 1.0);
+    });
+
+    testWidgets("160% trên màn 360pt: thẻ có gợi ý + giải thích không tràn", (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(360, 740);
+      addTearDown(tester.view.reset);
+      final kv = MemoryStore();
+      const note = "**Chú ý:** dùng với 가다\n- một\n- hai\n- ba";
+      await LocalStore(kv).saveContent(
+        contentOf([
+          contentDeck("z1", const [
+            {
+              "back": "학교",
+              "front": "trường học ở gần nhà tôi",
+              "hint": "chú thích khá dài để xuống nhiều dòng trên màn hẹp",
+              "note": note,
+            },
+          ], name: "Bộ zoom"),
+        ]),
+      );
+      await pumpApp(tester, kv: kv);
+      for (var i = 0; i < 8; i++) {
+        await pressWithCmd(tester, LogicalKeyboardKey.equal);
+      }
+      await tester.enterText(find.byType(TextField), "x");
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text("Giải thích"), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group("phím tắt", () {

@@ -4,11 +4,13 @@ import "package:google_fonts/google_fonts.dart";
 
 import "../../../../core/platform/platform.dart";
 import "../../../../core/theme/app_palette.dart";
+import "card_text_zoom.dart";
 import "../../domain/note_format.dart";
 
 /// Chiều cao tối đa của khung giải thích trên thẻ. Dài hơn thì trên máy
 /// tính/web cuộn bên trong khung, trên điện thoại cắt bớt và bấm vào để xem
 /// đầy đủ — giống [HintBox], để nút chấm bên dưới không bị đẩy khỏi màn hình.
+/// Ở cỡ chữ gốc; chữ phóng to thì khung cao theo (xem [CardTextZoom]).
 const answerNoteMaxHeight = 280.0;
 
 /// Giải thích cho đáp án, hiện sau khi lộ mặt sau. Nội dung là Markdown dán
@@ -56,8 +58,12 @@ class _AnswerNoteState extends State<AnswerNote> {
     if (isPhone) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _checkOverflow());
     }
+    // Khung cao theo cỡ chữ để phóng chữ vẫn thấy đủ số dòng như cũ.
+    final maxHeight = MediaQuery.textScalerOf(
+      context,
+    ).scale(answerNoteMaxHeight);
     final box = ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: answerNoteMaxHeight),
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: Scrollbar(
         controller: _scroll,
         // Luôn hiện thanh cuộn khi dài hơn khung (máy tính), để biết còn nội
@@ -153,7 +159,13 @@ class _AnswerNoteState extends State<AnswerNote> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                NoteMarkdown(note: widget.note, palette: p, selectable: true),
+                CardTextZoom(
+                  child: NoteMarkdown(
+                    note: widget.note,
+                    palette: p,
+                    selectable: true,
+                  ),
+                ),
               ],
             ),
           ),

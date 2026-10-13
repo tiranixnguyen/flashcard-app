@@ -1,6 +1,8 @@
 import "package:flashcard_app/core/theme/app_palette.dart";
+import "package:flashcard_app/core/theme/card_zoom_provider.dart";
 import "package:flashcard_app/features/study_reading/presentation/widgets/answer_note.dart";
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:google_fonts/google_fonts.dart";
 
@@ -27,29 +29,33 @@ const _shortNote = "Dòng 1\nDòng 2 **đậm**";
 /// dung — Markdown (bảng, khối code cuộn ngang) phải layout được trong đó.
 Future<void> pumpNote(WidgetTester tester, String note) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: SizedBox(
-            width: 600,
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AnswerNote(
-                          note: note,
-                          title: "đi",
-                          palette: AppPalette.light,
-                        ),
-                      ],
+    // Bảng xem đầy đủ phóng chữ theo cardZoomProvider (SharedPreferences).
+    ProviderScope(
+      overrides: [cardZoomProvider.overrideWithValue(1.0)],
+      child: MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: SizedBox(
+              width: 600,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AnswerNote(
+                            note: note,
+                            title: "đi",
+                            palette: AppPalette.light,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

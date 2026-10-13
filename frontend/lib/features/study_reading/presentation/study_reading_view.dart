@@ -8,6 +8,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../core/platform/platform.dart";
 import "../../../core/theme/app_palette.dart";
+import "../../../core/theme/card_zoom_provider.dart";
 import "../../../core/theme/theme_provider.dart";
 import "../data/content_api.dart";
 import "audio_playback.dart";
@@ -143,6 +144,7 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     final withCmd = keyboard.isMetaPressed || keyboard.isControlPressed;
     final key = event.logicalKey;
     if (withCmd && key == LogicalKeyboardKey.period) return _toggleAudio(s);
+    if (withCmd && _handleZoom(key)) return true;
     final isEnter =
         key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter;
@@ -195,6 +197,25 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
       // bộ gõ tiếng Hàn chốt chữ đang soạn dở trước).
     }
     return false;
+  }
+
+  /// `Cmd` + `=`/`+` · `-` · `0`: phóng/thu/về cỡ gốc chữ trên thẻ.
+  bool _handleZoom(LogicalKeyboardKey key) {
+    final zoom = ref.read(cardZoomProvider.notifier);
+    if (key == LogicalKeyboardKey.equal ||
+        key == LogicalKeyboardKey.add ||
+        key == LogicalKeyboardKey.numpadAdd) {
+      zoom.zoomIn();
+    } else if (key == LogicalKeyboardKey.minus ||
+        key == LogicalKeyboardKey.numpadSubtract) {
+      zoom.zoomOut();
+    } else if (key == LogicalKeyboardKey.digit0 ||
+        key == LogicalKeyboardKey.numpad0) {
+      zoom.reset();
+    } else {
+      return false;
+    }
+    return true;
   }
 
   bool _toggleAudio(StudySessionState s) {

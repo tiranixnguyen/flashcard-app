@@ -10,6 +10,7 @@ import "../../models/card_audio.dart";
 import "../study_session_view_model.dart";
 import "answer_note.dart";
 import "audio_button.dart";
+import "card_text_zoom.dart";
 import "dashed_line.dart";
 import "edit_card_dialog.dart";
 import "hint_box.dart";
@@ -76,42 +77,52 @@ class StudyCard extends ConsumerWidget {
                 children: [
                   _CardMeta(state: s, palette: p),
                   const SizedBox(height: 16),
-                  Text(
-                    "Nghĩa tiếng Việt",
-                    style: GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft),
-                  ),
-                  const SizedBox(height: 4),
-                  _withAudio(
-                    s,
-                    CardField.front,
-                    p,
-                    Text(
-                      word.front,
-                      style: GoogleFonts.notoSans(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w600,
-                        color: p.ink,
-                      ),
+                  CardTextZoom(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Nghĩa tiếng Việt",
+                          style: GoogleFonts.notoSans(
+                            fontSize: 13,
+                            color: p.inkSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _withAudio(
+                          s,
+                          CardField.front,
+                          p,
+                          Text(
+                            word.front,
+                            style: GoogleFonts.notoSans(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: p.ink,
+                            ),
+                          ),
+                        ),
+                        if (word.hint != null) ...[
+                          const SizedBox(height: 12),
+                          // Key theo thẻ để sang thẻ mới thì vị trí cuộn /
+                          // trạng thái "tràn" được làm mới, không mang theo từ
+                          // thẻ trước. Key phải khác của AnswerNote: trùng key
+                          // thì element gợi ý cũ không được gỡ, vẫn hiện.
+                          _withAudio(
+                            s,
+                            CardField.hint,
+                            p,
+                            HintBox(
+                              key: ValueKey(("hint", s.cardSerial)),
+                              hint: word.hint!,
+                              title: word.front,
+                              palette: p,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (word.hint != null) ...[
-                    const SizedBox(height: 12),
-                    // Key theo thẻ để sang thẻ mới thì vị trí cuộn / trạng
-                    // thái "tràn" được làm mới, không mang theo từ thẻ trước.
-                    // Key phải khác của AnswerNote (cùng Column): trùng key thì
-                    // sang thẻ mới element gợi ý cũ không được gỡ, vẫn hiện.
-                    _withAudio(
-                      s,
-                      CardField.hint,
-                      p,
-                      HintBox(
-                        key: ValueKey(("hint", s.cardSerial)),
-                        hint: word.hint!,
-                        title: word.front,
-                        palette: p,
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 22),
                   if (word.typeAnswer) ...[
                     _answerRow(ref, isCorrect),
@@ -128,12 +139,14 @@ class StudyCard extends ConsumerWidget {
                   // Giải thích chỉ hiện khi đã lộ mặt sau (chấm xong / lật).
                   if (word.note != null && (s.answered || s.flipped)) ...[
                     const SizedBox(height: 18),
-                    AnswerNote(
-                      key: ValueKey(("note", s.cardSerial)),
-                      note: word.note!,
-                      title: word.front,
-                      palette: p,
-                      headerTrailing: _audioButton(s, CardField.note, p),
+                    CardTextZoom(
+                      child: AnswerNote(
+                        key: ValueKey(("note", s.cardSerial)),
+                        note: word.note!,
+                        title: word.front,
+                        palette: p,
+                        headerTrailing: _audioButton(s, CardField.note, p),
+                      ),
                     ),
                   ],
                 ],
@@ -154,37 +167,42 @@ class StudyCard extends ConsumerWidget {
         Expanded(
           child: KeyboardLanguageScope(
             languageCode: "ko",
-            child: TextField(
-              controller: answerController,
-              focusNode: answerFocus,
-              // Android: bàn phím (vd Gboard) tự chuyển sang tiếng Hàn. iOS do
-              // KeyboardLanguageScope lo — Flutter không hỗ trợ hintLocales ở iOS.
-              hintLocales: koreanKeyboard,
-              enabled: !state.answered,
-              style: GoogleFonts.notoSansKr(
-                fontSize: 22,
-                color: isCorrect ? p.correct : p.ink,
-              ),
-              decoration: InputDecoration(
-                hintText: "Gõ tiếng Hàn…",
-                // Nhỏ hơn chữ người dùng gõ (22) để không bị cắt trên màn hẹp.
-                hintStyle: GoogleFonts.notoSans(fontSize: 15, color: p.inkSoft),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: p.ink, width: 2),
+            child: CardTextZoom(
+              child: TextField(
+                controller: answerController,
+                focusNode: answerFocus,
+                // Android: bàn phím (vd Gboard) tự chuyển sang tiếng Hàn. iOS do
+                // KeyboardLanguageScope lo — Flutter không hỗ trợ hintLocales ở iOS.
+                hintLocales: koreanKeyboard,
+                enabled: !state.answered,
+                style: GoogleFonts.notoSansKr(
+                  fontSize: 22,
+                  color: isCorrect ? p.correct : p.ink,
                 ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: p.red, width: 2),
-                ),
-                disabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: isCorrect ? p.correct : p.ink,
-                    width: 2,
+                decoration: InputDecoration(
+                  hintText: "Gõ tiếng Hàn…",
+                  // Nhỏ hơn chữ người dùng gõ (22) để không bị cắt trên màn hẹp.
+                  hintStyle: GoogleFonts.notoSans(
+                    fontSize: 15,
+                    color: p.inkSoft,
+                  ),
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(color: p.ink, width: 2),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: p.red, width: 2),
+                  ),
+                  disabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: isCorrect ? p.correct : p.ink,
+                      width: 2,
+                    ),
                   ),
                 ),
+                // Chỉ chấm bài: khi đã trả lời, ô này bị vô hiệu hoá nên không
+                // bao giờ nhận Enter — sang thẻ tiếp do phím tắt ở màn học lo.
+                onSubmitted: vm.checkAnswer,
               ),
-              // Chỉ chấm bài: khi đã trả lời, ô này bị vô hiệu hoá nên không
-              // bao giờ nhận Enter — sang thẻ tiếp do phím tắt ở màn học lo.
-              onSubmitted: vm.checkAnswer,
             ),
           ),
         ),
@@ -215,6 +233,10 @@ class _FlipSide extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return CardTextZoom(child: _content(ref));
+  }
+
+  Widget _content(WidgetRef ref) {
     final p = palette;
     final word = state.word!;
     if (!state.flipped) {
@@ -305,6 +327,7 @@ class _CardMeta extends ConsumerWidget {
             ],
           ),
         ),
+        CardZoomButton(palette: p),
         _menu(context, ref),
       ],
     );
@@ -455,60 +478,63 @@ class _Feedback extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isCorrect ? "✓" : "✕",
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: isCorrect ? p.correct : p.wrong,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    if (state.outcome == AnswerOutcome.correct &&
-                        !state.overridden)
-                      const TextSpan(text: "맞아")
-                    else ...[
-                      if (state.outcome == AnswerOutcome.known)
-                        const TextSpan(text: "Đã đánh dấu thuộc — "),
-                      if (state.overridden) const TextSpan(text: "맞아 — "),
-                      TextSpan(
-                        text: word.back,
-                        style: GoogleFonts.notoSansKr(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (alts.isNotEmpty)
-                        TextSpan(
-                          text: "  (hoặc: ${alts.join(", ")})",
-                          style: GoogleFonts.notoSansKr(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: p.inkSoft,
-                          ),
-                        ),
-                    ],
-                  ],
-                ),
-                style: GoogleFonts.notoSansKr(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+        CardTextZoom(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isCorrect ? "✓" : "✕",
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
                   color: isCorrect ? p.correct : p.wrong,
                 ),
               ),
-            ),
-            // Cả khi chỉ hiện "맞아" (không nhắc lại đáp án) vẫn nghe được.
-            if (_audioButton(state, CardField.back, p) case final button?) ...[
-              const SizedBox(width: 8),
-              button,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      if (state.outcome == AnswerOutcome.correct &&
+                          !state.overridden)
+                        const TextSpan(text: "맞아")
+                      else ...[
+                        if (state.outcome == AnswerOutcome.known)
+                          const TextSpan(text: "Đã đánh dấu thuộc — "),
+                        if (state.overridden) const TextSpan(text: "맞아 — "),
+                        TextSpan(
+                          text: word.back,
+                          style: GoogleFonts.notoSansKr(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (alts.isNotEmpty)
+                          TextSpan(
+                            text: "  (hoặc: ${alts.join(", ")})",
+                            style: GoogleFonts.notoSansKr(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: p.inkSoft,
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
+                  style: GoogleFonts.notoSansKr(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isCorrect ? p.correct : p.wrong,
+                  ),
+                ),
+              ),
+              // Cả khi chỉ hiện "맞아" (không nhắc lại đáp án) vẫn nghe được.
+              if (_audioButton(state, CardField.back, p)
+                  case final button?) ...[
+                const SizedBox(width: 8),
+                button,
+              ],
             ],
-          ],
+          ),
         ),
         if (state.canOverride) ...[
           const SizedBox(height: 6),

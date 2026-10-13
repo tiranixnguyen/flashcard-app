@@ -1,6 +1,8 @@
 import "package:flashcard_app/core/theme/app_palette.dart";
+import "package:flashcard_app/core/theme/card_zoom_provider.dart";
 import "package:flashcard_app/features/study_reading/presentation/widgets/hint_box.dart";
 import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:flutter_test/flutter_test.dart";
 import "package:google_fonts/google_fonts.dart";
 
@@ -16,29 +18,33 @@ const _capHeight = 14.0 * 1.45 * hintVisibleLines;
 /// dung. `IntrinsicHeight` là chỗ dễ vỡ nhất (vd `LayoutBuilder` sẽ ném lỗi).
 Future<void> pumpHint(WidgetTester tester, String hint) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: SizedBox(
-            width: 600,
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        HintBox(
-                          hint: hint,
-                          title: "than phiền, bày tỏ",
-                          palette: AppPalette.light,
-                        ),
-                      ],
+    // Bảng xem đầy đủ phóng chữ theo cardZoomProvider (SharedPreferences).
+    ProviderScope(
+      overrides: [cardZoomProvider.overrideWithValue(1.0)],
+      child: MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: SizedBox(
+              width: 600,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HintBox(
+                            hint: hint,
+                            title: "than phiền, bày tỏ",
+                            palette: AppPalette.light,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

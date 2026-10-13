@@ -4,6 +4,7 @@ import "package:google_fonts/google_fonts.dart";
 
 import "../../../../core/platform/platform.dart";
 import "../../../../core/theme/app_palette.dart";
+import "card_text_zoom.dart";
 
 /// Số dòng chú thích hiện sẵn trên thẻ. Dài hơn thì trên máy tính/web cuộn
 /// bên trong khung, trên điện thoại cắt bớt và bấm vào để xem đầy đủ.
@@ -153,9 +154,11 @@ class _HintBoxState extends State<HintBox> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SelectableText(
-                  widget.hint,
-                  style: _style.copyWith(fontSize: 15),
+                CardTextZoom(
+                  child: SelectableText(
+                    widget.hint,
+                    style: _style.copyWith(fontSize: 15),
+                  ),
                 ),
               ],
             ),

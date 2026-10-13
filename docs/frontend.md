@@ -32,6 +32,7 @@ lib/features/study_reading/
 | `study_panels.dart` | thống kê, thanh tiến độ, nút điều khiển, màn hoàn thành/trống/lỗi |
 | `hint_box.dart`, `dashed_line.dart` | chú thích trên thẻ, đường kẻ đứt bên trái thẻ |
 | `answer_note.dart` | giải thích đáp án (Markdown) sau khi lộ mặt sau |
+| `card_text_zoom.dart` | phóng chữ nội dung thẻ + nút "Aa" |
 | `deck_editor_dialog.dart`, `edit_card_dialog.dart`, `history_sheet.dart` | hộp thoại soạn bộ/nhóm, sửa thẻ, bảng lịch sử |
 
 Widget nhận `state` + `palette` qua tham số, gọi view model bằng
@@ -70,6 +71,13 @@ tới) rồi truyền vào `StudyCard`.
   thẻ, `Cmd+Enter` = Đã thuộc; đã lật thì `1`/`→` = Nhớ, `0`/`←` = Chưa nhớ —
   cố ý không dùng `Enter` để bấm Enter hai lần không lỡ tay chấm "Nhớ".
   `Cmd+.` = nghe/tạm dừng file nghe (xem "File nghe").
+- **Phóng chữ trên thẻ** (`cardZoomProvider`, nấc 85%–160%, lưu
+  SharedPreferences riêng từng máy): `Cmd` + `=`/`−`/`0` hoặc nút "Aa" cạnh
+  •••. Chỉ chữ *nội dung* thẻ to lên — `CardTextZoom` bọc riêng mặt
+  trước/sau, gợi ý, ô nhập, dòng ✓/✕, giải thích; badge/cờ/nút giữ cỡ gốc.
+  `CardTextZoom` luôn bọc kể cả 100% (đổi hình dạng cây là ô nhập bị dựng lại,
+  mất focus). Bảng xem đầy đủ (bottom sheet) là route riêng nên tự bọc lại.
+  Khung giải thích (`answerNoteMaxHeight`) cao theo cỡ chữ để giữ số dòng.
 - **Ô nhập dọn theo `cardSerial`**, không theo đối tượng thẻ (`replaceContent`
   tạo đối tượng mới cho cùng thẻ đang hỏi). Sang thẻ tự chấm thì `unfocus()` để
   điện thoại cụp bàn phím.

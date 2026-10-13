@@ -31,7 +31,8 @@
   chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ), bộ rỗng không
   crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0), file nghe (nút
   theo trường, dừng khi sang thẻ, `Cmd+.`, offline, điện thoại không có, dialog
-  gắn/gỡ/tải lên).
+  gắn/gỡ/tải lên), phóng chữ thẻ (`Cmd+=/−/0`, nút "Aa", nút/badge giữ cỡ,
+  không mất chữ đang gõ, 160% trên màn 360pt không tràn).
 - `hint_box_test.dart` — chú thích trên thẻ theo nền tảng: máy tính/web giới
   hạn `hintVisibleLines` dòng rồi cuộn; điện thoại cắt bớt, bấm mở bảng đầy đủ.
   Dựng trong `IntrinsicHeight` như thẻ thật — đừng dùng `LayoutBuilder` trong
@@ -54,7 +55,9 @@ trong deck ⭐/漢 (thẻ ở lại tới khi sang thẻ tiếp rồi rơi hẳn
 - **Override mọi provider chạm I/O thật:** `bundledContentProvider`,
   `localStoreProvider` (`LocalStore(MemoryStore())`), `contentApiProvider`,
   `connectivityGatewayProvider`, `audioPlayerGatewayProvider` +
-  `audioFilePickerProvider` (bản giả trong `support/fake_audio.dart`), nên cả
+  `audioFilePickerProvider` (bản giả trong `support/fake_audio.dart`),
+  `cardZoomProvider` (SharedPreferences — kể cả test riêng `HintBox`/
+  `AnswerNote`, vì bảng xem đầy đủ bọc `CardTextZoom`), nên cả
   `clockProvider`. `testWidgets` chạy
   trong fake-async nên I/O thật (asset qua `rootBundle`, platform channel,
   mạng) không bao giờ xong → kẹt loading, chỉ thấy timeout.
