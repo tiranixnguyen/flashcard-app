@@ -15,6 +15,7 @@ export interface CardDto {
   typeAnswer: boolean;
   marked: boolean;
   hanja: boolean;
+  passage: boolean;
   frontAudioId: string | null;
   backAudioId: string | null;
   hintAudioId: string | null;
@@ -55,6 +56,7 @@ const cardSelect = {
   typeAnswer: true,
   marked: true,
   hanja: true,
+  passage: true,
   frontAudioId: true,
   backAudioId: true,
   hintAudioId: true,
@@ -266,12 +268,13 @@ export interface FlagChange {
   cardId: string;
   marked?: boolean;
   hanja?: boolean;
+  passage?: boolean;
   /** Thời điểm người dùng bấm (ISO). Lần bấm muộn nhất thắng. */
   changedAt: string;
 }
 
 /**
- * Áp các lần bật/tắt ⭐/漢 gửi lên (có thể dồn từ lúc offline). Lần bấm cũ hơn
+ * Áp các lần bật/tắt ⭐/漢/📖 gửi lên (có thể dồn từ lúc offline). Lần bấm cũ hơn
  * lần đã ghi thì bỏ qua; thẻ đã bị xoá cũng bỏ qua — không phải lỗi.
  */
 export async function applyFlagChanges(
@@ -297,9 +300,20 @@ export async function applyFlagChanges(
       });
       applied += r.count;
     }
+    if (c.passage !== undefined) {
+      const r = await prisma.card.updateMany({
+        where: { ...scope, OR: [{ passageChangedAt: null }, { passageChangedAt: { lt: at } }] },
+        data: { passage: c.passage, passageChangedAt: at },
+      });
+      applied += r.count;
+    }
   }
   const requested = changes.reduce(
-    (n, c) => n + (c.marked !== undefined ? 1 : 0) + (c.hanja !== undefined ? 1 : 0),
+    (n, c) =>
+      n +
+      (c.marked !== undefined ? 1 : 0) +
+      (c.hanja !== undefined ? 1 : 0) +
+      (c.passage !== undefined ? 1 : 0),
     0,
   );
   return { applied, ignored: requested - applied };

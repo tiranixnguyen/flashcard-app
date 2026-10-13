@@ -4,7 +4,7 @@ App học từ vựng Hàn → Việt (thẻ gõ đáp án hoặc tự chấm, �
 **tiếng Việt**. Agent khác: xem `AGENTS.md`.
 
 - `frontend/` — Flutter + Riverpod (codegen). Học offline hoàn toàn, có mạng
-  thì tự đồng bộ nền. **Điện thoại chỉ học (+ ⭐/漢); Mac/web học + soạn nhóm/
+  thì tự đồng bộ nền. **Điện thoại chỉ học (+ ⭐/漢/📖); Mac/web học + soạn nhóm/
   bộ/thẻ (cần mạng).**
 - `backend/` — Express 5 + Prisma 7 + Postgres. Server là nguồn đúng cho nội
   dung và lịch sử học. Chưa có auth: một user cố định `DEFAULT_USER_EMAIL`.

@@ -49,7 +49,7 @@ void main() {
     }
   });
 
-  test("dựng catalog không rơi thẻ hay cờ ⭐/漢 nào", () {
+  test("dựng catalog không rơi thẻ hay cờ ⭐/漢/📖 nào", () {
     final cards = content.decks.expand((d) => d.cards).toList();
     expect(
       catalog.decks.fold<int>(0, (n, d) => n + d.words.length),
@@ -63,6 +63,10 @@ void main() {
       for (final c in cards)
         if (c.hanja) c.id,
     });
+    expect(catalog.passageIds, {
+      for (final c in cards)
+        if (c.passage) c.id,
+    });
   });
 
   test("engine khởi động được và hỏi ra thẻ đầu tiên", () {
@@ -71,6 +75,7 @@ void main() {
       vocabGroups: catalog.vocabGroups,
       markedIds: catalog.markedIds,
       hanjaIds: catalog.hanjaIds,
+      passageIds: catalog.passageIds,
       random: Random(7),
     )..bootstrap();
 

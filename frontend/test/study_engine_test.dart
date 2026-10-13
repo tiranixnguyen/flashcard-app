@@ -31,14 +31,21 @@ void main() {
       expect(c.decks.single.words.map((w) => w.back), ["학생", "선생님", "학교"]);
     });
 
-    test("gom cờ ⭐/漢 theo id thẻ", () {
+    test("gom cờ ⭐/漢/📖 theo id thẻ", () {
       final c = buildStudyCatalog(
         contentOf([
-          contentDeck("d1", threeWords, marked: {1}, hanja: {0, 2}),
+          contentDeck(
+            "d1",
+            threeWords,
+            marked: {1},
+            hanja: {0, 2},
+            passage: {2},
+          ),
         ]),
       );
       expect(c.markedIds, {"d1-1"});
       expect(c.hanjaIds, {"d1-0", "d1-2"});
+      expect(c.passageIds, {"d1-2"});
     });
   });
 
@@ -339,6 +346,61 @@ void main() {
       expect(e.currentIsMarked, isFalse);
       expect(e.hanjaCount, 1);
       expect(e.markedCount, 0);
+    });
+
+    test("cờ đoạn văn ngắn tách biệt với ⭐/漢", () {
+      final e = buildEngine();
+      expect(e.togglePassage(), isTrue);
+      expect(e.currentIsPassage, isTrue);
+      expect(e.currentIsMarked, isFalse);
+      expect(e.currentIsHanja, isFalse);
+      expect(e.passageCount, 1);
+      expect(e.togglePassage(), isFalse);
+      expect(e.passageCount, 0);
+    });
+
+    test("deck 📖 chỉ gồm thẻ gắn cờ, là deck ảo", () {
+      final e = engineFor(
+        contentOf([
+          contentDeck("d1", threeWords, passage: {0, 2}, hanja: {1}),
+        ]),
+      );
+      e.switchDeck(passageDeckId);
+      expect(isVirtualDeckId(passageDeckId), isTrue);
+      expect(e.currentDeck!.isVirtual, isTrue);
+      expect(e.currentDeck!.name, "📖 Đoạn văn ngắn");
+      expect(e.currentDeck!.words.map((w) => w.id), ["d1-0", "d1-2"]);
+    });
+
+    test("bỏ cờ 📖 ngay trong deck 📖: thẻ rơi khi sang thẻ tiếp", () {
+      final e = engineFor(
+        contentOf([
+          contentDeck("d1", threeWords, passage: {0, 2}),
+        ]),
+      );
+      e.switchDeck(passageDeckId);
+      e.togglePassage();
+      expect(e.totalCount, 2); // vẫn ở lại tới khi sang thẻ tiếp
+      e.revealAnswer();
+      e.nextCard();
+      expect(e.totalCount, 1);
+    });
+
+    test("tải lại nội dung giữa lượt deck 📖 thì dựng lại theo cờ mới", () {
+      final e = engineFor(
+        contentOf([
+          contentDeck("d1", threeWords, passage: {0}),
+        ]),
+      );
+      e.switchDeck(passageDeckId);
+      replaceWith(
+        e,
+        contentOf([
+          contentDeck("d1", threeWords, passage: {0, 1}),
+        ]),
+      );
+      expect(e.currentDeckId, passageDeckId);
+      expect(e.totalCount, 2);
     });
 
     test("cờ có sẵn từ nội dung được nạp theo id thẻ", () {

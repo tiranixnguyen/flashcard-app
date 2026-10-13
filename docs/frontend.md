@@ -131,7 +131,7 @@ tới) rồi truyền vào `StudyCard`.
   bàn phím mở xong (metrics đổi liên tục trong animation).
 - **Soạn nội dung chỉ trên Mac/web** (`!isPhone`): "+ Nhóm", "✎" đổi tên nhóm,
   "+ Bộ mới", "+ Thêm từ vào bộ này", "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
-  ⭐/漢 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
+  ⭐/漢/📖 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
   back, hint?, note?, altAnswers?, typeAnswer?}]}` hoặc mảng
   trần, kể cả còn bọc trong ` ```json `; nút "Sao chép prompt tách từ" chép
   `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô "Nhập đáp án" (tick

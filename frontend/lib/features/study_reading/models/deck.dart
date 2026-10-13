@@ -21,7 +21,7 @@ class Deck {
   final String name;
   final String? group;
 
-  /// Deck ảo (⭐ Từ khó nhớ, 漢 Hán Hàn, 🔀 ngẫu nhiên) được dựng động từ các
+  /// Deck ảo (⭐ Từ khó nhớ, 漢 Hán Hàn, 📖 Đoạn văn ngắn, 🔀 ngẫu nhiên) được dựng động từ các
   /// deck gốc; không có trên server và không ghi lịch sử học.
   final bool isVirtual;
 

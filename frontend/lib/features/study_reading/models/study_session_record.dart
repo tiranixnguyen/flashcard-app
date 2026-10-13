@@ -94,7 +94,7 @@ class StudySessionRecord {
   );
 }
 
-/// Một lần bật/tắt ⭐/漢 chờ gửi lên server. `changedAt` là lúc bấm — server
+/// Một lần bật/tắt ⭐/漢/📖 chờ gửi lên server. `changedAt` là lúc bấm — server
 /// lấy lần bấm muộn nhất, nên gửi trễ (offline) vẫn không đè lần mới hơn.
 class FlagChange {
   const FlagChange({
@@ -102,18 +102,21 @@ class FlagChange {
     required this.changedAt,
     this.marked,
     this.hanja,
+    this.passage,
   });
 
   final String cardId;
   final DateTime changedAt;
   final bool? marked;
   final bool? hanja;
+  final bool? passage;
 
   factory FlagChange.fromJson(Map<String, dynamic> json) => FlagChange(
     cardId: json["cardId"] as String,
     changedAt: DateTime.parse(json["changedAt"] as String),
     marked: json["marked"] as bool?,
     hanja: json["hanja"] as bool?,
+    passage: json["passage"] as bool?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -121,5 +124,6 @@ class FlagChange {
     "changedAt": changedAt.toUtc().toIso8601String(),
     if (marked != null) "marked": marked,
     if (hanja != null) "hanja": hanja,
+    if (passage != null) "passage": passage,
   };
 }

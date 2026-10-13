@@ -193,6 +193,13 @@ class _FakeApi implements ContentApi {
   Future<void> pushFlagChanges(List<FlagChange> changes) async {
     _check();
     pushedFlags.addAll(changes);
+    // Như server thật: lần tải nội dung sau mang cờ mới.
+    for (final f in changes) {
+      server = server.updateCard(
+        f.cardId,
+        (c) => c.copyWith(marked: f.marked, hanja: f.hanja, passage: f.passage),
+      );
+    }
   }
 
   @override
@@ -460,7 +467,7 @@ void main() {
     expect(find.textContaining("Thuộc 0/2"), findsOneWidget);
   });
 
-  group("⭐/漢 (mọi máy, kể cả offline)", () {
+  group("⭐/漢/📖 (mọi máy, kể cả offline)", () {
     testWidgets("hiện ngay trên thẻ, xếp hàng chờ gửi khi offline", (
       tester,
     ) async {
@@ -468,7 +475,7 @@ void main() {
       expect(find.text("★"), findsNothing);
 
       await openCardMenu(tester);
-      await tester.tap(find.text("☆ Đánh dấu khó nhớ"));
+      await tester.tap(find.text("☆ Khó nhớ"));
       await tester.pumpAndSettle();
 
       expect(find.text("★"), findsOneWidget);
@@ -486,7 +493,7 @@ void main() {
     testWidgets("có mạng thì gửi ngay, hàng đợi trống", (tester) async {
       final h = await pumpApp(tester, api: _FakeApi(online: true));
       await openCardMenu(tester);
-      await tester.tap(find.text("漢 Đánh dấu Hán Hàn"));
+      await tester.tap(find.text("漢 Hán Hàn"));
       await tester.pumpAndSettle();
 
       expect(h.api.pushedFlags.single.hanja, isTrue);
@@ -494,6 +501,52 @@ void main() {
       expect(await h.store.loadPendingFlags(), isEmpty);
       expect(find.text("✓ Đã đồng bộ"), findsOneWidget);
     });
+
+    testWidgets("📖 đoạn văn ngắn: hiện trên thẻ, gửi cờ passage, mở deck", (
+      tester,
+    ) async {
+      final h = await pumpApp(tester, api: _FakeApi(online: true));
+      final picker = find.byType(DropdownButton<String>);
+      String passageLabel() => tester
+          .widget<DropdownButton<String>>(picker)
+          .items!
+          .map((i) => ((i.child as Row).children.first as Expanded).child)
+          .whereType<Text>()
+          .map((t) => t.data!)
+          .firstWhere((l) => l.startsWith("📖"));
+      expect(passageLabel(), "📖 Đoạn văn ngắn (0)");
+
+      await openCardMenu(tester);
+      await tester.tap(find.text("📖 Đoạn văn ngắn"));
+      await tester.pumpAndSettle();
+
+      expect(find.text("📖"), findsOneWidget); // chip trên thẻ
+      expect(h.api.pushedFlags.single.passage, isTrue);
+      expect(h.api.pushedFlags.single.marked, isNull);
+      expect(h.api.pushedFlags.single.hanja, isNull);
+      expect(passageLabel(), "📖 Đoạn văn ngắn (1)");
+
+      // Cờ đang bật: nhãn trong menu có ✓.
+      await openCardMenu(tester);
+      expect(find.text("📖 Đoạn văn ngắn ✓"), findsOneWidget);
+      expect(find.text("☆ Khó nhớ"), findsOneWidget);
+    });
+  });
+
+  testWidgets("ô chọn bộ: deck ảo nằm trên cùng, rồi tới bộ của nhóm", (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    final items = tester
+        .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+        .items!;
+    expect(items.map((i) => i.value), [
+      "marked",
+      "hanja",
+      "passage",
+      "random20",
+      "d1",
+    ]);
   });
 
   group("lịch sử học", () {
@@ -674,7 +727,7 @@ void main() {
         await openCardMenu(tester);
         expect(find.text("✎ Sửa / xoá thẻ"), findsNothing);
         // ⭐/漢 vẫn dùng được trên điện thoại.
-        expect(find.text("☆ Đánh dấu khó nhớ"), findsOneWidget);
+        expect(find.text("☆ Khó nhớ"), findsOneWidget);
       },
       variant: const TargetPlatformVariant({
         TargetPlatform.iOS,

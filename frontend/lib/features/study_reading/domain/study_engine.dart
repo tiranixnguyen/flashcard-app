@@ -21,10 +21,21 @@ enum AnswerOutcome {
 
 const markedDeckId = "marked";
 const hanjaDeckId = "hanja";
+const passageDeckId = "passage";
 const randomDeckId = "random20";
 
 bool isVirtualDeckId(String? id) =>
-    id == markedDeckId || id == hanjaDeckId || id == randomDeckId;
+    id == markedDeckId ||
+    id == hanjaDeckId ||
+    id == passageDeckId ||
+    id == randomDeckId;
+
+/// Tên các deck ảo dựng từ cờ (⭐/漢/📖).
+const _flaggedDeckNames = {
+  markedDeckId: "⭐ Từ khó nhớ",
+  hanjaDeckId: "漢 Ôn từ Hán Hàn",
+  passageDeckId: "📖 Đoạn văn ngắn",
+};
 
 /// Bộ máy học theo kiểu Leitner **trong một lượt học**, thuần Dart (không phụ
 /// thuộc Flutter) để test được trực tiếp.
@@ -42,9 +53,11 @@ class StudyEngine {
     required this._vocabGroups,
     Set<String> markedIds = const {},
     Set<String> hanjaIds = const {},
+    Set<String> passageIds = const {},
     Random? random,
   }) : _markedIds = {...markedIds},
        _hanjaIds = {...hanjaIds},
+       _passageIds = {...passageIds},
        _random = random ?? Random() {
     _currentVocabGroup = _vocabGroups.isEmpty ? "" : _vocabGroups.first.id;
   }
@@ -62,6 +75,7 @@ class StudyEngine {
   List<VocabGroup> _vocabGroups;
   Set<String> _markedIds;
   Set<String> _hanjaIds;
+  Set<String> _passageIds;
   final Random _random;
 
   final Map<String, Deck> _virtualDecks = {};
@@ -152,9 +166,11 @@ class StudyEngine {
 
   bool get currentIsMarked => _markedIds.contains(currentWord?.id);
   bool get currentIsHanja => _hanjaIds.contains(currentWord?.id);
+  bool get currentIsPassage => _passageIds.contains(currentWord?.id);
 
   int get markedCount => _flaggedWords(_markedIds).length;
   int get hanjaCount => _flaggedWords(_hanjaIds).length;
+  int get passageCount => _flaggedWords(_passageIds).length;
 
   // -------------------------------------------------------------- khởi động
 
@@ -372,6 +388,17 @@ class StudyEngine {
   /// Bật/tắt 漢 cho thẻ hiện tại, trả về giá trị mới (`null` nếu không có thẻ).
   bool? toggleHanja() => _toggleFlag(_hanjaIds);
 
+  /// Bật/tắt 📖 cho thẻ hiện tại, trả về giá trị mới (`null` nếu không có thẻ).
+  bool? togglePassage() => _toggleFlag(_passageIds);
+
+  /// Tập cờ ứng với deck ảo [deckId] (⭐/漢/📖); `null` nếu không phải.
+  Set<String>? _flagsOf(String? deckId) => switch (deckId) {
+    markedDeckId => _markedIds,
+    hanjaDeckId => _hanjaIds,
+    passageDeckId => _passageIds,
+    _ => null,
+  };
+
   /// Bỏ cờ ngay trong deck ảo tương ứng thì thẻ vẫn ở lại tới khi sang thẻ
   /// tiếp (xem [_pruneUnflagged]) — để người học xem nốt đáp án, và bấm nhầm
   /// thì bấm lại là xong.
@@ -388,11 +415,7 @@ class StudyEngine {
   /// giảm theo — không thì lượt học không bao giờ "hoàn thành" được.
   void _pruneUnflagged() {
     final deckId = _currentDeckId;
-    final flags = switch (deckId) {
-      markedDeckId => _markedIds,
-      hanjaDeckId => _hanjaIds,
-      _ => null,
-    };
+    final flags = _flagsOf(deckId);
     final deck = currentDeck;
     final rt = _runtime;
     if (flags == null || deck == null || rt == null) return;
@@ -423,13 +446,10 @@ class StudyEngine {
   /// Mở bộ khác — luôn là một lượt mới, kể cả khi quay lại bộ vừa học dở.
   void switchDeck(String deckId) {
     if (deckId == _currentDeckId) return;
-    switch (deckId) {
-      case markedDeckId:
-        _buildFlaggedDeck(markedDeckId, _markedIds);
-      case hanjaDeckId:
-        _buildFlaggedDeck(hanjaDeckId, _hanjaIds);
-      case randomDeckId:
-        _buildRandomDeck();
+    if (deckId == randomDeckId) {
+      _buildRandomDeck();
+    } else if (_flagsOf(deckId) case final flags?) {
+      _buildFlaggedDeck(deckId, flags);
     }
     _openDeck(deckId);
   }
@@ -437,7 +457,7 @@ class StudyEngine {
   void _buildFlaggedDeck(String id, Set<String> flags) {
     _virtualDecks[id] = Deck(
       id: id,
-      name: id == markedDeckId ? "⭐ Từ khó nhớ" : "漢 Ôn từ Hán Hàn",
+      name: _flaggedDeckNames[id]!,
       words: _flaggedWords(flags),
       isVirtual: true,
     );
@@ -488,6 +508,7 @@ class StudyEngine {
     required List<VocabGroup> vocabGroups,
     required Set<String> markedIds,
     required Set<String> hanjaIds,
+    required Set<String> passageIds,
   }) {
     final oldDeck = currentDeck;
     final oldRuntime = _runtime;
@@ -497,6 +518,7 @@ class StudyEngine {
     _vocabGroups = vocabGroups;
     _markedIds = {...markedIds};
     _hanjaIds = {...hanjaIds};
+    _passageIds = {...passageIds};
 
     if (!vocabGroups.any((g) => g.id == _currentVocabGroup)) {
       _currentVocabGroup = vocabGroups.isEmpty ? "" : vocabGroups.first.id;
@@ -510,15 +532,13 @@ class StudyEngine {
       for (final d in decks)
         for (final w in d.words) w.id: w,
     };
-    switch (_currentDeckId) {
-      case markedDeckId:
-        _buildFlaggedDeck(markedDeckId, _markedIds);
-      case hanjaDeckId:
-        _buildFlaggedDeck(hanjaDeckId, _hanjaIds);
-      case randomDeckId:
-        _setRandomDeck([
-          for (final w in oldDeck?.words ?? const <StudyWord>[]) ?byId[w.id],
-        ]);
+    final currentId = _currentDeckId;
+    if (currentId == randomDeckId) {
+      _setRandomDeck([
+        for (final w in oldDeck?.words ?? const <StudyWord>[]) ?byId[w.id],
+      ]);
+    } else if (_flagsOf(currentId) case final flags?) {
+      _buildFlaggedDeck(currentId!, flags);
     }
 
     final newDeck = currentDeck;

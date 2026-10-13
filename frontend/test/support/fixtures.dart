@@ -16,6 +16,7 @@ ContentDeck contentDeck(
   int position = 0,
   Set<int> marked = const {},
   Set<int> hanja = const {},
+  Set<int> passage = const {},
 }) {
   final cards = <ContentCard>[];
   for (final (i, w) in words.indexed) {
@@ -32,6 +33,7 @@ ContentDeck contentDeck(
         typeAnswer: w["typeAnswer"] as bool? ?? defaultTypeAnswer(b),
         marked: marked.contains(i),
         hanja: hanja.contains(i),
+        passage: passage.contains(i),
         audio: CardAudio.fromJson(w),
       ),
     );
@@ -66,6 +68,7 @@ StudyEngine engineFor(ContentSnapshot content, {int seed = 42}) {
     vocabGroups: c.vocabGroups,
     markedIds: c.markedIds,
     hanjaIds: c.hanjaIds,
+    passageIds: c.passageIds,
     random: Random(seed),
   )..bootstrap();
 }
@@ -78,5 +81,6 @@ bool replaceWith(StudyEngine e, ContentSnapshot content) {
     vocabGroups: c.vocabGroups,
     markedIds: c.markedIds,
     hanjaIds: c.hanjaIds,
+    passageIds: c.passageIds,
   );
 }

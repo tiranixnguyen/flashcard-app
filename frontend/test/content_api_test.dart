@@ -88,6 +88,7 @@ void main() {
                 "typeAnswer": false,
                 "marked": false,
                 "hanja": true,
+                "passage": true,
               },
             ],
           },
@@ -100,6 +101,8 @@ void main() {
     expect(cards[0].marked, isTrue);
     expect(cards[1].altAnswers, ["갑니다"]);
     expect(cards[1].hanja, isTrue);
+    // Cache/server cũ chưa có `passage` -> false.
+    expect([cards[0].passage, cards[1].passage], [false, true]);
     expect([cards[0].typeAnswer, cards[1].typeAnswer], [true, false]);
   });
 

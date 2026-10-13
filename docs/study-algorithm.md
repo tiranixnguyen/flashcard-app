@@ -101,12 +101,14 @@ hỏi nên giữ luôn trạng thái lật.
 
 ## Deck ảo
 
-Ba deck dựng động, không có trên server, không ghi lịch sử học:
+Bốn deck dựng động, không có trên server, không ghi lịch sử học. Ô chọn bộ
+xếp chúng **trên cùng** (⭐, 漢, 📖, 🔀), rồi mới tới các bộ của nhóm:
 
 | id | Nội dung |
 |---|---|
 | `marked` | ⭐ các thẻ được đánh dấu khó nhớ |
 | `hanja` | 漢 các thẻ được đánh dấu là từ Hán Hàn |
+| `passage` | 📖 các thẻ được đánh dấu là đoạn văn ngắn |
 | `random20` | 🔀 20 thẻ gốc ngẫu nhiên, rút lại mỗi lần mở |
 
 Thẻ trong deck ảo là bản sao **giữ nguyên `id` của thẻ gốc** — mọi thao tác
@@ -115,7 +117,11 @@ Thẻ trong deck ảo là bản sao **giữ nguyên `id` của thẻ gốc** —
 Cờ đánh dấu chỉ tính trong phạm vi nhóm đang học (`visibleDecks`): đang ở Sep1
 thì không thấy từ đã đánh dấu ở Sep2.
 
-Bỏ ⭐/漢 ngay trong deck ⭐/漢 tương ứng: thẻ vẫn hiện tới khi sang thẻ tiếp (xem
+Ba cờ ⭐/漢/📖 cùng một cơ chế (cột `marked`/`hanja`/`passage` + mốc
+`*ChangedAt` riêng trên server, `FlagChange` ở client); thêm cờ mới thì đi
+theo đủ các chỗ đó.
+
+Bỏ ⭐/漢/📖 ngay trong deck tương ứng: thẻ vẫn hiện tới khi sang thẻ tiếp (xem
 nốt đáp án, bấm nhầm thì bấm lại), rồi rơi hẳn khỏi lượt và tổng số thẻ giảm
 theo (`_pruneUnflagged`, chạy lúc nạp thẻ mới).
 
@@ -161,9 +167,9 @@ Server là nguồn đúng cho **nội dung** (`Group`/`Deck`/`Card`) và **lịc
 - **Nội dung** tải bằng `GET /content`, cache trên máy. Tạo/sửa (nhóm, bộ, thẻ)
   chỉ làm trên Mac/web, **cần có mạng**: gọi server trước, thành công mới áp
   vào máy.
-- **⭐/漢** dùng được mọi máy, kể cả offline: đổi ngay trên máy, xếp vào hàng
+- **⭐/漢/📖** dùng được mọi máy, kể cả offline: đổi ngay trên máy, xếp vào hàng
   đợi `FlagChange { cardId, changedAt }`. Server giữ `markedChangedAt`/
-  `hanjaChangedAt` riêng từng cờ và chỉ nhận thay đổi mới hơn — gửi trễ không
+  `hanjaChangedAt`/`passageChangedAt` riêng từng cờ và chỉ nhận thay đổi mới hơn — gửi trễ không
   đè lần bấm mới hơn ở máy khác.
 - **Lần học** chỉ thêm, không sửa; `id` do máy sinh (128 bit ngẫu nhiên) nên gửi
   lại bao nhiêu lần vẫn chỉ ra một bản ghi, hai máy học cùng lúc không đè nhau.

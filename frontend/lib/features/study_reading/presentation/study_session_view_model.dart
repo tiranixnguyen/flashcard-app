@@ -45,6 +45,7 @@ class StudySessionState {
     required this.streak,
     required this.isMarked,
     required this.isHanja,
+    required this.isPassage,
     required this.correctCount,
     required this.attemptedCount,
     required this.masteredCount,
@@ -60,7 +61,7 @@ class StudySessionState {
   final List<DeckOption> deckOptions;
 
   /// `false` khi nhóm từ vựng đang chọn chưa có bộ từ nào. Không suy ra được từ
-  /// [deckOptions] vì danh sách đó luôn kèm ba deck ảo.
+  /// [deckOptions] vì danh sách đó luôn kèm bốn deck ảo.
   final bool hasVisibleDecks;
 
   final List<VocabGroup> vocabGroups;
@@ -68,7 +69,7 @@ class StudySessionState {
   final String? currentDeckId;
   final String? currentDeckName;
 
-  /// Bộ ảo (⭐/漢/🔀): không ghi lịch sử, không gợi ý ôn, không thêm từ được.
+  /// Bộ ảo (⭐/漢/📖/🔀): không ghi lịch sử, không gợi ý ôn, không thêm từ được.
   final bool isVirtualDeck;
 
   /// `null` khi đã thuộc hết deck hoặc nhóm không có deck nào.
@@ -89,6 +90,7 @@ class StudySessionState {
   final int streak;
   final bool isMarked;
   final bool isHanja;
+  final bool isPassage;
 
   final int correctCount;
   final int attemptedCount;
@@ -189,6 +191,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       vocabGroups: catalog.vocabGroups,
       markedIds: catalog.markedIds,
       hanjaIds: catalog.hanjaIds,
+      passageIds: catalog.passageIds,
     )..bootstrap();
 
     _reconnectSub = ref
@@ -238,6 +241,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       streak: progress?.streak ?? 0,
       isMarked: e.currentIsMarked,
       isHanja: e.currentIsHanja,
+      isPassage: e.currentIsPassage,
       correctCount: e.correctCount,
       attemptedCount: e.attemptedCount,
       masteredCount: e.masteredCount,
@@ -260,9 +264,10 @@ class StudySessionViewModel extends _$StudySessionViewModel {
   ) {
     final marked = e.markedCount;
     final hanja = e.hanjaCount;
+    final passage = e.passageCount;
+    // Deck ảo lên đầu: dùng chung cho mọi nhóm, không trôi xuống cuối khi
+    // nhóm có nhiều bộ.
     return [
-      for (final d in e.visibleDecks)
-        DeckOption(id: d.id, label: d.name, review: reviewOf(d.id)),
       DeckOption(
         id: markedDeckId,
         label: "⭐ Từ khó nhớ ($marked)",
@@ -273,7 +278,14 @@ class StudySessionViewModel extends _$StudySessionViewModel {
         label: "漢 Từ Hán Hàn ($hanja)",
         enabled: hanja > 0,
       ),
+      DeckOption(
+        id: passageDeckId,
+        label: "📖 Đoạn văn ngắn ($passage)",
+        enabled: passage > 0,
+      ),
       const DeckOption(id: randomDeckId, label: "🔀 Deck ngẫu nhiên"),
+      for (final d in e.visibleDecks)
+        DeckOption(id: d.id, label: d.name, review: reviewOf(d.id)),
     ];
   }
 
@@ -422,10 +434,10 @@ class StudySessionViewModel extends _$StudySessionViewModel {
   ContentSnapshot _applyFlag(ContentSnapshot content, FlagChange f) =>
       content.updateCard(
         f.cardId,
-        (c) => c.copyWith(marked: f.marked, hanja: f.hanja),
+        (c) => c.copyWith(marked: f.marked, hanja: f.hanja, passage: f.passage),
       );
 
-  /// Server chưa nhận các ⭐/漢 trong hàng đợi — áp lại lên bản server trả về
+  /// Server chưa nhận các ⭐/漢/📖 trong hàng đợi — áp lại lên bản server trả về
   /// để không nháy về giá trị cũ.
   ContentSnapshot _withPendingFlags(ContentSnapshot content) =>
       _pendingFlags.fold(content, _applyFlag);
@@ -443,6 +455,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       vocabGroups: catalog.vocabGroups,
       markedIds: catalog.markedIds,
       hanjaIds: catalog.hanjaIds,
+      passageIds: catalog.passageIds,
     );
     if (_draft != null && _draft!.deckId != e.currentDeckId) _endDraft();
     if (changedCard) _cancelNextLock();
@@ -541,23 +554,29 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     _emit();
   }
 
-  /// ⭐/漢 dùng được cả offline, trên mọi máy: đổi ngay trên máy, gửi sau.
-  void toggleMark() => _toggleFlag(marked: true);
-  void toggleHanja() => _toggleFlag(marked: false);
+  /// ⭐/漢/📖 dùng được cả offline, trên mọi máy: đổi ngay trên máy, gửi sau.
+  void toggleMark() => _toggleFlag(_Flag.marked);
+  void toggleHanja() => _toggleFlag(_Flag.hanja);
+  void togglePassage() => _toggleFlag(_Flag.passage);
 
-  void _toggleFlag({required bool marked}) {
+  void _toggleFlag(_Flag flag) {
     final e = _engine;
     final cardId = e?.currentWord?.id;
     if (e == null || cardId == null) return;
-    final value = marked ? e.toggleMark() : e.toggleHanja();
+    final value = switch (flag) {
+      _Flag.marked => e.toggleMark(),
+      _Flag.hanja => e.toggleHanja(),
+      _Flag.passage => e.togglePassage(),
+    };
     if (value == null) return;
     HapticFeedback.selectionClick();
 
     final change = FlagChange(
       cardId: cardId,
       changedAt: _now(),
-      marked: marked ? value : null,
-      hanja: marked ? null : value,
+      marked: flag == _Flag.marked ? value : null,
+      hanja: flag == _Flag.hanja ? value : null,
+      passage: flag == _Flag.passage ? value : null,
     );
     _content = _applyFlag(_content, change);
     _pendingFlags = [..._pendingFlags, change];
@@ -724,3 +743,5 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     });
   }
 }
+
+enum _Flag { marked, hanja, passage }

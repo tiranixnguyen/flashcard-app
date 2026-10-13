@@ -62,39 +62,42 @@ model Deck {
 /// Một thẻ. Thẻ của bộ gốc có id cố định "<deckId>-<vị trí>" (vd "ds2-7"),
 /// khớp với bản đóng gói trong app.
 model Card {
-  id              String    @id @default(cuid())
-  deckId          String
-  position        Int
+  id               String    @id @default(cuid())
+  deckId           String
+  position         Int
   /// Mặt trước — câu hỏi hiện ra (thường là nghĩa tiếng Việt).
-  front           String
+  front            String
   /// Mặt sau — đáp án (thường là từ tiếng Hàn).
-  back            String
-  hint            String?
+  back             String
+  hint             String?
   /// Giải thích cho đáp án (không bắt buộc), hiện sau khi lộ đáp án. Markdown
   /// dán thẳng từ AI — giữ nguyên xuống dòng/thụt lề, chỉ bỏ dòng trống ở hai
   /// đầu (xem cleanNote trong wordInput.ts).
-  note            String?
-  altAnswers      String[]  @default([])
+  note             String?
+  altAnswers       String[]  @default([])
   /// `true` = gõ đáp án (chấm theo `back`/`altAnswers`); `false` = thẻ tự
   /// chấm: lật thẻ rồi tự bấm "Nhớ"/"Chưa nhớ". Nhập bộ mà không ghi rõ thì
   /// `back` ngắn (≤ 3 từ) là gõ đáp án — xem wordInput.ts.
-  typeAnswer      Boolean   @default(false)
-  /// ⭐ khó nhớ / 漢 Hán Hàn — điện thoại vẫn được bật/tắt (kể cả offline).
+  typeAnswer       Boolean   @default(false)
+  /// ⭐ khó nhớ / 漢 Hán Hàn / 📖 đoạn văn ngắn — điện thoại vẫn được bật/tắt
+  /// (kể cả offline).
   /// Nhiều máy cùng đổi thì lần đổi muộn nhất thắng, so theo thời điểm bấm do
   /// client gửi lên (không phải lúc tới server). Mỗi cờ một mốc riêng: dùng
   /// chung một mốc thì đổi ⭐ có thể bị từ chối chỉ vì 漢 vừa đổi muộn hơn.
-  marked          Boolean   @default(false)
-  markedChangedAt DateTime?
-  hanja           Boolean   @default(false)
-  hanjaChangedAt  DateTime?
+  marked           Boolean   @default(false)
+  markedChangedAt  DateTime?
+  hanja            Boolean   @default(false)
+  hanjaChangedAt   DateTime?
+  passage          Boolean   @default(false)
+  passageChangedAt DateTime?
   /// File nghe (MP3) gắn vào từng trường — nút ▶︎ hiện cạnh trường đó. Chỉ
   /// Mac/web phát; điện thoại bỏ qua. Xoá Audio thì thẻ chỉ mất file nghe.
-  frontAudioId    String?
-  backAudioId     String?
-  hintAudioId     String?
-  noteAudioId     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  frontAudioId     String?
+  backAudioId      String?
+  hintAudioId      String?
+  noteAudioId      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   deck       Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
   frontAudio Audio? @relation("FrontAudio", fields: [frontAudioId], references: [id], onDelete: SetNull)

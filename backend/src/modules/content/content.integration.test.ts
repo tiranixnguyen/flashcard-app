@@ -170,7 +170,7 @@ describe("bộ từ và thẻ", () => {
   });
 });
 
-describe("dấu ⭐/漢 — lần bấm muộn nhất thắng, mỗi dấu tính riêng", () => {
+describe("dấu ⭐/漢/📖 — lần bấm muộn nhất thắng, mỗi dấu tính riêng", () => {
   it("lần bấm cũ tới sau (hàng đợi offline) không đè lần bấm mới hơn", async () => {
     const g = await makeGroup();
     const { cards } = await makeDeck(g.id, [{ back: "가", front: "a" }]);
@@ -202,6 +202,30 @@ describe("dấu ⭐/漢 — lần bấm muộn nhất thắng, mỗi dấu tính
     expect(r.json.applied).toBe(1);
     const c = (await api("GET", "/content")).json.decks[0].cards[0];
     expect([c.marked, c.hanja]).toEqual([true, true]);
+  });
+
+  it("📖 đoạn văn ngắn: bật/tắt riêng, lần bấm cũ không đè", async () => {
+    const g = await makeGroup();
+    const { cards } = await makeDeck(g.id, [{ back: "가", front: "a" }]);
+    const id = cards[0].id;
+    expect(cards[0].passage).toBe(false);
+
+    const r = await api("POST", "/cards/flags", {
+      changes: [
+        { cardId: id, passage: true, changedAt: "2026-01-03T00:00:00Z" },
+        { cardId: id, passage: false, changedAt: "2026-01-02T00:00:00Z" },
+      ],
+    });
+    expect(r.json).toEqual({ applied: 1, ignored: 1 });
+    const c = (await api("GET", "/content")).json.decks[0].cards[0];
+    expect([c.marked, c.hanja, c.passage]).toEqual([false, false, true]);
+  });
+
+  it("passage không phải boolean -> 400", async () => {
+    const r = await api("POST", "/cards/flags", {
+      changes: [{ cardId: "x", passage: "yes", changedAt: "2026-01-01T00:00:00Z" }],
+    });
+    expect(r.status).toBe(400);
   });
 
   it("thẻ đã bị xoá thì bỏ qua, không lỗi", async () => {

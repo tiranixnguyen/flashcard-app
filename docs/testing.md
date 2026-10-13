@@ -5,7 +5,7 @@
 - `study_engine_test.dart` — thuật toán trên dữ liệu giả (dựng qua
   `support/fixtures.dart` → `buildStudyCatalog`, đúng đường chạy thật), hạt
   giống cố định. Gồm `replaceContent` (sửa/xoá/thêm thẻ giữa lượt), bỏ cờ
-  trong deck ⭐/漢 và thẻ tự chấm (lật không tính điểm, chưa lật không chấm
+  trong deck ⭐/漢/📖 và thẻ tự chấm (lật không tính điểm, chưa lật không chấm
   được, "Nhớ"/"Chưa nhớ" đúng nhánh), mỗi thẻ độc lập (thuộc/xoá một thẻ
   không kéo thẻ khác).
   Fixture `contentDeck` áp `defaultTypeAnswer` như server, nên từ ngắn trong
@@ -27,7 +27,8 @@
   `visibleAudioFields` cho `Cmd+.`.
 - `study_reading_view_test.dart` — smoke test UI qua `_FakeApi` (server trong
   bộ nhớ) + `MemoryStore`: ghi lần học (hết bộ / bỏ dở / nháp sót), hàng đợi
-  offline tự gửi khi có mạng, ⭐/漢 offline, lịch sử gộp máy khác, soạn nội dung
+  offline tự gửi khi có mạng, ⭐/漢/📖 offline (`_FakeApi` áp cờ vào server giả
+  như thật), thứ tự ô chọn bộ (deck ảo trên cùng), lịch sử gộp máy khác, soạn nội dung
   chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ), bộ rỗng không
   crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0), file nghe (nút
   theo trường, dừng khi sang thẻ, `Cmd+.`, offline, điện thoại không có, dialog

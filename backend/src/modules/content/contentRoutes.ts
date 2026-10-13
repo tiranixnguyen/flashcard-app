@@ -174,7 +174,8 @@ contentRouter.post(
         typeof c.changedAt === "string" &&
         !Number.isNaN(Date.parse(c.changedAt)) &&
         (c.marked === undefined || typeof c.marked === "boolean") &&
-        (c.hanja === undefined || typeof c.hanja === "boolean");
+        (c.hanja === undefined || typeof c.hanja === "boolean") &&
+        (c.passage === undefined || typeof c.passage === "boolean");
       if (!ok) {
         res.status(400).json({ error: `changes[${i}] không hợp lệ.` });
         return;

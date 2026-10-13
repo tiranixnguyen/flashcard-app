@@ -169,6 +169,7 @@ class ContentCard {
     this.typeAnswer = false,
     this.marked = false,
     this.hanja = false,
+    this.passage = false,
     this.audio = CardAudio.none,
   });
 
@@ -186,6 +187,9 @@ class ContentCard {
   final bool typeAnswer;
   final bool marked;
   final bool hanja;
+
+  /// 📖 Đoạn văn ngắn — cờ người học tự gắn, giống ⭐/漢.
+  final bool passage;
 
   /// Xem [StudyWord.audio].
   final CardAudio audio;
@@ -206,6 +210,7 @@ class ContentCard {
     typeAnswer: json["typeAnswer"] as bool? ?? json.containsKey("kr"),
     marked: json["marked"] as bool? ?? false,
     hanja: json["hanja"] as bool? ?? false,
+    passage: json["passage"] as bool? ?? false,
     audio: CardAudio.fromJson(json),
   );
 
@@ -220,6 +225,7 @@ class ContentCard {
     "typeAnswer": typeAnswer,
     "marked": marked,
     "hanja": hanja,
+    "passage": passage,
     ...audio.toJson(),
   };
 
@@ -232,6 +238,7 @@ class ContentCard {
     bool? typeAnswer,
     bool? marked,
     bool? hanja,
+    bool? passage,
     CardAudio? audio,
   }) => ContentCard(
     id: id,
@@ -244,6 +251,7 @@ class ContentCard {
     typeAnswer: typeAnswer ?? this.typeAnswer,
     marked: marked ?? this.marked,
     hanja: hanja ?? this.hanja,
+    passage: passage ?? this.passage,
     audio: audio ?? this.audio,
   );
 }
@@ -255,12 +263,14 @@ class StudyCatalog {
     required this.vocabGroups,
     required this.markedIds,
     required this.hanjaIds,
+    required this.passageIds,
   });
 
   final List<Deck> decks;
   final List<VocabGroup> vocabGroups;
   final Set<String> markedIds;
   final Set<String> hanjaIds;
+  final Set<String> passageIds;
 }
 
 /// Dựng dữ liệu cho engine: sắp nhóm/bộ/thẻ theo `position`.
@@ -272,6 +282,7 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
 
   final marked = <String>{};
   final hanja = <String>{};
+  final passage = <String>{};
   final studyDecks = <Deck>[];
 
   for (final d in decks) {
@@ -281,6 +292,7 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
     for (final c in cards) {
       if (c.marked) marked.add(c.id);
       if (c.hanja) hanja.add(c.id);
+      if (c.passage) passage.add(c.id);
       words.add(
         StudyWord(
           id: c.id,
@@ -304,5 +316,6 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
     vocabGroups: [for (final g in groups) VocabGroup(id: g.id, name: g.name)],
     markedIds: marked,
     hanjaIds: hanja,
+    passageIds: passage,
   );
 }

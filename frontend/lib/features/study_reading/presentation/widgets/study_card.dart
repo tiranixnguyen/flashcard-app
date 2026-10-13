@@ -324,6 +324,8 @@ class _CardMeta extends ConsumerWidget {
               // menu ••• mới biết thẻ đã được gắn cờ hay chưa.
               if (s.isMarked) _flagChip("★", p.gold, "Đã đánh dấu khó nhớ"),
               if (s.isHanja) _flagChip("漢", p.blue, "Đã đánh dấu Hán Hàn"),
+              if (s.isPassage)
+                _flagChip("📖", p.ink, "Đã đánh dấu đoạn văn ngắn"),
             ],
           ),
         ),
@@ -383,23 +385,36 @@ class _CardMeta extends ConsumerWidget {
             vm.toggleMark();
           case "hanja":
             vm.toggleHanja();
+          case "passage":
+            vm.togglePassage();
           case "edit":
             await _openEditDialog(context, vm);
         }
       },
+      // Nhãn ngắn, không "Đánh dấu"; cờ đang bật thì có ✓ ở cuối.
       itemBuilder: (_) => [
         PopupMenuItem(
           value: "mark",
           child: Text(
-            s.isMarked ? "★ Đã đánh dấu khó nhớ" : "☆ Đánh dấu khó nhớ",
+            s.isMarked ? "★ Khó nhớ ✓" : "☆ Khó nhớ",
             style: TextStyle(color: s.isMarked ? p.gold : p.ink),
           ),
         ),
         PopupMenuItem(
           value: "hanja",
           child: Text(
-            s.isHanja ? "漢 Đã đánh dấu Hán Hàn" : "漢 Đánh dấu Hán Hàn",
+            s.isHanja ? "漢 Hán Hàn ✓" : "漢 Hán Hàn",
             style: TextStyle(color: s.isHanja ? p.blue : p.ink),
+          ),
+        ),
+        PopupMenuItem(
+          value: "passage",
+          child: Text(
+            s.isPassage ? "📖 Đoạn văn ngắn ✓" : "📖 Đoạn văn ngắn",
+            style: TextStyle(
+              color: p.ink,
+              fontWeight: s.isPassage ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ),
         // Sửa/xoá thẻ cần mạng và bàn phím thật -> chỉ Mac/web.
