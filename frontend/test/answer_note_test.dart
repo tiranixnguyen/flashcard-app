@@ -25,8 +25,8 @@ final _longNote = [
 ].join("\n");
 const _shortNote = "Dòng 1\nDòng 2 **đậm**";
 
-/// Dựng giống ngữ cảnh thật trong thẻ: `IntrinsicHeight` + `Row` + cột nội
-/// dung — Markdown (bảng, khối code cuộn ngang) phải layout được trong đó.
+/// Dựng trong `IntrinsicHeight` + `Row` + cột nội dung — ngữ cảnh khắt khe
+/// nhất: Markdown (bảng, khối code cuộn ngang) phải layout được trong đó.
 Future<void> pumpNote(WidgetTester tester, String note) async {
   await tester.pumpWidget(
     // Bảng xem đầy đủ phóng chữ theo cardZoomProvider (SharedPreferences).

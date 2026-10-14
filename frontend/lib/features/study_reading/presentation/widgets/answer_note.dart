@@ -16,9 +16,8 @@ const answerNoteMaxHeight = 280.0;
 /// Giải thích cho đáp án, hiện sau khi lộ mặt sau. Nội dung là Markdown dán
 /// thẳng từ AI (tiêu đề, **đậm**, danh sách, bảng, code…).
 ///
-/// Thẻ bọc trong `IntrinsicHeight` nên không dùng `LayoutBuilder` để đo tràn
-/// (xem [HintBox]); thay vào đó đọc `maxScrollExtent` của khung cuộn sau khi
-/// layout xong.
+/// Đo tràn bằng `maxScrollExtent` của khung cuộn sau khi layout xong, không
+/// dùng `LayoutBuilder` (xem [HintBox]).
 class AnswerNote extends StatefulWidget {
   const AnswerNote({
     super.key,

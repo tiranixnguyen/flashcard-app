@@ -65,95 +65,101 @@ class StudyCard extends ConsumerWidget {
         ],
       ),
       padding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 26, narrow ? 16 : 24, 28),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(width: 6, child: DashedVerticalLine(color: p.red)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardMeta(state: s, palette: p),
-                  const SizedBox(height: 16),
-                  CardTextZoom(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+      // Vạch đứt bên trái kéo hết chiều cao thẻ nhờ Positioned trong Stack.
+      // Không dùng IntrinsicHeight + Row(stretch): lượt đo intrinsic lệch vài
+      // phần pixel so với lúc xếp thật (TextField, font thật) làm cột tràn 1px.
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+            child: DashedVerticalLine(color: p.red),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CardMeta(state: s, palette: p),
+                const SizedBox(height: 16),
+                CardTextZoom(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Nghĩa tiếng Việt",
+                        style: GoogleFonts.notoSans(
+                          fontSize: 13,
+                          color: p.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _withAudio(
+                        s,
+                        CardField.front,
+                        p,
                         Text(
-                          "Nghĩa tiếng Việt",
+                          word.front,
                           style: GoogleFonts.notoSans(
-                            fontSize: 13,
-                            color: p.inkSoft,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
+                            color: p.ink,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                      ),
+                      if (word.hint != null) ...[
+                        const SizedBox(height: 12),
+                        // Key theo thẻ để sang thẻ mới thì vị trí cuộn /
+                        // trạng thái "tràn" được làm mới, không mang theo từ
+                        // thẻ trước. Key phải khác của AnswerNote: trùng key
+                        // thì element gợi ý cũ không được gỡ, vẫn hiện.
                         _withAudio(
                           s,
-                          CardField.front,
+                          CardField.hint,
                           p,
-                          Text(
-                            word.front,
-                            style: GoogleFonts.notoSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                              color: p.ink,
-                            ),
+                          HintBox(
+                            key: ValueKey(("hint", s.cardSerial)),
+                            hint: word.hint!,
+                            title: word.front,
+                            palette: p,
                           ),
                         ),
-                        if (word.hint != null) ...[
-                          const SizedBox(height: 12),
-                          // Key theo thẻ để sang thẻ mới thì vị trí cuộn /
-                          // trạng thái "tràn" được làm mới, không mang theo từ
-                          // thẻ trước. Key phải khác của AnswerNote: trùng key
-                          // thì element gợi ý cũ không được gỡ, vẫn hiện.
-                          _withAudio(
-                            s,
-                            CardField.hint,
-                            p,
-                            HintBox(
-                              key: ValueKey(("hint", s.cardSerial)),
-                              hint: word.hint!,
-                              title: word.front,
-                              palette: p,
-                            ),
-                          ),
-                        ],
                       ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                if (word.typeAnswer) ...[
+                  _answerRow(ref, isCorrect),
+                  if (s.answered) ...[
+                    const SizedBox(height: 14),
+                    _Feedback(state: s, palette: p, isCorrect: isCorrect),
+                  ],
+                ] else if (s.answered)
+                  // Thẻ tự chấm chỉ dừng lại ở đây sau "Đã thuộc" — tự
+                  // chấm xong là sang thẻ tiếp luôn.
+                  _Feedback(state: s, palette: p, isCorrect: isCorrect)
+                else
+                  _FlipSide(key: answerRowKey, state: s, palette: p),
+                // Giải thích chỉ hiện khi đã lộ mặt sau (chấm xong / lật).
+                if (word.note != null && (s.answered || s.flipped)) ...[
+                  const SizedBox(height: 18),
+                  CardTextZoom(
+                    child: AnswerNote(
+                      key: ValueKey(("note", s.cardSerial)),
+                      note: word.note!,
+                      title: word.front,
+                      palette: p,
+                      headerTrailing: _audioButton(s, CardField.note, p),
                     ),
                   ),
-                  const SizedBox(height: 22),
-                  if (word.typeAnswer) ...[
-                    _answerRow(ref, isCorrect),
-                    if (s.answered) ...[
-                      const SizedBox(height: 14),
-                      _Feedback(state: s, palette: p, isCorrect: isCorrect),
-                    ],
-                  ] else if (s.answered)
-                    // Thẻ tự chấm chỉ dừng lại ở đây sau "Đã thuộc" — tự
-                    // chấm xong là sang thẻ tiếp luôn.
-                    _Feedback(state: s, palette: p, isCorrect: isCorrect)
-                  else
-                    _FlipSide(key: answerRowKey, state: s, palette: p),
-                  // Giải thích chỉ hiện khi đã lộ mặt sau (chấm xong / lật).
-                  if (word.note != null && (s.answered || s.flipped)) ...[
-                    const SizedBox(height: 18),
-                    CardTextZoom(
-                      child: AnswerNote(
-                        key: ValueKey(("note", s.cardSerial)),
-                        note: word.note!,
-                        title: word.front,
-                        palette: p,
-                        headerTrailing: _audioButton(s, CardField.note, p),
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

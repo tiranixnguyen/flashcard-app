@@ -14,8 +14,8 @@ const _shortHint = "một dòng ngắn";
 /// Chiều cao tối đa kỳ vọng trên máy tính: đúng [hintVisibleLines] dòng.
 const _capHeight = 14.0 * 1.45 * hintVisibleLines;
 
-/// Dựng giống ngữ cảnh thật trong thẻ: `IntrinsicHeight` + `Row` + cột nội
-/// dung. `IntrinsicHeight` là chỗ dễ vỡ nhất (vd `LayoutBuilder` sẽ ném lỗi).
+/// Dựng trong `IntrinsicHeight` + `Row` + cột nội dung — ngữ cảnh khắt khe
+/// nhất (vd `LayoutBuilder` sẽ ném lỗi), để `HintBox` dùng được ở mọi nơi.
 Future<void> pumpHint(WidgetTester tester, String hint) async {
   await tester.pumpWidget(
     // Bảng xem đầy đủ phóng chữ theo cardZoomProvider (SharedPreferences).

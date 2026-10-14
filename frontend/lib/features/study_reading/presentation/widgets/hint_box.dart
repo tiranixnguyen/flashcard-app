@@ -15,10 +15,9 @@ const _lineHeight = 1.45;
 
 /// Chú thích của thẻ, có giới hạn chiều cao.
 ///
-/// Không dùng `LayoutBuilder` để đo xem chữ có tràn không: thẻ bọc trong
-/// `IntrinsicHeight` (để vạch đứt bên trái kéo hết chiều cao thẻ), mà
-/// `LayoutBuilder` không hỗ trợ tính intrinsic và sẽ ném lỗi. Thay vào đó đọc
-/// `RenderParagraph.didExceedMaxLines` sau khi layout xong.
+/// Đo xem chữ có tràn không bằng `RenderParagraph.didExceedMaxLines` sau khi
+/// layout xong, không dùng `LayoutBuilder` — nhờ vậy vẫn dựng được dưới
+/// `IntrinsicHeight` (`LayoutBuilder` không tính intrinsic, sẽ ném lỗi).
 class HintBox extends StatefulWidget {
   const HintBox({
     super.key,
