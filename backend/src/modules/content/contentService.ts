@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../../../prisma/generated/prisma/client";
+import { DeckType } from "../../../prisma/generated/prisma/enums";
 import { missingAudioIds } from "../audio/audioService";
 import { HttpError } from "../common/httpError";
 import { cleanAlts, cleanNote, cleanWordInputs, type WordInput } from "./wordInput";
@@ -26,11 +27,36 @@ export interface CardDto {
 export const AUDIO_FIELDS = ["frontAudioId", "backAudioId", "hintAudioId", "noteAudioId"] as const;
 export type AudioField = (typeof AUDIO_FIELDS)[number];
 
+/** Loại bộ từ hợp lệ (client hiển thị 듣기, 말하기, 읽기, 쓰기, 문법). */
+export const DECK_TYPES = Object.values(DeckType);
+
+/** `undefined` = không hợp lệ; `null` = bỏ phân loại. */
+export function parseDeckType(value: unknown): DeckType | null | undefined {
+  if (value === null) return null;
+  return DECK_TYPES.find((t) => t === value);
+}
+
+export const MAX_DESCRIPTION = 500;
+
+/**
+ * Mô tả bộ: chữ thuần, bỏ khoảng trắng hai đầu, rỗng → `null`. `undefined` =
+ * không hợp lệ (không phải chuỗi/null hoặc dài quá [MAX_DESCRIPTION]).
+ */
+export function parseDescription(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== "string") return undefined;
+  const text = value.replace(/\r\n?/g, "\n").trim();
+  if (text.length > MAX_DESCRIPTION) return undefined;
+  return text || null;
+}
+
 export interface DeckDto {
   id: string;
   groupId: string;
   name: string;
   position: number;
+  type: DeckType | null;
+  description: string | null;
   cards: CardDto[];
 }
 
@@ -72,9 +98,19 @@ function toDeckDto(d: {
   groupId: string;
   name: string;
   position: number;
+  type: DeckType | null;
+  description: string | null;
   cards: CardDto[];
 }): DeckDto {
-  return { id: d.id, groupId: d.groupId, name: d.name, position: d.position, cards: d.cards };
+  return {
+    id: d.id,
+    groupId: d.groupId,
+    name: d.name,
+    position: d.position,
+    type: d.type,
+    description: d.description,
+    cards: d.cards,
+  };
 }
 
 /** Toàn bộ nội dung (nhóm + bộ + thẻ) của user — app tải một lần rồi cache. */
@@ -151,7 +187,13 @@ async function insertCards(
 export async function createDeck(
   prisma: PrismaClient,
   userId: string,
-  input: { groupId: string; name: string; words: WordInput[] },
+  input: {
+    groupId: string;
+    name: string;
+    type?: DeckType | null;
+    description?: string | null;
+    words: WordInput[];
+  },
 ): Promise<DeckDto> {
   return prisma.$transaction(async (tx) => {
     const group = await tx.group.findFirst({ where: { id: input.groupId, userId } });
@@ -167,6 +209,8 @@ export async function createDeck(
         groupId: group.id,
         name: input.name.trim(),
         position: (last?.position ?? -1) + 1,
+        type: input.type ?? null,
+        description: input.description ?? null,
       },
     });
     await insertCards(tx, deck.id, input.words, 0);
@@ -174,6 +218,20 @@ export async function createDeck(
       await tx.deck.findUniqueOrThrow({ where: { id: deck.id }, include: deckInclude }),
     );
   });
+}
+
+/** Sửa thông tin bộ (loại, mô tả): thiếu trường = giữ nguyên, `null` = xoá. */
+export async function updateDeck(
+  prisma: PrismaClient,
+  userId: string,
+  deckId: string,
+  patch: { type?: DeckType | null; description?: string | null },
+): Promise<DeckDto> {
+  const { count } = await prisma.deck.updateMany({ where: { id: deckId, userId }, data: patch });
+  if (count === 0) throw new HttpError(404, "Không tìm thấy bộ từ.");
+  return toDeckDto(
+    await prisma.deck.findUniqueOrThrow({ where: { id: deckId }, include: deckInclude }),
+  );
 }
 
 /**

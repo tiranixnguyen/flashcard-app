@@ -77,6 +77,87 @@ describe("bộ từ và thẻ", () => {
     expect(noGroup.status).toBe(404);
   });
 
+  it("loại bộ: mặc định null, đặt khi tạo, đổi/bỏ bằng PATCH", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    expect((await makeDeck(g.id, words)) as any).toMatchObject({ type: null });
+
+    const r = await api("POST", "/decks", {
+      groupId: g.id,
+      name: "Nghe",
+      type: "listening",
+      words,
+    });
+    expect(r.status).toBe(201);
+    expect(r.json.type).toBe("listening");
+
+    const changed = await api("PATCH", `/decks/${r.json.id}`, { type: "grammar" });
+    expect(changed.json).toMatchObject({ type: "grammar", name: "Nghe" });
+    expect(changed.json.cards).toHaveLength(1);
+    const cleared = await api("PATCH", `/decks/${r.json.id}`, { type: null });
+    expect(cleared.json.type).toBeNull();
+
+    const content = await api("GET", "/content");
+    expect(content.json.decks.map((d: any) => d.type)).toEqual([null, null]);
+  });
+
+  it("loại bộ sai -> 400; bộ không tồn tại -> 404", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    const bad = await api("POST", "/decks", { groupId: g.id, name: "x", type: "듣기", words });
+    expect(bad.status).toBe(400);
+    const deck = await makeDeck(g.id, words);
+    expect((await api("PATCH", `/decks/${deck.id}`, {})).status).toBe(400);
+    expect((await api("PATCH", `/decks/${deck.id}`, { type: "music" })).status).toBe(400);
+    expect((await api("PATCH", "/decks/khong-co", { type: "reading" })).status).toBe(404);
+  });
+
+  it("mô tả bộ: dọn khoảng trắng, PATCH thiếu trường thì giữ, rỗng/null là xoá", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    const r = await api("POST", "/decks", {
+      groupId: g.id,
+      name: "Nghe",
+      type: "listening",
+      description: "  Bài nghe:\r\nhttps://example.com/a  ",
+      words,
+    });
+    expect(r.status).toBe(201);
+    expect(r.json.description).toBe("Bài nghe:\nhttps://example.com/a");
+    expect((await makeDeck(g.id, words)) as any).toMatchObject({ description: null });
+
+    // Chỉ đổi loại -> mô tả giữ nguyên, và ngược lại.
+    const typed = await api("PATCH", `/decks/${r.json.id}`, { type: "grammar" });
+    expect(typed.json).toMatchObject({
+      type: "grammar",
+      description: "Bài nghe:\nhttps://example.com/a",
+    });
+    const described = await api("PATCH", `/decks/${r.json.id}`, { description: "Mới" });
+    expect(described.json).toMatchObject({ type: "grammar", description: "Mới" });
+
+    expect(
+      (await api("PATCH", `/decks/${r.json.id}`, { description: "   " })).json.description,
+    ).toBeNull();
+    await api("PATCH", `/decks/${r.json.id}`, { description: "x" });
+    expect(
+      (await api("PATCH", `/decks/${r.json.id}`, { description: null })).json.description,
+    ).toBeNull();
+  });
+
+  it("mô tả bộ sai kiểu hoặc quá 500 ký tự -> 400", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    const long = "a".repeat(501);
+    expect(
+      (await api("POST", "/decks", { groupId: g.id, name: "x", description: long, words })).status,
+    ).toBe(400);
+    const deck = await makeDeck(g.id, words);
+    expect((await api("PATCH", `/decks/${deck.id}`, { description: 5 })).status).toBe(400);
+    expect((await api("PATCH", `/decks/${deck.id}`, { description: long })).status).toBe(400);
+    const ok = await api("PATCH", `/decks/${deck.id}`, { description: "a".repeat(500) });
+    expect(ok.status).toBe(200);
+  });
+
   it("bộ tối đa 500 từ -> tạo trọn trong một transaction", async () => {
     const g = await makeGroup();
     const words = Array.from({ length: 500 }, (_, i) => ({ back: `단어${i}`, front: `từ ${i}` }));

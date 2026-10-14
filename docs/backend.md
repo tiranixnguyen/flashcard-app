@@ -44,6 +44,16 @@ khởi đầu / bản sao:
   bắt buộc): lưu nguyên văn, chỉ bỏ dòng trống đầu + khoảng trắng cuối và đổi
   CRLF (`cleanNote`); PATCH thiếu `note` thì giữ nguyên, `null`/rỗng là xoá. App vẫn đọc được cache cũ `kr`/`vi` trên
   máy (coi là thẻ gõ đáp án) tới lần đồng bộ sau.
+- `Deck.type` (enum `DeckType`, không bắt buộc): `listening`/`speaking`/
+  `reading`/`writing`/`grammar` — client hiển thị 듣기/말하기/읽기/쓰기/문법.
+  Lưu khoá ASCII để đổi nhãn không cần migration; app gặp giá trị lạ thì coi
+  như chưa phân loại.
+- `Deck.description` (không bắt buộc): chữ thuần ≤ 500 ký tự, bỏ khoảng trắng
+  hai đầu + đổi CRLF, rỗng → `null` (`parseDescription`). App tự biến link
+  `http(s)://` thành link bấm được (chỉ Mac/web).
+- `POST /decks` nhận thêm `type`, `description`. `PATCH /decks/:id`
+  `{ type?, description? }`: thiếu trường = giữ, `null` = xoá, giá trị sai hoặc
+  body không có trường nào → 400.
 - `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm), **định dạng cũ
   `kr`/`vi`** (`importContent.ts` tự chuyển sang `back`/`front`). Chỉ `npm run
   import-content` đọc, cùng chỉnh sửa/⭐/漢 thật từ bảng `SyncState` cũ (không có

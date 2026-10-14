@@ -8,9 +8,14 @@ import {
   type AudioField,
   createDeck,
   createGroup,
+  DECK_TYPES,
   deleteCard,
   getContent,
+  MAX_DESCRIPTION,
+  parseDeckType,
+  parseDescription,
   renameGroup,
+  updateDeck,
   updateCard,
   type FlagChange,
 } from "./contentService";
@@ -23,6 +28,8 @@ import { parseWordInputs } from "./wordInput";
 export const contentRouter = Router();
 
 const MAX_NAME = 120;
+const TYPE_ERROR = `Loại bộ không hợp lệ (${DECK_TYPES.join(", ")} hoặc null).`;
+const DESCRIPTION_ERROR = `Mô tả bộ phải là chữ, tối đa ${MAX_DESCRIPTION} ký tự.`;
 
 function nameOf(body: unknown): string | null {
   const name = (body as { name?: unknown } | null)?.name;
@@ -75,14 +82,63 @@ contentRouter.post(
       res.status(400).json({ error: "Thiếu groupId." });
       return;
     }
+    const type = body.type === undefined ? null : parseDeckType(body.type);
+    if (type === undefined) {
+      res.status(400).json({ error: TYPE_ERROR });
+      return;
+    }
+    const description = body.description === undefined ? null : parseDescription(body.description);
+    if (description === undefined) {
+      res.status(400).json({ error: DESCRIPTION_ERROR });
+      return;
+    }
     const words = parseWordInputs(body.words);
     if (!words.ok) {
       res.status(400).json({ error: words.error });
       return;
     }
-    res
-      .status(201)
-      .json(await createDeck(prisma, userId, { groupId: body.groupId, name, words: words.value }));
+    res.status(201).json(
+      await createDeck(prisma, userId, {
+        groupId: body.groupId,
+        name,
+        type,
+        description,
+        words: words.value,
+      }),
+    );
+  }),
+);
+
+/**
+ * Sửa thông tin bộ: body `{ type?, description? }` — thiếu trường = giữ
+ * nguyên, `null` = xoá. Phải có ít nhất một trường.
+ */
+contentRouter.patch(
+  "/decks/:id",
+  handle(async (req, res, userId) => {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const patch: Parameters<typeof updateDeck>[3] = {};
+    if (body.type !== undefined) {
+      const type = parseDeckType(body.type);
+      if (type === undefined) {
+        res.status(400).json({ error: TYPE_ERROR });
+        return;
+      }
+      patch.type = type;
+    }
+    if (body.description !== undefined) {
+      const description = parseDescription(body.description);
+      if (description === undefined) {
+        res.status(400).json({ error: DESCRIPTION_ERROR });
+        return;
+      }
+      patch.description = description;
+    }
+    if (Object.keys(patch).length === 0) {
+      res.status(400).json({ error: "Không có gì để sửa (type, description)." });
+      return;
+    }
+    res.json(await updateDeck(prisma, userId, String(req.params.id), patch));
   }),
 );
 

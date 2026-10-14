@@ -38,16 +38,31 @@ model Group {
   @@index([userId, position])
 }
 
+/// Loại bộ từ (kỹ năng). Lưu khoá ASCII; nhãn tiếng Hàn (듣기, 말하기, 읽기,
+/// 쓰기, 문법) do client hiển thị.
+enum DeckType {
+  listening
+  speaking
+  reading
+  writing
+  grammar
+}
+
 /// Bộ từ. 28 bộ gốc giữ id cũ ("ds1" … "ds30") để khớp với bản đóng gói sẵn
 /// trong app (frontend/assets/content.json) — xem scripts/importContent.ts.
 model Deck {
-  id        String   @id @default(cuid())
-  userId    String
-  groupId   String
-  name      String
-  position  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(cuid())
+  userId      String
+  groupId     String
+  name        String
+  position    Int
+  /// Không bắt buộc — bộ chưa phân loại để `null`. Chỉ Mac/web đặt/đổi.
+  type        DeckType?
+  /// Mô tả ngắn (không bắt buộc, chữ thuần). Link `http(s)://` trong đó app
+  /// hiển thị thành link bấm được.
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   // NoAction thay vì Restrict mặc định: vẫn cấm xoá nhóm còn chứa bộ, nhưng
