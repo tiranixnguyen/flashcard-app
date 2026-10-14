@@ -5,6 +5,7 @@ import "package:dio/dio.dart";
 import "package:flashcard_app/features/study_reading/data/content_api.dart";
 import "package:flashcard_app/features/study_reading/models/card_audio.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
+import "package:flashcard_app/features/study_reading/models/deck.dart";
 import "package:flashcard_app/features/study_reading/models/study_session_record.dart";
 import "package:flutter_test/flutter_test.dart";
 
@@ -66,6 +67,8 @@ void main() {
             "groupId": "g1",
             "name": "Bộ 1",
             "position": 0,
+            "type": "listening",
+            "description": "Nghe https://a.com",
             "cards": [
               {
                 "id": "ds1-0",
@@ -104,6 +107,71 @@ void main() {
     // Cache/server cũ chưa có `passage` -> false.
     expect([cards[0].passage, cards[1].passage], [false, true]);
     expect([cards[0].typeAnswer, cards[1].typeAnswer], [true, false]);
+    expect(c.decks.single.type, DeckType.listening);
+    expect(c.decks.single.toJson()["type"], "listening");
+    expect(c.decks.single.description, "Nghe https://a.com");
+    expect(
+      c.decks.single.copyWith(cards: []).description,
+      "Nghe https://a.com",
+    );
+  });
+
+  test("loại bộ: thiếu (cache cũ) hoặc giá trị lạ -> chưa phân loại", () {
+    ContentDeck deck(Object? type) => ContentDeck.fromJson({
+      "id": "ds1",
+      "groupId": "g1",
+      "name": "Bộ 1",
+      "position": 0,
+      "type": ?type,
+      "cards": [],
+    });
+    expect(deck(null).type, isNull);
+    expect(deck(null).description, isNull); // cache cũ chưa có mô tả
+    expect(deck("music").type, isNull);
+    expect(deck("grammar").type, DeckType.grammar);
+    expect(deck("grammar").copyWith(cards: []).type, DeckType.grammar);
+  });
+
+  test("tạo bộ gửi kèm loại; đổi loại = PATCH /decks/:id", () async {
+    final deckJson = {
+      "id": "dx",
+      "groupId": "g1",
+      "name": "Nghe",
+      "position": 0,
+      "type": "reading",
+      "cards": [],
+    };
+    final (api, adapter) = _api((_) => _json(200, deckJson));
+    await api.createDeck(
+      groupId: "g1",
+      name: "Nghe",
+      words: const [],
+      type: DeckType.speaking,
+      description: "mô tả",
+    );
+    expect(adapter.requests.last.data, containsPair("type", "speaking"));
+    expect(adapter.requests.last.data, containsPair("description", "mô tả"));
+
+    await api.setDeckDescription("dx", "https://a.com");
+    expect(
+      [adapter.requests.last.path, adapter.requests.last.data],
+      [
+        "/decks/dx",
+        {"description": "https://a.com"},
+      ],
+    );
+
+    final d = await api.setDeckType("dx", null);
+    final req = adapter.requests.last;
+    expect(
+      [req.method, req.path, req.data],
+      [
+        "PATCH",
+        "/decks/dx",
+        {"type": null},
+      ],
+    );
+    expect(d.type, DeckType.reading);
   });
 
   test("cache cũ kr/vi (trước khi có thẻ tự chấm) vẫn đọc được", () {

@@ -55,6 +55,17 @@ tới) rồi truyền vào `StudyCard`.
 - **Dropdown chọn deck phải là controlled widget**, không dùng
   `DropdownButtonFormField`: nó giữ giá trị riêng trong `FormFieldState`, engine
   tự đổi deck (đổi nhóm, xoá thẻ) thì ô chọn lệch và Flutter ném assert.
+  `DeckPicker` là `MenuAnchor` tự dựng (không phải `DropdownButton`) để
+  "+ Bộ mới" (Mac/web) nằm ở hàng cuối menu và **dính ở đáy** khi cuộn danh
+  sách bộ. Menu kích thước cố định tính trước (`MenuAnchor` đo intrinsic width,
+  `ListView` lười không trả lời được), mở ra đã cuộn tới bộ đang chọn. Menu là
+  overlay chứ không phải route nên màn học tự kiểm `_deckMenu.isOpen`: nhả phím
+  tắt cho menu, và không tự cuộn tới ô trả lời (`MenuAnchor` tự đóng khi trang
+  cuộn).
+- **Thẻ học không bọc `IntrinsicHeight`**: vạch đứt đỏ bên trái là
+  `Positioned` (top/bottom 0) trong `Stack`. `IntrinsicHeight` từng làm cột
+  nội dung tràn 1px vì lượt đo intrinsic lệch vài phần pixel so với lúc xếp
+  thật (font thật, `TextField`) — test font không tái hiện được.
 - **`MaterialApp` luôn có `theme: buildAppTheme(...)`.** Màu *trạng thái* của
   widget Material (disabled, con trỏ, handle bôi đen, dialog, SnackBar) lấy từ
   `ThemeData`; thiếu thì thành đen-trên-đen ở chế độ tối (lỗi cũ: nút "Thẻ
@@ -130,13 +141,25 @@ tới) rồi truyền vào `StudyCard`.
   chọn bộ từ vẫn thấy; màn quá thấp thì ưu tiên ô trả lời. Debounce 300ms chờ
   bàn phím mở xong (metrics đổi liên tục trong animation).
 - **Soạn nội dung chỉ trên Mac/web** (`!isPhone`): "+ Nhóm", "✎" đổi tên nhóm,
-  "+ Bộ mới", "+ Thêm từ vào bộ này", "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
+  "+ Bộ mới" (hàng cuối menu ô chọn bộ), "+ Mô tả" và "+ Thêm từ" (căn trái
+  dưới ô chọn bộ),
+  "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
   ⭐/漢/📖 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
   back, hint?, note?, altAnswers?, typeAnswer?}]}` hoặc mảng
   trần, kể cả còn bọc trong ` ```json `; nút "Sao chép prompt tách từ" chép
   `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô "Nhập đáp án" (tick
   sẵn theo `defaultTypeAnswer`: mặt sau ≤ 3 từ), đổi được trước khi gửi. Dialog
   sửa thẻ có checkbox "Nhập đáp án" và ô "Giải thích đáp án".
+- **Loại bộ** (`DeckType`, 듣기/말하기/읽기/쓰기/문법, không bắt buộc): chọn bằng
+  hàng chip khi tạo bộ, đổi bằng nút "Loại: …" (bên phải, cùng hàng "+ Mô tả"/"+ Thêm từ")
+  (Mac/web, cần mạng; chọn lại loại đang có = bỏ phân loại). Ô chọn bộ hiện nhãn loại (`DeckTypeBadge`) trước tên bộ
+  trên mọi máy. Cache/`content.json` cũ thiếu `type` → chưa phân loại.
+- **Mô tả bộ** (`description`, không bắt buộc, ≤ 500 ký tự): nhập khi tạo bộ,
+  sửa bằng nút "+ Mô tả"/"✎ Mô tả" (Mac/web, cần mạng; xoá trắng = xoá). Hiện
+  dưới ô chọn bộ trên mọi máy (bộ ảo thì không). Link `http(s)://` tách bằng
+  `linkify` (`domain/`) và **chỉ bấm được trên Mac/web** (`LinkedText` →
+  `linkLauncherProvider` → `url_launcher`, mở trình duyệt ngoài); điện thoại
+  hiện chữ thường nên không cần khai báo `<queries>` Android.
 - **Giải thích đáp án** (`note`, không bắt buộc): Markdown dán từ AI, render
   bằng `flutter_markdown_plus` trong `answer_note.dart`, chỉ hiện khi đã lộ
   mặt sau (`answered || flipped`). **Không trim** ở client (thụt lề/dòng trống

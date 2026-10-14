@@ -4,10 +4,20 @@ import "package:google_fonts/google_fonts.dart";
 
 import "../../../../core/theme/app_palette.dart";
 import "../../domain/deck_import.dart";
+import "../../models/deck.dart";
 
-/// Gửi lên server; trả về thông báo lỗi, `null` nếu thành công.
+/// Gửi lên server; trả về thông báo lỗi, `null` nếu thành công. [type] và
+/// [description] luôn `null` khi thêm từ vào bộ có sẵn.
 typedef DeckSubmit =
-    Future<String?> Function(String name, List<Map<String, dynamic>> words);
+    Future<String?> Function(
+      String name,
+      List<Map<String, dynamic>> words,
+      DeckType? type,
+      String? description,
+    );
+
+/// Giới hạn mô tả bộ — khớp `MAX_DESCRIPTION` ở backend.
+const maxDeckDescription = 500;
 
 /// Tạo bộ mới (có ô tên) hoặc thêm từ vào bộ có sẵn ([appendTo] = tên bộ).
 /// Dán JSON từ AI, xem trước số thẻ + từ trùng, chọn thẻ nào gõ đáp án
@@ -55,7 +65,9 @@ class _DeckEditorDialog extends StatefulWidget {
 class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   final _nameController = TextEditingController();
   final _jsonController = TextEditingController();
+  final _descriptionController = TextEditingController();
   DeckImport _parsed = const DeckImport();
+  DeckType? _type;
   bool _nameTouched = false;
   bool _sending = false;
   String? _error;
@@ -66,6 +78,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   void dispose() {
     _nameController.dispose();
     _jsonController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -94,6 +107,8 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     final err = await widget.onSubmit(
       _nameController.text.trim(),
       _parsed.words,
+      _type,
+      _isAppend ? null : _descriptionController.text,
     );
     if (!mounted) return;
     if (err == null) {
@@ -146,6 +161,19 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
                   onChanged: (_) => setState(() => _nameTouched = true),
                   style: GoogleFonts.notoSans(fontSize: 15, color: p.ink),
                   decoration: _decoration(p, "vd: Bài 12 — Sức khoẻ"),
+                ),
+                const SizedBox(height: 14),
+                _label(p, "Loại bộ (không bắt buộc)"),
+                DeckTypeChips(
+                  palette: p,
+                  selected: _type,
+                  onChanged: _sending ? null : (t) => setState(() => _type = t),
+                ),
+                const SizedBox(height: 14),
+                _label(p, "Mô tả ngắn (không bắt buộc, link bấm được)"),
+                _DescriptionField(
+                  controller: _descriptionController,
+                  palette: p,
                 ),
                 const SizedBox(height: 14),
               ],
@@ -302,6 +330,192 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
       ),
     ),
   );
+}
+
+/// Ô nhập mô tả bộ (dùng chung khi tạo bộ và sửa mô tả).
+class _DescriptionField extends StatelessWidget {
+  const _DescriptionField({
+    required this.controller,
+    required this.palette,
+    this.autofocus = false,
+  });
+
+  final TextEditingController controller;
+  final AppPalette palette;
+  final bool autofocus;
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: controller,
+    autofocus: autofocus,
+    minLines: 2,
+    maxLines: 5,
+    maxLength: maxDeckDescription,
+    style: GoogleFonts.notoSansKr(fontSize: 14, color: palette.ink),
+    decoration: _decoration(palette, "vd: Bài nghe sách Sơ cấp 1 — https://…"),
+  );
+}
+
+/// Sửa mô tả bộ [deckName]; để trống là xoá. [onSubmit] trả về thông báo lỗi,
+/// `null` nếu thành công.
+Future<bool?> showDeckDescriptionDialog({
+  required BuildContext context,
+  required AppPalette palette,
+  required String deckName,
+  required String? initial,
+  required Future<String?> Function(String description) onSubmit,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (_) => _DescriptionDialog(
+      palette: palette,
+      deckName: deckName,
+      initial: initial ?? "",
+      onSubmit: onSubmit,
+    ),
+  );
+}
+
+class _DescriptionDialog extends StatefulWidget {
+  const _DescriptionDialog({
+    required this.palette,
+    required this.deckName,
+    required this.initial,
+    required this.onSubmit,
+  });
+
+  final AppPalette palette;
+  final String deckName;
+  final String initial;
+  final Future<String?> Function(String description) onSubmit;
+
+  @override
+  State<_DescriptionDialog> createState() => _DescriptionDialogState();
+}
+
+class _DescriptionDialogState extends State<_DescriptionDialog> {
+  late final _controller = TextEditingController(text: widget.initial);
+  bool _sending = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+    final err = await widget.onSubmit(_controller.text);
+    if (!mounted) return;
+    if (err == null) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() {
+        _sending = false;
+        _error = err;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.palette;
+    return AlertDialog(
+      backgroundColor: p.cardBg,
+      title: Text(
+        "Mô tả “${widget.deckName}”",
+        style: GoogleFonts.notoSansKr(
+          fontWeight: FontWeight.w700,
+          color: p.ink,
+        ),
+      ),
+      content: SizedBox(
+        width: 480,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DescriptionField(
+              controller: _controller,
+              palette: p,
+              autofocus: true,
+            ),
+            Text(
+              "Để trống là xoá mô tả. Link http(s):// bấm được khi học.",
+              style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!, style: TextStyle(color: p.wrong, fontSize: 13)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _sending ? null : () => Navigator.of(context).pop(),
+          child: Text("Huỷ", style: TextStyle(color: p.inkSoft)),
+        ),
+        ElevatedButton(
+          onPressed: _sending ? null : _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: p.ink,
+            foregroundColor: p.paper,
+          ),
+          child: Text(_sending ? "Đang lưu…" : "Lưu"),
+        ),
+      ],
+    );
+  }
+}
+
+/// Hàng chip chọn loại bộ; bấm lại chip đang chọn = bỏ phân loại.
+class DeckTypeChips extends StatelessWidget {
+  const DeckTypeChips({
+    super.key,
+    required this.palette,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final AppPalette palette;
+  final DeckType? selected;
+
+  /// `null` = khoá (đang gửi).
+  final ValueChanged<DeckType?>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = palette;
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final t in DeckType.values)
+          ChoiceChip(
+            label: Text(t.label),
+            selected: t == selected,
+            showCheckmark: false,
+            visualDensity: VisualDensity.compact,
+            backgroundColor: p.cardBg,
+            selectedColor: p.blue.withValues(alpha: 0.15),
+            side: BorderSide(color: t == selected ? p.blue : p.paperLine),
+            labelStyle: GoogleFonts.notoSansKr(
+              fontSize: 13,
+              color: t == selected ? p.blue : p.ink,
+              fontWeight: t == selected ? FontWeight.w600 : FontWeight.w400,
+            ),
+            onSelected: onChanged == null
+                ? null
+                : (on) => onChanged!(on ? t : null),
+          ),
+      ],
+    );
+  }
 }
 
 InputDecoration _decoration(AppPalette p, String hint) => InputDecoration(

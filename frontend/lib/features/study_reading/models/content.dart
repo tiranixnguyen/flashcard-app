@@ -122,12 +122,20 @@ class ContentDeck {
     required this.name,
     required this.position,
     required this.cards,
+    this.type,
+    this.description,
   });
 
   final String id;
   final String groupId;
   final String name;
   final int position;
+
+  /// Cache/`content.json` cũ chưa có trường này → `null`.
+  final DeckType? type;
+
+  /// Mô tả ngắn, chữ thuần (link hiển thị thành bấm được). Cache cũ → `null`.
+  final String? description;
   final List<ContentCard> cards;
 
   factory ContentDeck.fromJson(Map<String, dynamic> json) => ContentDeck(
@@ -135,6 +143,8 @@ class ContentDeck {
     groupId: json["groupId"] as String,
     name: json["name"] as String,
     position: json["position"] as int,
+    type: DeckType.fromKey(json["type"]),
+    description: json["description"] as String?,
     cards: (json["cards"] as List)
         .map((c) => ContentCard.fromJson(c as Map<String, dynamic>))
         .toList(),
@@ -145,6 +155,8 @@ class ContentDeck {
     "groupId": groupId,
     "name": name,
     "position": position,
+    "type": type?.key,
+    "description": description,
     "cards": [for (final c in cards) c.toJson()],
   };
 
@@ -153,6 +165,8 @@ class ContentDeck {
     groupId: groupId,
     name: name,
     position: position,
+    type: type,
+    description: description,
     cards: cards ?? this.cards,
   );
 }
@@ -307,7 +321,14 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
       );
     }
     studyDecks.add(
-      Deck(id: d.id, name: d.name, group: d.groupId, words: words),
+      Deck(
+        id: d.id,
+        name: d.name,
+        group: d.groupId,
+        type: d.type,
+        description: d.description,
+        words: words,
+      ),
     );
   }
 

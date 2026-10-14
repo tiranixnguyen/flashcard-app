@@ -32,6 +32,9 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
 
   final _pageScroll = ScrollController();
   final _deckPickerKey = GlobalKey();
+
+  /// Menu ô chọn bộ là overlay (không phải route) — đang mở thì nhả phím tắt.
+  final _deckMenu = MenuController();
   final _answerRowKey = GlobalKey();
   Timer? _typingScrollDebounce;
 
@@ -91,6 +94,8 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
   /// thể bắt người học gõ khi không thấy mình đang gõ gì.
   void _scrollForTyping() {
     if (!mounted || !_answerFocus.hasFocus || !_pageScroll.hasClients) return;
+    // Cuộn trang làm MenuAnchor của ô chọn bộ tự đóng.
+    if (_deckMenu.isOpen) return;
     final picker = _deckPickerKey.currentContext?.findRenderObject();
     final input = _answerRowKey.currentContext?.findRenderObject();
     if (picker == null || input == null) return;
@@ -137,6 +142,7 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
     // Đang mở dialog sửa thẻ hoặc menu ••• -> route trên cùng không phải màn
     // học; để phím về cho dialog/menu (vd Enter trong ô sửa thẻ).
     if (!(ModalRoute.of(context)?.isCurrent ?? false)) return false;
+    if (_deckMenu.isOpen) return false;
     final s = ref.read(studySessionViewModelProvider).value;
     if (s == null || s.word == null) return false;
 
@@ -321,7 +327,14 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
           const SizedBox(height: 14),
           GroupTabs(state: s, palette: p),
           const SizedBox(height: 10),
-          DeckPicker(key: _deckPickerKey, state: s, palette: p),
+          DeckPicker(
+            key: _deckPickerKey,
+            state: s,
+            palette: p,
+            menuController: _deckMenu,
+          ),
+          if (s.currentDeckDescription case final d?)
+            DeckDescription(text: d, palette: p),
           if (!isPhone) AuthoringRow(state: s, palette: p),
           const SizedBox(height: 12),
           if (s.isEmptyGroup)
@@ -331,7 +344,8 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
               message: isPhone
                   ? "Chọn một nhóm khác ở phía trên để bắt đầu học. "
                         "Bộ từ mới được tạo trên Mac/web."
-                  : "Bấm “+ Bộ mới” để tạo bộ đầu tiên, hoặc chọn nhóm khác.",
+                  : "Mở ô chọn bộ rồi bấm “+ Bộ mới” để tạo bộ đầu tiên, "
+                        "hoặc chọn nhóm khác.",
             )
           else if (s.isEmptyDeck)
             EmptyStateView(
@@ -341,7 +355,7 @@ class _StudyReadingViewState extends ConsumerState<StudyReadingView>
                   ? "Chọn một bộ khác ở phía trên để tiếp tục học."
                   : isPhone
                   ? "Thẻ mới được thêm trên Mac/web."
-                  : "Bấm “+ Thêm từ vào bộ này” để thêm thẻ.",
+                  : "Bấm “+ Thêm từ” để thêm thẻ.",
             )
           else ...[
             StatsRow(state: s, palette: p),

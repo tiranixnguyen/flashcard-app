@@ -45,7 +45,7 @@ npm run export-content            # DB → frontend/assets/content.json (trướ
 - Sửa `StudyEngine` → thêm test vào `study_engine_test.dart`.
 - `ContentApi` chỉ được ném `ApiException` (kể cả lỗi parse).
 - Widget test: override **mọi** provider chạm I/O (asset, store, API,
-  connectivity, clock, audio player/picker), không `pumpAndSettle` ở màn học — thiếu là treo im lặng.
+  connectivity, clock, audio player/picker, link launcher), không `pumpAndSettle` ở màn học — thiếu là treo im lặng.
 - `MaterialApp` luôn có `theme: buildAppTheme(...)`; màu disabled đặt ở theme.
 - Dropdown chọn deck là controlled widget (không `DropdownButtonFormField`).
 - Phím tắt bắt ở `HardwareKeyboard`, không `Shortcuts`/`Focus`; "Xem đáp án"

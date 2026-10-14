@@ -6,6 +6,7 @@ import "package:riverpod_annotation/riverpod_annotation.dart";
 import "../../../core/api/api_client.dart";
 import "../models/card_audio.dart";
 import "../models/content.dart";
+import "../models/deck.dart";
 import "../models/study_session_record.dart";
 
 part "content_api.g.dart";
@@ -37,7 +38,15 @@ abstract class ContentApi {
     required String groupId,
     required String name,
     required List<Map<String, dynamic>> words,
+    DeckType? type,
+    String? description,
   });
+
+  /// Đặt/đổi loại bộ; `null` = bỏ phân loại.
+  Future<ContentDeck> setDeckType(String deckId, DeckType? type);
+
+  /// Đặt/đổi mô tả bộ; `null` = xoá.
+  Future<ContentDeck> setDeckDescription(String deckId, String? description);
   Future<ContentDeck> appendCards(
     String deckId,
     List<Map<String, dynamic>> words,
@@ -134,12 +143,37 @@ class DioContentApi implements ContentApi {
     required String groupId,
     required String name,
     required List<Map<String, dynamic>> words,
+    DeckType? type,
+    String? description,
   }) => _request(
     "POST",
     "/decks",
-    body: {"groupId": groupId, "name": name, "words": words},
+    body: {
+      "groupId": groupId,
+      "name": name,
+      "type": type?.key,
+      "description": description,
+      "words": words,
+    },
     parse: ContentDeck.fromJson,
   );
+
+  @override
+  Future<ContentDeck> setDeckType(String deckId, DeckType? type) => _request(
+    "PATCH",
+    "/decks/$deckId",
+    body: {"type": type?.key},
+    parse: ContentDeck.fromJson,
+  );
+
+  @override
+  Future<ContentDeck> setDeckDescription(String deckId, String? description) =>
+      _request(
+        "PATCH",
+        "/decks/$deckId",
+        body: {"description": description},
+        parse: ContentDeck.fromJson,
+      );
 
   @override
   Future<ContentDeck> appendCards(

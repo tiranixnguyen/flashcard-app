@@ -34,7 +34,7 @@ final class StudySessionViewModelProvider
 }
 
 String _$studySessionViewModelHash() =>
-    r'b025d818ca73e0d05d72ff476ce41d324b37f2a4';
+    r'532f512978189c7bc40eb009e86460084a56be93';
 
 abstract class _$StudySessionViewModel
     extends $AsyncNotifier<StudySessionState> {

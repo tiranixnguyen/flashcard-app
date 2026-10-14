@@ -34,6 +34,8 @@ class StudySessionState {
     required this.currentGroupId,
     required this.currentDeckId,
     required this.currentDeckName,
+    required this.currentDeckType,
+    required this.currentDeckDescription,
     required this.isVirtualDeck,
     required this.word,
     required this.cardSerial,
@@ -68,6 +70,12 @@ class StudySessionState {
   final String currentGroupId;
   final String? currentDeckId;
   final String? currentDeckName;
+
+  /// Loại bộ đang mở (`null` = chưa phân loại hoặc bộ ảo).
+  final DeckType? currentDeckType;
+
+  /// Mô tả bộ đang mở (`null` = không có hoặc bộ ảo).
+  final String? currentDeckDescription;
 
   /// Bộ ảo (⭐/漢/📖/🔀): không ghi lịch sử, không gợi ý ôn, không thêm từ được.
   final bool isVirtualDeck;
@@ -130,12 +138,16 @@ class DeckOption {
   const DeckOption({
     required this.id,
     required this.label,
+    this.type,
     this.review,
     this.enabled = true,
   });
 
   final String id;
   final String label;
+
+  /// Loại bộ (chỉ bộ thật) — hiện thành nhãn nhỏ trước tên bộ.
+  final DeckType? type;
 
   /// Gợi ý ôn lại (chỉ bộ thật) — hiện mờ sau tên bộ.
   final ReviewStatus? review;
@@ -229,6 +241,8 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       currentGroupId: e.currentVocabGroup,
       currentDeckId: e.currentDeckId,
       currentDeckName: deck?.name,
+      currentDeckType: deck?.type,
+      currentDeckDescription: deck?.description,
       isVirtualDeck: isVirtual,
       word: e.currentWord,
       cardSerial: e.cardSerial,
@@ -285,7 +299,12 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       ),
       const DeckOption(id: randomDeckId, label: "🔀 Deck ngẫu nhiên"),
       for (final d in e.visibleDecks)
-        DeckOption(id: d.id, label: d.name, review: reviewOf(d.id)),
+        DeckOption(
+          id: d.id,
+          label: d.name,
+          type: d.type,
+          review: reviewOf(d.id),
+        ),
     ];
   }
 
@@ -659,6 +678,8 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     required String groupId,
     required String name,
     required List<Map<String, dynamic>> words,
+    DeckType? type,
+    String? description,
   }) async {
     String? deckId;
     return _author(
@@ -667,6 +688,8 @@ class StudySessionViewModel extends _$StudySessionViewModel {
           groupId: groupId,
           name: name,
           words: words,
+          type: type,
+          description: _cleanDescription(description),
         );
         deckId = deck.id;
         return _content.upsertDeck(deck);
@@ -676,6 +699,24 @@ class StudySessionViewModel extends _$StudySessionViewModel {
         e.switchDeck(deckId!);
       },
     );
+  }
+
+  /// Đặt/đổi loại bộ thật ([type] `null` = bỏ phân loại).
+  Future<String?> setDeckType(String deckId, DeckType? type) => _author(
+    () async => _content.upsertDeck(await _api.setDeckType(deckId, type)),
+  );
+
+  /// Đặt/đổi mô tả bộ thật (rỗng = xoá).
+  Future<String?> setDeckDescription(String deckId, String? description) =>
+      _author(
+        () async => _content.upsertDeck(
+          await _api.setDeckDescription(deckId, _cleanDescription(description)),
+        ),
+      );
+
+  static String? _cleanDescription(String? text) {
+    final t = text?.trim();
+    return t == null || t.isEmpty ? null : t;
   }
 
   Future<String?> appendCards(

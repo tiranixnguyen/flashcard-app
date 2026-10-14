@@ -20,24 +20,31 @@
 - `content_api_test.dart` — `DioContentApi` ở tầng HTTP thật (fake
   `HttpClientAdapter`): parse, `offline` vs server từ chối (thông báo từ body),
   body sai định dạng/HTML vẫn thành `ApiException`, body gửi đi đúng định dạng,
-  cache cũ `kr`/`vi` vẫn đọc được. Upload file nghe gửi bytes thô, PATCH thẻ gửi
+  cache cũ `kr`/`vi` vẫn đọc được, loại bộ (thiếu/giá trị lạ → `null`, gửi
+  khi tạo bộ, `PATCH /decks/:id`), mô tả bộ. Upload file nghe gửi bytes thô, PATCH thẻ gửi
   đủ 4 id file nghe.
+- `linkify_test.dart` — tách link `http(s)://` trong mô tả bộ: ghép lại đúng
+  chữ gốc, bỏ dấu câu cuối, giữ ngoặc cân bằng, bỏ qua link không có host.
 - `audio_playback_test.dart` — trình phát dùng chung: phát/tạm dừng/phát lại
   từ đầu, chuyển file, nạp lỗi, sang thẻ lúc đang nạp thì không phát;
   `visibleAudioFields` cho `Cmd+.`.
 - `study_reading_view_test.dart` — smoke test UI qua `_FakeApi` (server trong
   bộ nhớ) + `MemoryStore`: ghi lần học (hết bộ / bỏ dở / nháp sót), hàng đợi
   offline tự gửi khi có mạng, ⭐/漢/📖 offline (`_FakeApi` áp cờ vào server giả
-  như thật), thứ tự ô chọn bộ (deck ảo trên cùng), lịch sử gộp máy khác, soạn nội dung
-  chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ), bộ rỗng không
+  như thật), thứ tự ô chọn bộ (deck ảo trên cùng), menu ô chọn bộ ("+ Bộ mới"
+  dính đáy khi cuộn, chọn bộ, Enter không lọt xuống màn học), lịch sử gộp máy khác, soạn nội dung
+  chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ, chọn/đổi loại
+  bộ + nhãn trong ô chọn bộ, đổi loại offline báo lỗi, thêm/sửa/xoá mô tả),
+  mô tả bộ (link mở qua `_FakeLinkLauncher` trên máy tính, điện thoại là chữ
+  thường, bộ ảo không hiện), bộ rỗng không
   crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0), file nghe (nút
   theo trường, dừng khi sang thẻ, `Cmd+.`, offline, điện thoại không có, dialog
   gắn/gỡ/tải lên), phóng chữ thẻ (`Cmd+=/−/0`, nút "Aa", nút/badge giữ cỡ,
   không mất chữ đang gõ, 160% trên màn 360pt không tràn).
 - `hint_box_test.dart` — chú thích trên thẻ theo nền tảng: máy tính/web giới
   hạn `hintVisibleLines` dòng rồi cuộn; điện thoại cắt bớt, bấm mở bảng đầy đủ.
-  Dựng trong `IntrinsicHeight` như thẻ thật — đừng dùng `LayoutBuilder` trong
-  `HintBox` (ném lỗi dưới `IntrinsicHeight`).
+  Dựng trong `IntrinsicHeight` (ngữ cảnh khắt khe nhất) — đừng dùng
+  `LayoutBuilder` trong `HintBox` (ném lỗi dưới `IntrinsicHeight`).
 - `note_format_test.dart` — dựng lại cấp lồng danh sách bị mất thụt lề.
 - `answer_note_test.dart` — giải thích Markdown (bảng, code, xuống dòng đơn)
   layout được trong `IntrinsicHeight`; máy tính cuộn trong khung, điện thoại
@@ -57,6 +64,7 @@ trong deck ⭐/漢 (thẻ ở lại tới khi sang thẻ tiếp rồi rơi hẳn
   `localStoreProvider` (`LocalStore(MemoryStore())`), `contentApiProvider`,
   `connectivityGatewayProvider`, `audioPlayerGatewayProvider` +
   `audioFilePickerProvider` (bản giả trong `support/fake_audio.dart`),
+  `linkLauncherProvider` (url_launcher),
   `cardZoomProvider` (SharedPreferences — kể cả test riêng `HintBox`/
   `AnswerNote`, vì bảng xem đầy đủ bọc `CardTextZoom`), nên cả
   `clockProvider`. `testWidgets` chạy

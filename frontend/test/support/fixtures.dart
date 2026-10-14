@@ -4,6 +4,7 @@ import "package:flashcard_app/features/study_reading/domain/deck_import.dart";
 import "package:flashcard_app/features/study_reading/domain/study_engine.dart";
 import "package:flashcard_app/features/study_reading/models/card_audio.dart";
 import "package:flashcard_app/features/study_reading/models/content.dart";
+import "package:flashcard_app/features/study_reading/models/deck.dart";
 
 /// Dựng một bộ giống hệt server làm từ JSON nhập bộ: mỗi từ một thẻ, không ghi
 /// `typeAnswer` thì theo `defaultTypeAnswer` (đáp án ngắn là gõ đáp án), id
@@ -14,6 +15,8 @@ ContentDeck contentDeck(
   String groupId = "g1",
   String? name,
   int position = 0,
+  DeckType? type,
+  String? description,
   Set<int> marked = const {},
   Set<int> hanja = const {},
   Set<int> passage = const {},
@@ -43,6 +46,8 @@ ContentDeck contentDeck(
     groupId: groupId,
     name: name ?? "Bộ $id",
     position: position,
+    type: type,
+    description: description,
     cards: cards,
   );
 }
