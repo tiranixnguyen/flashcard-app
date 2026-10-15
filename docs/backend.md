@@ -52,8 +52,9 @@ khởi đầu / bản sao:
   hai đầu + đổi CRLF, rỗng → `null` (`parseDescription`). App tự biến link
   `http(s)://` thành link bấm được (chỉ Mac/web).
 - `POST /decks` nhận thêm `type`, `description`. `PATCH /decks/:id`
-  `{ type?, description? }`: thiếu trường = giữ, `null` = xoá, giá trị sai hoặc
-  body không có trường nào → 400.
+  `{ name?, type?, description? }`: thiếu trường = giữ, `null` = xoá (`name`
+  không xoá được: rỗng/`null`/quá 120 ký tự → 400), giá trị sai hoặc body không
+  có trường nào → 400.
 - `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm), **định dạng cũ
   `kr`/`vi`** (`importContent.ts` tự chuyển sang `back`/`front`). Chỉ `npm run
   import-content` đọc, cùng chỉnh sửa/⭐/漢 thật từ bảng `SyncState` cũ (không có

@@ -144,6 +144,31 @@ describe("bộ từ và thẻ", () => {
     ).toBeNull();
   });
 
+  it("đổi tên bộ bằng PATCH: dọn khoảng trắng, giữ loại/mô tả; tên rỗng -> 400", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    const r = await api("POST", "/decks", {
+      groupId: g.id,
+      name: "Nghe",
+      type: "listening",
+      description: "Mô tả",
+      words,
+    });
+    const renamed = await api("PATCH", `/decks/${r.json.id}`, { name: "  Bài 2  " });
+    expect(renamed.json).toMatchObject({
+      name: "Bài 2",
+      type: "listening",
+      description: "Mô tả",
+    });
+    const both = await api("PATCH", `/decks/${r.json.id}`, { name: "Bài 3", description: null });
+    expect(both.json).toMatchObject({ name: "Bài 3", description: null });
+    expect((await api("PATCH", `/decks/${r.json.id}`, { name: "   " })).status).toBe(400);
+    expect((await api("PATCH", `/decks/${r.json.id}`, { name: null })).status).toBe(400);
+    expect((await api("PATCH", `/decks/${r.json.id}`, { name: "a".repeat(121) })).status).toBe(
+      400,
+    );
+  });
+
   it("mô tả bộ sai kiểu hoặc quá 500 ký tự -> 400", async () => {
     const g = await makeGroup();
     const words = [{ back: "가다", front: "đi" }];

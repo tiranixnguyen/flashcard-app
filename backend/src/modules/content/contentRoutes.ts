@@ -110,14 +110,22 @@ contentRouter.post(
 );
 
 /**
- * Sửa thông tin bộ: body `{ type?, description? }` — thiếu trường = giữ
- * nguyên, `null` = xoá. Phải có ít nhất một trường.
+ * Sửa thông tin bộ: body `{ name?, type?, description? }` — thiếu trường =
+ * giữ nguyên, `null` = xoá (tên thì không xoá được). Phải có ít nhất một trường.
  */
 contentRouter.patch(
   "/decks/:id",
   handle(async (req, res, userId) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const patch: Parameters<typeof updateDeck>[3] = {};
+    if (body.name !== undefined) {
+      const name = nameOf(body);
+      if (!name) {
+        res.status(400).json({ error: `Tên bộ không được trống (tối đa ${MAX_NAME} ký tự).` });
+        return;
+      }
+      patch.name = name;
+    }
     if (body.type !== undefined) {
       const type = parseDeckType(body.type);
       if (type === undefined) {
@@ -135,7 +143,7 @@ contentRouter.patch(
       patch.description = description;
     }
     if (Object.keys(patch).length === 0) {
-      res.status(400).json({ error: "Không có gì để sửa (type, description)." });
+      res.status(400).json({ error: "Không có gì để sửa (name, type, description)." });
       return;
     }
     res.json(await updateDeck(prisma, userId, String(req.params.id), patch));

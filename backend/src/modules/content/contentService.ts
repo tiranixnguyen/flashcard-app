@@ -220,12 +220,12 @@ export async function createDeck(
   });
 }
 
-/** Sửa thông tin bộ (loại, mô tả): thiếu trường = giữ nguyên, `null` = xoá. */
+/** Sửa thông tin bộ (tên, loại, mô tả): thiếu trường = giữ nguyên, `null` = xoá. */
 export async function updateDeck(
   prisma: PrismaClient,
   userId: string,
   deckId: string,
-  patch: { type?: DeckType | null; description?: string | null },
+  patch: { name?: string; type?: DeckType | null; description?: string | null },
 ): Promise<DeckDto> {
   const { count } = await prisma.deck.updateMany({ where: { id: deckId, userId }, data: patch });
   if (count === 0) throw new HttpError(404, "Không tìm thấy bộ từ.");
