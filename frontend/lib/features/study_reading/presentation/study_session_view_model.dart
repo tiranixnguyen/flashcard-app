@@ -701,18 +701,23 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     );
   }
 
-  /// Đặt/đổi loại bộ thật ([type] `null` = bỏ phân loại).
-  Future<String?> setDeckType(String deckId, DeckType? type) => _author(
-    () async => _content.upsertDeck(await _api.setDeckType(deckId, type)),
+  /// Sửa bộ thật ("Deck này"): tên, loại ([type] `null` = bỏ phân loại), mô
+  /// tả (rỗng = xoá).
+  Future<String?> updateDeckInfo(
+    String deckId, {
+    required String name,
+    required DeckType? type,
+    required String? description,
+  }) => _author(
+    () async => _content.upsertDeck(
+      await _api.updateDeckInfo(
+        deckId,
+        name: name.trim(),
+        type: type,
+        description: _cleanDescription(description),
+      ),
+    ),
   );
-
-  /// Đặt/đổi mô tả bộ thật (rỗng = xoá).
-  Future<String?> setDeckDescription(String deckId, String? description) =>
-      _author(
-        () async => _content.upsertDeck(
-          await _api.setDeckDescription(deckId, _cleanDescription(description)),
-        ),
-      );
 
   static String? _cleanDescription(String? text) {
     final t = text?.trim();

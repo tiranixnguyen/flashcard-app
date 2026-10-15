@@ -111,102 +111,40 @@ class AuthoringRow extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final style = GoogleFonts.notoSans(fontSize: 12.5, color: p.blue);
+    // Căn phải, "Deck này" ngoài cùng.
     return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      spacing: 4,
       children: [
-        Expanded(
-          child: Wrap(
-            spacing: 4,
-            children: [
-              TextButton(
-                onPressed: () => showDeckDescriptionDialog(
-                  context: context,
-                  palette: p,
-                  deckName: s.currentDeckName ?? "",
-                  initial: s.currentDeckDescription,
-                  onSubmit: (text) => vm.setDeckDescription(deckId, text),
-                ),
-                child: Text(
-                  s.currentDeckDescription == null ? "+ Mô tả" : "✎ Mô tả",
-                  style: style,
-                ),
-              ),
-              TextButton(
-                onPressed: () => showDeckEditorDialog(
-                  context: context,
-                  palette: p,
-                  groupName: group.name,
-                  knownKorean: s.knownKorean,
-                  appendTo: s.currentDeckName,
-                  onSubmit: (_, words, _, _) => vm.appendCards(deckId, words),
-                ),
-                child: Text("+ Thêm từ", style: style),
-              ),
-            ],
+        TextButton(
+          onPressed: () => showDeckEditorDialog(
+            context: context,
+            palette: p,
+            groupName: group.name,
+            knownKorean: s.knownKorean,
+            appendTo: s.currentDeckName,
+            onSubmit: (_, words, _, _) => vm.appendCards(deckId, words),
           ),
+          child: Text("+ Thêm từ", style: style),
         ),
-        _DeckTypeMenu(
-          deckId: deckId,
-          current: s.currentDeckType,
-          palette: p,
-          style: style,
-        ),
-      ],
-    );
-  }
-}
-
-/// Nút "Loại: …" đổi loại bộ đang mở (cần có mạng). Chọn lại loại đang có =
-/// bỏ phân loại (giống chip khi tạo bộ).
-class _DeckTypeMenu extends ConsumerWidget {
-  const _DeckTypeMenu({
-    required this.deckId,
-    required this.current,
-    required this.palette,
-    required this.style,
-  });
-
-  final String deckId;
-  final DeckType? current;
-  final AppPalette palette;
-  final TextStyle style;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final p = palette;
-    final itemStyle = GoogleFonts.notoSansKr(fontSize: 14, color: p.ink);
-    return PopupMenuButton<String>(
-      tooltip: "Đổi loại bộ",
-      color: p.cardBg,
-      onSelected: (key) async {
-        final messenger = ScaffoldMessenger.of(context);
-        final err = await ref
-            .read(studySessionViewModelProvider.notifier)
-            .setDeckType(
+        TextButton.icon(
+          onPressed: () => showDeckInfoDialog(
+            context: context,
+            palette: p,
+            name: s.currentDeckName ?? "",
+            type: s.currentDeckType,
+            description: s.currentDeckDescription,
+            onSubmit: (name, type, description) => vm.updateDeckInfo(
               deckId,
-              key == current?.key ? null : DeckType.fromKey(key),
-            );
-        if (err != null) {
-          messenger.showSnackBar(SnackBar(content: Text(err)));
-        }
-      },
-      itemBuilder: (_) => [
-        for (final t in DeckType.values)
-          CheckedPopupMenuItem(
-            value: t.key,
-            checked: t == current,
-            child: Text(t.label, style: itemStyle),
+              name: name,
+              type: type,
+              description: description,
+            ),
           ),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Text(
-          "Loại: ${current?.label ?? "—"}",
-          style: GoogleFonts.notoSansKr(
-            fontSize: style.fontSize,
-            color: style.color,
-          ),
+          icon: Icon(Icons.edit_note, size: 18, color: p.blue),
+          label: Text("Deck này", style: style),
         ),
-      ),
+      ],
     );
   }
 }

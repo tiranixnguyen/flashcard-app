@@ -33,8 +33,9 @@
   offline tự gửi khi có mạng, ⭐/漢/📖 offline (`_FakeApi` áp cờ vào server giả
   như thật), thứ tự ô chọn bộ (deck ảo trên cùng), menu ô chọn bộ ("+ Bộ mới"
   dính đáy khi cuộn, chọn bộ, Enter không lọt xuống màn học), lịch sử gộp máy khác, soạn nội dung
-  chỉ trên Mac/web (kể cả ô "Nhập đáp án" khi tạo bộ / sửa thẻ, chọn/đổi loại
-  bộ + nhãn trong ô chọn bộ, đổi loại offline báo lỗi, thêm/sửa/xoá mô tả),
+  chỉ trên Mac/web (tick chọn từ được lưu khi dán JSON, thêm từ nhập tay,
+  ô "Nhập đáp án" khi sửa thẻ, "Deck này" đổi tên/loại (+ nhãn trong ô chọn
+  bộ) + thêm/sửa/xoá mô tả, offline báo lỗi không đóng hộp thoại),
   mô tả bộ (link mở qua `_FakeLinkLauncher` trên máy tính, điện thoại là chữ
   thường, bộ ảo không hiện), bộ rỗng không
   crash, thẻ tự chấm (lật, Nhớ/Chưa nhớ, phím tắt Space/1/0), file nghe (nút

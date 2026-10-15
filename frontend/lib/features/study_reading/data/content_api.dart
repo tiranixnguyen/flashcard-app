@@ -42,11 +42,14 @@ abstract class ContentApi {
     String? description,
   });
 
-  /// Đặt/đổi loại bộ; `null` = bỏ phân loại.
-  Future<ContentDeck> setDeckType(String deckId, DeckType? type);
-
-  /// Đặt/đổi mô tả bộ; `null` = xoá.
-  Future<ContentDeck> setDeckDescription(String deckId, String? description);
+  /// Sửa thông tin bộ: tên, loại (`null` = bỏ phân loại), mô tả (`null` =
+  /// xoá) — gửi đủ cả ba.
+  Future<ContentDeck> updateDeckInfo(
+    String deckId, {
+    required String name,
+    required DeckType? type,
+    required String? description,
+  });
   Future<ContentDeck> appendCards(
     String deckId,
     List<Map<String, dynamic>> words,
@@ -159,21 +162,17 @@ class DioContentApi implements ContentApi {
   );
 
   @override
-  Future<ContentDeck> setDeckType(String deckId, DeckType? type) => _request(
+  Future<ContentDeck> updateDeckInfo(
+    String deckId, {
+    required String name,
+    required DeckType? type,
+    required String? description,
+  }) => _request(
     "PATCH",
     "/decks/$deckId",
-    body: {"type": type?.key},
+    body: {"name": name, "type": type?.key, "description": description},
     parse: ContentDeck.fromJson,
   );
-
-  @override
-  Future<ContentDeck> setDeckDescription(String deckId, String? description) =>
-      _request(
-        "PATCH",
-        "/decks/$deckId",
-        body: {"description": description},
-        parse: ContentDeck.fromJson,
-      );
 
   @override
   Future<ContentDeck> appendCards(

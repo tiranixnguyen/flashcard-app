@@ -58,10 +58,6 @@ ContentSnapshot _content() => contentOf(
 
 final _now = DateTime(2026, 9, 25, 10);
 
-/// Mục trong menu "Loại: …" (chạm vào chữ thì trúng ListTile bọc ngoài).
-Finder _typeMenuItem(String label) =>
-    find.widgetWithText(CheckedPopupMenuItem<String>, label);
-
 /// Server giả trong bộ nhớ. Mặc định "không có mạng" — khớp môi trường test
 /// và là nhánh an toàn nhất khi không test riêng đường đồng bộ.
 class _FakeApi implements ContentApi {
@@ -132,35 +128,20 @@ class _FakeApi implements ContentApi {
   }
 
   @override
-  Future<ContentDeck> setDeckType(String deckId, DeckType? type) async {
+  Future<ContentDeck> updateDeckInfo(
+    String deckId, {
+    required String name,
+    required DeckType? type,
+    required String? description,
+  }) async {
     _check();
     final old = server.decks.firstWhere((d) => d.id == deckId);
     final d = ContentDeck(
       id: old.id,
       groupId: old.groupId,
-      name: old.name,
+      name: name,
       position: old.position,
       type: type,
-      description: old.description,
-      cards: old.cards,
-    );
-    server = server.upsertDeck(d);
-    return d;
-  }
-
-  @override
-  Future<ContentDeck> setDeckDescription(
-    String deckId,
-    String? description,
-  ) async {
-    _check();
-    final old = server.decks.firstWhere((d) => d.id == deckId);
-    final d = ContentDeck(
-      id: old.id,
-      groupId: old.groupId,
-      name: old.name,
-      position: old.position,
-      type: old.type,
       description: description,
       cards: old.cards,
     );
@@ -190,6 +171,7 @@ class _FakeApi implements ContentApi {
             front: c.front,
             hint: c.hint,
             note: c.note,
+            altAnswers: c.altAnswers,
             typeAnswer: c.typeAnswer,
           ),
       ],
@@ -965,7 +947,7 @@ void main() {
       (tester) async {
         await pumpApp(tester);
         expect(find.text("+ Nhóm"), findsNothing);
-        expect(find.textContaining("Loại:"), findsNothing);
+        expect(find.text("Deck này"), findsNothing);
         // Menu ô chọn bộ trên điện thoại không có hàng "+ Bộ mới".
         await openDeckMenu(tester);
         expect(find.text("🔀 Deck ngẫu nhiên"), findsOneWidget);
@@ -983,7 +965,7 @@ void main() {
       }),
     );
 
-    testWidgets("tạo bộ từ JSON dán vào -> gửi server, mở luôn bộ mới", (
+    testWidgets("tạo bộ từ JSON: tick chọn từ được lưu, mặc định gõ đáp án", (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1000));
@@ -1005,9 +987,9 @@ void main() {
         '{"back": "쓰레기는 줄이고 재활용은 늘리다", "front": "giảm rác"}]}\n```',
       );
       await tester.pump();
-      // Đáp án ngắn tick sẵn "Nhập đáp án", câu dài thì không.
+      // Mặc định chọn hết.
       expect(
-        find.text("✓ 3 thẻ (2 nhập đáp án, còn lại tự chấm)"),
+        find.text("✓ Lưu 3/3 từ — tick để chọn từ được lưu"),
         findsOneWidget,
       );
       expect(
@@ -1020,16 +1002,33 @@ void main() {
       );
       expect(
         [for (final c in tester.widgetList<Checkbox>(boxes)) c.value],
-        [true, true, false],
+        [true, true, true],
       );
 
-      // Bỏ tick thẻ đầu -> thành thẻ tự chấm.
+      // Bỏ tick thẻ đầu -> không lưu từ đó.
       await tester.tap(boxes.first);
       await tester.pump();
       expect(
-        find.text("✓ 3 thẻ (1 nhập đáp án, còn lại tự chấm)"),
+        find.text("✓ Lưu 2/3 từ — tick để chọn từ được lưu"),
         findsOneWidget,
       );
+      // "Bỏ chọn hết" -> không còn gì để lưu; "Chọn hết" rồi bỏ lại thẻ đầu.
+      await tester.tap(find.text("Chọn hết"));
+      await tester.pump();
+      await tester.tap(find.text("Bỏ chọn hết"));
+      await tester.pump();
+      expect(
+        tester
+            .widget<ElevatedButton>(
+              find.widgetWithText(ElevatedButton, "Tạo bộ (0 thẻ)"),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.text("Chọn hết"));
+      await tester.pump();
+      await tester.tap(boxes.first);
+      await tester.pump();
 
       // Chip chọn một: bấm lại chip đang chọn là bỏ chọn.
       await tester.tap(find.widgetWithText(ChoiceChip, "쓰기"));
@@ -1039,121 +1038,195 @@ void main() {
       await tester.tap(find.widgetWithText(ChoiceChip, "듣기"));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(ElevatedButton, "Tạo bộ"));
+      await tester.tap(find.widgetWithText(ElevatedButton, "Tạo bộ (2 thẻ)"));
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsNothing);
       expect(h.api.server.decks.last.name, "Bài 12");
-      expect(
-        [for (final c in h.api.server.decks.last.cards) c.typeAnswer],
-        [false, true, false],
-      );
+      final saved = h.api.server.decks.last.cards;
+      expect([for (final c in saved) c.back], ["학교", "쓰레기는 줄이고 재활용은 늘리다"]);
+      // Câu dài vẫn là thẻ gõ đáp án.
+      expect([for (final c in saved) c.typeAnswer], [true, true]);
       expect(find.text("Bài 12"), findsOneWidget); // ô chọn bộ đã sang bộ mới
-      expect(find.textContaining("Thuộc 0/3"), findsOneWidget);
+      expect(find.textContaining("Thuộc 0/2"), findsOneWidget);
       expect(h.api.server.decks.last.type, DeckType.listening);
       expect(h.api.server.decks.last.description, "Sách Sơ cấp — https://a.vn");
       expect(find.byType(DeckDescription), findsOneWidget);
-      expect(find.text("Loại: 듣기"), findsOneWidget);
+      expect(find.byType(DeckTypeBadge), findsOneWidget);
     }, variant: desktop);
 
-    testWidgets("đổi loại bộ đang mở: nhãn hiện trong ô chọn bộ, bỏ được", (
+    testWidgets("Deck này: đổi loại bộ, nhãn hiện trong ô chọn bộ, bỏ được", (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final h = await pumpApp(tester, api: _FakeApi(online: true));
       expect(find.byType(DeckTypeBadge), findsNothing);
+      Future<void> pickType(String label) async {
+        await tester.tap(find.text("Deck này"));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(ChoiceChip, label));
+        await tester.pump();
+        await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+        await tester.pumpAndSettle();
+      }
 
-      await tester.tap(find.text("Loại: —"));
-      await tester.pumpAndSettle();
-      await tester.tap(_typeMenuItem("문법"));
-      await tester.pumpAndSettle();
+      await pickType("문법");
       expect(h.api.server.decks.first.type, DeckType.grammar);
-      expect(find.text("Loại: 문법"), findsOneWidget);
       expect(find.byType(DeckTypeBadge), findsOneWidget);
 
-      await tester.tap(find.text("Loại: 문법"));
+      // Dialog mở lại đã chọn sẵn loại cũ; bấm lại = bỏ phân loại.
+      await tester.tap(find.text("Deck này"));
       await tester.pumpAndSettle();
-      expect(_typeMenuItem("Chưa phân loại"), findsNothing);
-      // Chọn lại loại đang có = bỏ phân loại.
-      await tester.tap(_typeMenuItem("문법"));
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, "문법"))
+            .selected,
+        isTrue,
+      );
+      await tester.tap(find.widgetWithText(TextButton, "Huỷ"));
       await tester.pumpAndSettle();
+      await pickType("문법");
       expect(h.api.server.decks.first.type, isNull);
-      expect(find.text("Loại: —"), findsOneWidget);
       expect(find.byType(DeckTypeBadge), findsNothing);
     }, variant: desktop);
 
     testWidgets(
-      "hàng nút dưới ô chọn bộ: Mô tả, Thêm từ căn trái; Loại bên phải",
+      "hàng nút dưới ô chọn bộ căn phải: Thêm từ, Deck này ngoài cùng",
       (tester) async {
         await tester.binding.setSurfaceSize(const Size(1200, 1000));
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await pumpApp(tester);
         final picker = tester.getRect(find.byType(DeckPicker));
-        final desc = tester.getRect(find.widgetWithText(TextButton, "+ Mô tả"));
+        final desc = tester.getRect(
+          find.widgetWithText(TextButton, "Deck này"),
+        );
         final add = tester.getRect(
           find.widgetWithText(TextButton, "+ Thêm từ"),
         );
-        final type = tester.getRect(find.text("Loại: —"));
-        expect(desc.left, picker.left);
-        expect(desc.right, lessThanOrEqualTo(add.left));
-        expect(type.left, greaterThan(picker.center.dx));
+        expect(desc.right, picker.right);
+        expect(add.right, lessThanOrEqualTo(desc.left));
+        expect(find.textContaining("Loại:"), findsNothing);
       },
       variant: desktop,
     );
 
-    testWidgets("thêm / sửa / xoá mô tả bộ đang mở", (tester) async {
+    testWidgets("Deck này: đổi tên + thêm / sửa / xoá mô tả bộ đang mở", (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final h = await pumpApp(tester, api: _FakeApi(online: true));
       expect(find.byType(DeckDescription), findsNothing);
-
-      await tester.tap(find.text("+ Mô tả"));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.descendant(
-          of: find.byType(AlertDialog),
-          matching: find.byType(TextField),
-        ),
-        "Nghe tại https://example.com/a",
+      final oldName = h.api.server.decks.first.name;
+      final fields = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
       );
+
+      await tester.tap(find.text("Deck này"));
+      await tester.pumpAndSettle();
+      // Ô tên điền sẵn tên cũ; tên trống thì không lưu được.
+      expect(tester.widget<TextField>(fields.at(0)).controller!.text, oldName);
+      await tester.enterText(fields.at(0), "  ");
+      await tester.pump();
+      expect(
+        tester
+            .widget<ElevatedButton>(find.widgetWithText(ElevatedButton, "Lưu"))
+            .onPressed,
+        isNull,
+      );
+      await tester.enterText(fields.at(0), "  Bộ đổi tên  ");
+      await tester.enterText(fields.at(1), "Nghe tại https://example.com/a");
       await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
       await tester.pumpAndSettle();
+      expect(h.api.server.decks.first.name, "Bộ đổi tên");
       expect(
         h.api.server.decks.first.description,
         "Nghe tại https://example.com/a",
       );
+      expect(find.text("Bộ đổi tên"), findsOneWidget); // ô chọn bộ đổi theo
       expect(find.byType(DeckDescription), findsOneWidget);
 
       // Sửa: dialog điền sẵn mô tả cũ; xoá trắng là xoá mô tả.
-      await tester.tap(find.text("✎ Mô tả"));
+      await tester.tap(find.text("Deck này"));
       await tester.pumpAndSettle();
       expect(find.text("Nghe tại https://example.com/a"), findsWidgets);
-      await tester.enterText(
-        find.descendant(
-          of: find.byType(AlertDialog),
-          matching: find.byType(TextField),
-        ),
-        "   ",
-      );
+      await tester.enterText(fields.at(1), "   ");
       await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
       await tester.pumpAndSettle();
       expect(h.api.server.decks.first.description, isNull);
+      expect(h.api.server.decks.first.name, "Bộ đổi tên");
       expect(find.byType(DeckDescription), findsNothing);
-      expect(find.text("+ Mô tả"), findsOneWidget);
     }, variant: desktop);
 
-    testWidgets("đổi loại bộ khi offline: báo cần có mạng", (tester) async {
+    testWidgets("thêm từ nhập tay: cùng các ô với sửa thẻ, lưu một từ", (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final h = await pumpApp(tester, api: _FakeApi(online: true));
+      final before = h.api.server.decks.first.cards.length;
+      final fields = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
+      ElevatedButton submit(String label) =>
+          tester.widget(find.widgetWithText(ElevatedButton, label));
+
+      await tester.tap(find.text("+ Thêm từ"));
+      await tester.pumpAndSettle();
+      // Mặc định là dán JSON (một ô); bấm "Nhập tay" mới ra form.
+      expect(fields, findsOneWidget);
+      await tester.tap(find.text("Nhập tay"));
+      await tester.pump();
+      // Cùng các ô với dialog sửa thẻ: mặt trước, mặt sau, gợi ý, giải thích
+      // (+ ô đáp án phụ khi bấm thêm).
+      expect(fields, findsNWidgets(4));
+      expect(find.text("Thêm vào danh sách"), findsNothing);
+      expect(submit("Thêm").onPressed, isNull);
+
+      await tester.tap(find.text("Thêm đáp án đúng khác"));
+      await tester.pump();
+      // front, back, đáp án phụ, gợi ý, giải thích.
+      await tester.enterText(fields.at(0), "răng");
+      await tester.enterText(fields.at(1), "치아");
+      await tester.enterText(fields.at(2), "이");
+      await tester.enterText(fields.at(3), "nha khoa");
+      await tester.enterText(fields.at(4), "**răng** nói chung");
+      // Bỏ tick -> thẻ tự chấm.
+      await tester.tap(find.text("Nhập đáp án"));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, "Thêm"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      final added = h.api.server.decks.first.cards.skip(before).toList();
+      expect(added, hasLength(1));
+      expect(added.single.front, "răng");
+      expect(added.single.back, "치아");
+      expect(added.single.typeAnswer, isFalse);
+      expect(added.single.hint, "nha khoa");
+      expect(added.single.note, "**răng** nói chung");
+      expect(added.single.altAnswers, ["이"]);
+    }, variant: desktop);
+
+    testWidgets("Deck này khi offline: báo cần có mạng, không đóng hộp thoại", (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(1200, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await pumpApp(tester);
 
-      await tester.tap(find.text("Loại: —"));
+      await tester.tap(find.text("Deck này"));
       await tester.pumpAndSettle();
-      await tester.tap(_typeMenuItem("읽기"));
+      await tester.tap(find.widgetWithText(ChoiceChip, "읽기"));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
       await tester.pumpAndSettle();
       expect(find.textContaining("Cần có mạng"), findsOneWidget);
-      expect(find.text("Loại: —"), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(DeckTypeBadge), findsNothing);
     }, variant: desktop);
 
     testWidgets("offline: báo cần có mạng, không đóng hộp thoại", (

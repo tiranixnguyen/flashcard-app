@@ -18,9 +18,10 @@ Quy tắc:
 /// Mặt sau tối đa bấy nhiêu từ thì coi là "ngắn".
 const shortAnswerMaxWords = 3;
 
-/// JSON không ghi rõ `typeAnswer`: đáp án ngắn (≤ 3 từ) thì gõ đáp án, dài hơn
-/// (câu, cụm dài — gõ lại từng chữ rất mệt) thì là thẻ tự chấm. Phải giống
-/// `defaultTypeAnswer` bên backend (`wordInput.ts`).
+/// Mặc định của SERVER khi request không ghi `typeAnswer`: đáp án ngắn (≤ 3
+/// từ) thì gõ đáp án, dài hơn là thẻ tự chấm. Phải giống `defaultTypeAnswer`
+/// bên backend (`wordInput.ts`). App luôn gửi rõ `typeAnswer` (xem
+/// [parseDeckImport]) nên chỉ fixture test cần tới.
 bool defaultTypeAnswer(String back) =>
     back.trim().split(RegExp(r"\s+")).length <= shortAnswerMaxWords;
 
@@ -32,8 +33,8 @@ class DeckImport {
   final String? name;
 
   /// Các từ hợp lệ, đúng định dạng gửi lên server (`front`, `back`, `hint`?,
-  /// `note`?, `altAnswers`?), mỗi từ một thẻ. Luôn có sẵn `typeAnswer` — ghi rõ trong JSON, không thì theo [defaultTypeAnswer] —
-  /// để trình tạo bộ hiện ô "Nhập đáp án" cho người dùng đổi trước khi gửi.
+  /// `note`?, `altAnswers`?), mỗi từ một thẻ. Luôn có sẵn `typeAnswer`: ghi
+  /// rõ trong JSON thì giữ, không thì `true` (thẻ gõ đáp án).
   final List<Map<String, dynamic>> words;
 
   /// Lỗi đọc được — có lỗi thì không cho gửi, tránh tạo bộ thiếu từ.
@@ -92,10 +93,8 @@ DeckImport parseDeckImport(String text) {
   // Giải thích là Markdown: giữ nguyên thụt lề/xuống dòng, server tự dọn hai
   // đầu (cleanNote) — trim ở đây sẽ phá khối code thụt lề ở dòng đầu.
   String? note(Object? v) => v is String && v.trim().isNotEmpty ? v : null;
-  bool typeAnswerOf(Map<dynamic, dynamic> m, String back) =>
-      m["typeAnswer"] is bool
-      ? m["typeAnswer"] as bool
-      : defaultTypeAnswer(back);
+  bool typeAnswerOf(Map<dynamic, dynamic> m) =>
+      m["typeAnswer"] is bool ? m["typeAnswer"] as bool : true;
 
   for (var i = 0; i < list.length; i++) {
     final w = list[i];
@@ -113,7 +112,7 @@ DeckImport parseDeckImport(String text) {
     final out = <String, dynamic>{
       "front": front,
       "back": back,
-      "typeAnswer": typeAnswerOf(w, back),
+      "typeAnswer": typeAnswerOf(w),
     };
     if (str(w["hint"]) case final hint?) out["hint"] = hint;
     if (note(w["note"]) case final n?) out["note"] = n;

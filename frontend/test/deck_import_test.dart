@@ -96,17 +96,13 @@ void main() {
   });
 
   group("Nhập đáp án", () {
-    test(
-      "không ghi typeAnswer: mặt sau ≤ 3 từ thì tick sẵn, dài hơn thì không",
-      () {
-        final r = parseDeckImport('''
+    test("không ghi typeAnswer: luôn là thẻ gõ đáp án, kể cả câu dài", () {
+      final r = parseDeckImport('''
 [{"back": "간 이식 수술", "front": "ghép gan"},
- {"back": "간 이식 수술을 하다", "front": "làm phẫu thuật ghép gan"},
  {"back": "1일 2회, 1회 1정 복용", "front": "liều dùng"}]''');
-        expect(r.words.map((c) => c["typeAnswer"]), [true, false, false]);
-        expect(r.typeAnswerCount, 1);
-      },
-    );
+      expect(r.words.map((c) => c["typeAnswer"]), [true, true]);
+      expect(r.typeAnswerCount, 2);
+    });
 
     test("ghi rõ typeAnswer thì giữ nguyên", () {
       final r = parseDeckImport('''

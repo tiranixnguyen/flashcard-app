@@ -5,6 +5,7 @@ import "package:google_fonts/google_fonts.dart";
 import "../../../../core/theme/app_palette.dart";
 import "../../domain/deck_import.dart";
 import "../../models/deck.dart";
+import "card_form_fields.dart";
 
 /// Gửi lên server; trả về thông báo lỗi, `null` nếu thành công. [type] và
 /// [description] luôn `null` khi thêm từ vào bộ có sẵn.
@@ -20,8 +21,9 @@ typedef DeckSubmit =
 const maxDeckDescription = 500;
 
 /// Tạo bộ mới (có ô tên) hoặc thêm từ vào bộ có sẵn ([appendTo] = tên bộ).
-/// Dán JSON từ AI, xem trước số thẻ + từ trùng, chọn thẻ nào gõ đáp án
-/// ("Nhập đáp án", tick sẵn cho đáp án ngắn), rồi gửi — cần có mạng.
+/// Hai cách nhập từ: gõ tay từng từ, hoặc dán JSON từ AI rồi tick chọn từ nào
+/// được lưu. Mọi từ mặc định là thẻ gõ đáp án (JSON ghi rõ `typeAnswer` thì
+/// giữ). Chỉ Mac/web, cần có mạng.
 Future<bool?> showDeckEditorDialog({
   required BuildContext context,
   required AppPalette palette,
@@ -42,6 +44,9 @@ Future<bool?> showDeckEditorDialog({
     ),
   );
 }
+
+/// Cách nhập từ trong trình tạo bộ.
+enum _InputMode { json, manual }
 
 class _DeckEditorDialog extends StatefulWidget {
   const _DeckEditorDialog({
@@ -66,7 +71,16 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   final _nameController = TextEditingController();
   final _jsonController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  /// Form "Nhập tay" — cùng các ô với dialog sửa thẻ.
+  final _form = CardForm();
+
+  var _mode = _InputMode.json;
   DeckImport _parsed = const DeckImport();
+
+  /// Song song với [DeckImport.words]: từ nào được lưu (mặc định chọn hết).
+  List<bool> _selected = const [];
+
   DeckType? _type;
   bool _nameTouched = false;
   bool _sending = false;
@@ -79,6 +93,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     _nameController.dispose();
     _jsonController.dispose();
     _descriptionController.dispose();
+    _form.dispose();
     super.dispose();
   }
 
@@ -86,6 +101,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     final parsed = parseDeckImport(text);
     setState(() {
       _parsed = parsed;
+      _selected = List.filled(parsed.words.length, true);
       _error = null;
       // Lấy tên AI đặt nếu người dùng chưa tự gõ tên.
       if (!_isAppend && !_nameTouched && parsed.name != null) {
@@ -94,9 +110,39 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     });
   }
 
+  /// Từ trong form (đủ hai mặt), `null` nếu chưa đủ. Giải thích
+  /// giữ nguyên Markdown (server tự dọn hai đầu), đáp án phụ server lọc trùng.
+  Map<String, dynamic>? get _draftWord {
+    final f = _form;
+    if (!f.hasBothSides) return null;
+    final hint = f.hint.text.trim();
+    final alts = [
+      for (final c in f.alts)
+        if (c.text.trim().isNotEmpty) c.text.trim(),
+    ];
+    return {
+      "front": f.front.text.trim(),
+      "back": f.back.text.trim(),
+      "typeAnswer": f.typeAnswer,
+      if (hint.isNotEmpty) "hint": hint,
+      if (f.note.text.trim().isNotEmpty) "note": f.note.text,
+      if (alts.isNotEmpty) "altAnswers": alts,
+    };
+  }
+
+  /// Những từ sẽ gửi đi. Gõ tay: mỗi lần một từ (nhiều từ thì dán JSON).
+  List<Map<String, dynamic>> get _words => switch (_mode) {
+    _InputMode.manual => [?_draftWord],
+    _InputMode.json => [
+      for (var i = 0; i < _parsed.words.length; i++)
+        if (_selected[i]) _parsed.words[i],
+    ],
+  };
+
   bool get _canSubmit =>
       !_sending &&
-      _parsed.ok &&
+      (_mode == _InputMode.manual || _parsed.errors.isEmpty) &&
+      _words.isNotEmpty &&
       (_isAppend || _nameController.text.trim().isNotEmpty);
 
   Future<void> _submit() async {
@@ -106,7 +152,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
     });
     final err = await widget.onSubmit(
       _nameController.text.trim(),
-      _parsed.words,
+      _words,
       _type,
       _isAppend ? null : _descriptionController.text,
     );
@@ -136,7 +182,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final p = widget.palette;
-    final dups = _parsed.duplicatesOf(widget.knownKorean);
+    final count = _words.length;
 
     return AlertDialog(
       backgroundColor: p.cardBg,
@@ -177,34 +223,33 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
                 ),
                 const SizedBox(height: 14),
               ],
-              Row(
-                children: [
-                  Expanded(
-                    child: _label(p, "JSON từ vựng (dán kết quả từ AI)"),
+              SegmentedButton<_InputMode>(
+                segments: const [
+                  ButtonSegment(
+                    value: _InputMode.json,
+                    icon: Icon(Icons.data_object, size: 16),
+                    label: Text("Dán JSON"),
                   ),
-                  TextButton.icon(
-                    onPressed: _copyPrompt,
-                    icon: Icon(Icons.copy, size: 15, color: p.blue),
-                    label: Text(
-                      "Sao chép prompt tách từ",
-                      style: TextStyle(color: p.blue, fontSize: 12.5),
-                    ),
+                  ButtonSegment(
+                    value: _InputMode.manual,
+                    icon: Icon(Icons.edit_outlined, size: 16),
+                    label: Text("Nhập tay"),
                   ),
                 ],
+                selected: {_mode},
+                showSelectedIcon: false,
+                onSelectionChanged: _sending
+                    ? null
+                    : (m) => setState(() {
+                        _mode = m.single;
+                        _error = null;
+                      }),
               ),
-              TextField(
-                controller: _jsonController,
-                onChanged: _onJsonChanged,
-                minLines: 8,
-                maxLines: 14,
-                style: GoogleFonts.notoSansKr(fontSize: 13, color: p.ink),
-                decoration: _decoration(
-                  p,
-                  '{"name": "…", "words": [{"front": "răng", "back": "치아"}]}',
-                ),
-              ),
-              const SizedBox(height: 10),
-              _preview(p, dups),
+              const SizedBox(height: 14),
+              ...switch (_mode) {
+                _InputMode.manual => _manualInput(p),
+                _InputMode.json => _jsonInput(p),
+              },
               if (_error != null) ...[
                 const SizedBox(height: 10),
                 Text(_error!, style: TextStyle(color: p.wrong, fontSize: 13)),
@@ -228,15 +273,63 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
             _sending
                 ? "Đang lưu…"
                 : _isAppend
-                ? "Thêm ${_parsed.words.length} thẻ"
-                : "Tạo bộ",
+                ? "Thêm"
+                : "Tạo bộ ($count thẻ)",
           ),
         ),
       ],
     );
   }
 
-  Widget _preview(AppPalette p, List<String> dups) {
+  List<Widget> _manualInput(AppPalette p) {
+    final back = _draftWord?["back"] as String?;
+    return [
+      CardFormFields(
+        form: _form,
+        palette: p,
+        enabled: !_sending,
+        onChanged: () => setState(() => _error = null),
+        onSubmitted: () {
+          if (_canSubmit) _submit();
+        },
+      ),
+      if (back != null && widget.knownKorean.contains(back)) ...[
+        const SizedBox(height: 6),
+        _dupWarning(p, [back]),
+      ],
+    ];
+  }
+
+  List<Widget> _jsonInput(AppPalette p) => [
+    Row(
+      children: [
+        Expanded(child: _label(p, "JSON từ vựng (dán kết quả từ AI)")),
+        TextButton.icon(
+          onPressed: _copyPrompt,
+          icon: Icon(Icons.copy, size: 15, color: p.blue),
+          label: Text(
+            "Sao chép prompt tách từ",
+            style: TextStyle(color: p.blue, fontSize: 12.5),
+          ),
+        ),
+      ],
+    ),
+    TextField(
+      controller: _jsonController,
+      onChanged: _onJsonChanged,
+      minLines: 8,
+      maxLines: 14,
+      style: GoogleFonts.notoSansKr(fontSize: 13, color: p.ink),
+      decoration: _decoration(
+        p,
+        '{"name": "…", "words": [{"front": "răng", "back": "치아"}]}',
+      ),
+    ),
+    const SizedBox(height: 10),
+    _jsonPreview(p),
+  ];
+
+  Widget _jsonPreview(AppPalette p) {
     final style = GoogleFonts.notoSans(fontSize: 13, color: p.inkSoft);
     if (_parsed.errors.isNotEmpty) {
       return Column(
@@ -249,39 +342,57 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
         ],
       );
     }
-    if (_parsed.words.isEmpty) {
+    final cards = _parsed.words;
+    if (cards.isEmpty) {
       return Text("Chưa có từ nào.", style: style);
     }
-    final cards = _parsed.words;
+    final picked = _selected.where((v) => v).length;
+    final allPicked = picked == cards.length;
+    final dups = [
+      for (var i = 0; i < cards.length; i++)
+        if (_selected[i] && widget.knownKorean.contains(cards[i]["back"]))
+          cards[i]["back"] as String,
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "✓ ${cards.length} thẻ (${_parsed.typeAnswerCount} nhập đáp án, "
-          "còn lại tự chấm)",
-          style: style.copyWith(color: p.correct),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          "☑ Nhập đáp án · ☐ tự chấm (lật thẻ rồi tự bấm Nhớ / Chưa nhớ)",
-          style: style.copyWith(fontSize: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                "✓ Lưu $picked/${cards.length} từ — tick để chọn từ được lưu",
+                style: style.copyWith(color: p.correct),
+              ),
+            ),
+            TextButton(
+              onPressed: _sending
+                  ? null
+                  : () => setState(
+                      () => _selected = List.filled(cards.length, !allPicked),
+                    ),
+              child: Text(
+                allPicked ? "Bỏ chọn hết" : "Chọn hết",
+                style: TextStyle(color: p.blue, fontSize: 12.5),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
         _cardList(p, cards),
-        if (dups.isNotEmpty)
-          Text(
-            "Đã có sẵn trong các bộ khác (vẫn thêm được): ${dups.join(", ")}",
-            style: GoogleFonts.notoSansKr(fontSize: 12.5, color: p.gold),
-          ),
+        if (dups.isNotEmpty) _dupWarning(p, dups),
       ],
     );
   }
 
+  Widget _dupWarning(AppPalette p, List<String> dups) => Text(
+    "Đã có sẵn trong các bộ khác (vẫn thêm được): ${dups.join(", ")}",
+    style: GoogleFonts.notoSansKr(fontSize: 12.5, color: p.gold),
+  );
+
   static const _cardRowHeight = 36.0;
 
-  /// Mỗi thẻ một dòng: ô "Nhập đáp án" + mặt trước → mặt sau. Đổi ô tick là
-  /// sửa thẳng `typeAnswer` trong [DeckImport.words] (thứ sẽ gửi lên server);
-  /// sửa JSON thì đọc lại từ đầu, tick về mặc định.
+  /// Mỗi thẻ một dòng: ô tick "lưu từ này" + mặt trước → mặt sau. Thẻ ghi
+  /// rõ `typeAnswer: false` thì ghi chú "tự chấm".
   Widget _cardList(AppPalette p, List<Map<String, dynamic>> cards) {
     return Container(
       height: (cards.length * _cardRowHeight).clamp(0, 6 * _cardRowHeight),
@@ -291,22 +402,22 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
         itemExtent: _cardRowHeight,
         itemBuilder: (_, i) {
           final c = cards[i];
-          final back = c["back"] as String?;
+          final selfGraded = c["typeAnswer"] == false ? "  · tự chấm" : "";
           return Row(
             children: [
               Tooltip(
-                message: "Nhập đáp án",
+                message: "Lưu từ này",
                 child: Checkbox(
-                  value: c["typeAnswer"] == true,
+                  value: _selected[i],
                   visualDensity: VisualDensity.compact,
                   onChanged: _sending
                       ? null
-                      : (v) => setState(() => c["typeAnswer"] = v ?? false),
+                      : (v) => setState(() => _selected[i] = v ?? false),
                 ),
               ),
               Expanded(
                 child: Text(
-                  back == null ? c["front"] as String : "${c["front"]} → $back",
+                  "${c["front"]} → ${c["back"]}$selfGraded",
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.notoSansKr(fontSize: 13, color: p.ink),
@@ -332,22 +443,16 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   );
 }
 
-/// Ô nhập mô tả bộ (dùng chung khi tạo bộ và sửa mô tả).
+/// Ô nhập mô tả bộ (dùng chung khi tạo bộ và sửa bộ).
 class _DescriptionField extends StatelessWidget {
-  const _DescriptionField({
-    required this.controller,
-    required this.palette,
-    this.autofocus = false,
-  });
+  const _DescriptionField({required this.controller, required this.palette});
 
   final TextEditingController controller;
   final AppPalette palette;
-  final bool autofocus;
 
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
-    autofocus: autofocus,
     minLines: 2,
     maxLines: 5,
     maxLength: maxDeckDescription,
@@ -356,60 +461,77 @@ class _DescriptionField extends StatelessWidget {
   );
 }
 
-/// Sửa mô tả bộ [deckName]; để trống là xoá. [onSubmit] trả về thông báo lỗi,
-/// `null` nếu thành công.
-Future<bool?> showDeckDescriptionDialog({
+/// Gửi thông tin bộ đã sửa; trả về thông báo lỗi, `null` nếu thành công.
+typedef DeckInfoSubmit =
+    Future<String?> Function(String name, DeckType? type, String description);
+
+/// "Deck này": sửa tên, loại, mô tả bộ đang mở (mô tả để trống là xoá).
+Future<bool?> showDeckInfoDialog({
   required BuildContext context,
   required AppPalette palette,
-  required String deckName,
-  required String? initial,
-  required Future<String?> Function(String description) onSubmit,
+  required String name,
+  required DeckType? type,
+  required String? description,
+  required DeckInfoSubmit onSubmit,
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (_) => _DescriptionDialog(
+    builder: (_) => _DeckInfoDialog(
       palette: palette,
-      deckName: deckName,
-      initial: initial ?? "",
+      name: name,
+      type: type,
+      description: description ?? "",
       onSubmit: onSubmit,
     ),
   );
 }
 
-class _DescriptionDialog extends StatefulWidget {
-  const _DescriptionDialog({
+class _DeckInfoDialog extends StatefulWidget {
+  const _DeckInfoDialog({
     required this.palette,
-    required this.deckName,
-    required this.initial,
+    required this.name,
+    required this.type,
+    required this.description,
     required this.onSubmit,
   });
 
   final AppPalette palette;
-  final String deckName;
-  final String initial;
-  final Future<String?> Function(String description) onSubmit;
+  final String name;
+  final DeckType? type;
+  final String description;
+  final DeckInfoSubmit onSubmit;
 
   @override
-  State<_DescriptionDialog> createState() => _DescriptionDialogState();
+  State<_DeckInfoDialog> createState() => _DeckInfoDialogState();
 }
 
-class _DescriptionDialogState extends State<_DescriptionDialog> {
-  late final _controller = TextEditingController(text: widget.initial);
+class _DeckInfoDialogState extends State<_DeckInfoDialog> {
+  late final _name = TextEditingController(text: widget.name);
+  late final _description = TextEditingController(text: widget.description);
+  late DeckType? _type = widget.type;
   bool _sending = false;
   String? _error;
 
   @override
   void dispose() {
-    _controller.dispose();
+    _name.dispose();
+    _description.dispose();
     super.dispose();
   }
 
+  bool get _canSubmit => !_sending && _name.text.trim().isNotEmpty;
+
   Future<void> _submit() async {
+    if (!_canSubmit) return;
     setState(() {
       _sending = true;
       _error = null;
     });
-    final err = await widget.onSubmit(_controller.text);
+    final err = await widget.onSubmit(
+      _name.text.trim(),
+      _type,
+      _description.text,
+    );
     if (!mounted) return;
     if (err == null) {
       Navigator.of(context).pop(true);
@@ -424,10 +546,15 @@ class _DescriptionDialogState extends State<_DescriptionDialog> {
   @override
   Widget build(BuildContext context) {
     final p = widget.palette;
+    final label = GoogleFonts.notoSans(
+      fontSize: 12.5,
+      fontWeight: FontWeight.w600,
+      color: p.inkSoft,
+    );
     return AlertDialog(
       backgroundColor: p.cardBg,
       title: Text(
-        "Mô tả “${widget.deckName}”",
+        "Sửa bộ “${widget.name}”",
         style: GoogleFonts.notoSansKr(
           fontWeight: FontWeight.w700,
           color: p.ink,
@@ -439,11 +566,29 @@ class _DescriptionDialogState extends State<_DescriptionDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _DescriptionField(
-              controller: _controller,
-              palette: p,
+            Text("Tên bộ", style: label),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _name,
               autofocus: true,
+              enabled: !_sending,
+              onChanged: (_) => setState(() {}),
+              onSubmitted: (_) => _submit(),
+              style: GoogleFonts.notoSans(fontSize: 15, color: p.ink),
+              decoration: _decoration(p, "Tên bộ"),
             ),
+            const SizedBox(height: 14),
+            Text("Loại bộ (bấm lại loại đang chọn để bỏ)", style: label),
+            const SizedBox(height: 6),
+            DeckTypeChips(
+              palette: p,
+              selected: _type,
+              onChanged: _sending ? null : (t) => setState(() => _type = t),
+            ),
+            const SizedBox(height: 14),
+            Text("Mô tả ngắn", style: label),
+            const SizedBox(height: 6),
+            _DescriptionField(controller: _description, palette: p),
             Text(
               "Để trống là xoá mô tả. Link http(s):// bấm được khi học.",
               style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
@@ -461,7 +606,7 @@ class _DescriptionDialogState extends State<_DescriptionDialog> {
           child: Text("Huỷ", style: TextStyle(color: p.inkSoft)),
         ),
         ElevatedButton(
-          onPressed: _sending ? null : _submit,
+          onPressed: _canSubmit ? _submit : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: p.ink,
             foregroundColor: p.paper,

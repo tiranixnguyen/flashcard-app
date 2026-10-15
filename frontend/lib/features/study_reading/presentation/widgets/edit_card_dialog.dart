@@ -2,7 +2,6 @@ import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:google_fonts/google_fonts.dart";
 
-import "../../../../core/platform/keyboard_language.dart";
 import "../../../../core/theme/app_palette.dart";
 import "../../data/audio_gateway.dart";
 import "../../models/card_audio.dart";
@@ -10,6 +9,7 @@ import "../../models/study_word.dart";
 import "../audio_playback.dart";
 import "../study_session_view_model.dart";
 import "audio_button.dart";
+import "card_form_fields.dart";
 
 /// Kết quả người dùng chọn trong hộp thoại sửa thẻ.
 sealed class EditCardResult {
@@ -64,19 +64,14 @@ class _EditCardDialog extends ConsumerStatefulWidget {
 }
 
 class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
-  late final _frontController = TextEditingController(text: widget.word.front);
-  late final _backController = TextEditingController(text: widget.word.back);
-  late bool _typeAnswer = widget.word.typeAnswer;
-  late final _hintController = TextEditingController(
-    text: widget.word.hint ?? "",
+  late final _form = CardForm(
+    front: widget.word.front,
+    back: widget.word.back,
+    hint: widget.word.hint ?? "",
+    note: widget.word.note ?? "",
+    altAnswers: widget.word.altAnswers ?? const [],
+    typeAnswer: widget.word.typeAnswer,
   );
-  late final _noteController = TextEditingController(
-    text: widget.word.note ?? "",
-  );
-  late final List<TextEditingController> _altControllers = [
-    for (final alt in widget.word.altAnswers ?? const <String>[])
-      TextEditingController(text: alt),
-  ];
 
   late CardAudio _audio = widget.word.audio;
 
@@ -88,13 +83,7 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
 
   @override
   void dispose() {
-    _frontController.dispose();
-    _backController.dispose();
-    _hintController.dispose();
-    _noteController.dispose();
-    for (final c in _altControllers) {
-      c.dispose();
-    }
+    _form.dispose();
     super.dispose();
   }
 
@@ -128,15 +117,14 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
   }
 
   void _submit() {
-    if (_frontController.text.trim().isEmpty ||
-        _backController.text.trim().isEmpty) {
+    if (!_form.hasBothSides) {
       setState(() => _error = "Vui lòng nhập đủ mặt trước và mặt sau.");
       return;
     }
     // Nút nghe nằm cạnh chữ của trường; trường trống thì thẻ không hiện gì.
     for (final (field, controller) in [
-      (CardField.hint, _hintController),
-      (CardField.note, _noteController),
+      (CardField.hint, _form.hint),
+      (CardField.note, _form.note),
     ]) {
       if (_audio[field] != null && controller.text.trim().isEmpty) {
         setState(
@@ -148,12 +136,12 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
     }
     _close(
       EditCardSaved(
-        front: _frontController.text,
-        back: _backController.text,
-        typeAnswer: _typeAnswer,
-        hint: _hintController.text,
-        note: _noteController.text,
-        altAnswers: [for (final c in _altControllers) c.text],
+        front: _form.front.text,
+        back: _form.back.text,
+        typeAnswer: _form.typeAnswer,
+        hint: _form.hint.text,
+        note: _form.note.text,
+        altAnswers: [for (final c in _form.alts) c.text],
         audio: _audio,
       ),
     );
@@ -179,83 +167,12 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _label(p, "Mặt trước — nghĩa tiếng Việt", audio: CardField.front),
-              _field(p, _frontController),
-              const SizedBox(height: 14),
-              _label(
-                p,
-                "Mặt sau — tiếng Hàn (đáp án chính)",
-                audio: CardField.back,
+              CardFormFields(
+                form: _form,
+                palette: p,
+                onChanged: () => setState(() {}),
+                audioControl: (field) => _audioControl(p, field),
               ),
-              _field(p, _backController, korean: true),
-              const SizedBox(height: 6),
-              CheckboxListTile(
-                value: _typeAnswer,
-                onChanged: (v) => setState(() => _typeAnswer = v ?? false),
-                title: Text(
-                  "Nhập đáp án",
-                  style: GoogleFonts.notoSans(fontSize: 14, color: p.ink),
-                ),
-                subtitle: Text(
-                  _typeAnswer
-                      ? "Gõ mặt sau rồi chấm."
-                      : "Thẻ tự chấm: lật thẻ rồi tự bấm Nhớ / Chưa nhớ.",
-                  style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
-                ),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-              ),
-              const SizedBox(height: 8),
-              _label(p, "Đáp án đúng khác (không bắt buộc)"),
-              for (var i = 0; i < _altControllers.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _field(p, _altControllers[i], korean: true),
-                      ),
-                      IconButton(
-                        tooltip: "Xoá đáp án này",
-                        onPressed: () => setState(() {
-                          _altControllers.removeAt(i).dispose();
-                        }),
-                        icon: Icon(Icons.close, size: 18, color: p.wrong),
-                      ),
-                    ],
-                  ),
-                ),
-              TextButton.icon(
-                onPressed: () => setState(
-                  () => _altControllers.add(TextEditingController()),
-                ),
-                icon: Icon(Icons.add, size: 16, color: p.blue),
-                label: Text(
-                  "Thêm đáp án đúng khác",
-                  style: TextStyle(color: p.blue),
-                ),
-              ),
-              const SizedBox(height: 8),
-              _label(p, "Gợi ý (không bắt buộc)", audio: CardField.hint),
-              // Cao sẵn 3 dòng, giãn tới 5 dòng rồi cuộn bên trong — gợi ý
-              // thật trong dữ liệu có cái dài hơn chục dòng (chiết tự Hán tự).
-              _field(p, _hintController, minLines: 3, maxLines: 5),
-              const SizedBox(height: 14),
-              _label(
-                p,
-                "Giải thích đáp án (không bắt buộc)",
-                audio: CardField.note,
-              ),
-              Text(
-                "Dán thẳng từ AI — giữ nguyên định dạng Markdown (tiêu đề, "
-                "**đậm**, danh sách, bảng…). Hiện sau khi lộ đáp án.",
-                style: GoogleFonts.notoSans(fontSize: 12, color: p.inkSoft),
-              ),
-              const SizedBox(height: 6),
-              // Giải thích có thể rất dài: cao sẵn 4 dòng, giãn tới 12 dòng
-              // rồi cuộn bên trong.
-              _field(p, _noteController, minLines: 4, maxLines: 12),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!, style: TextStyle(color: p.wrong, fontSize: 13)),
@@ -315,29 +232,6 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
     );
   }
 
-  /// Nhãn trường; có [audio] thì bên phải là nút gắn/nghe/gỡ file nghe.
-  Widget _label(AppPalette p, String text, {CardField? audio}) {
-    final label = Text(
-      text,
-      style: GoogleFonts.notoSans(
-        fontSize: 12.5,
-        fontWeight: FontWeight.w600,
-        color: p.inkSoft,
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: audio == null
-          ? label
-          : Row(
-              children: [
-                Expanded(child: label),
-                _audioControl(p, audio),
-              ],
-            ),
-    );
-  }
-
   Widget _audioControl(AppPalette p, CardField field) {
     if (_uploading == field) {
       return Padding(
@@ -377,44 +271,5 @@ class _EditCardDialogState extends ConsumerState<_EditCardDialog> {
         ),
       ],
     );
-  }
-
-  Widget _field(
-    AppPalette p,
-    TextEditingController controller, {
-    bool korean = false,
-    int minLines = 1,
-    int maxLines = 1,
-  }) {
-    final field = TextField(
-      controller: controller,
-      // Ô tiếng Hàn: Android tự chuyển bàn phím qua hintLocales; iOS qua
-      // KeyboardLanguageScope bên dưới. Ô tiếng Việt để trống -> bàn phím
-      // quay về ngôn ngữ đang dùng trước đó.
-      hintLocales: korean ? koreanKeyboard : null,
-      // maxLines > 1 thì bàn phím tự thành multiline: Enter xuống dòng thay
-      // vì submit — đúng ý cho gợi ý nhiều dòng (vd chiết tự Hán tự).
-      minLines: minLines,
-      maxLines: maxLines,
-      style: korean
-          ? GoogleFonts.notoSansKr(fontSize: 16, color: p.ink)
-          : GoogleFonts.notoSans(fontSize: 15, color: p.ink),
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 10,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: p.paperLine),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: p.blue, width: 1.5),
-        ),
-      ),
-    );
-    return korean
-        ? KeyboardLanguageScope(languageCode: "ko", child: field)
-        : field;
   }
 }

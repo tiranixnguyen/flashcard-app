@@ -141,21 +141,27 @@ tới) rồi truyền vào `StudyCard`.
   chọn bộ từ vẫn thấy; màn quá thấp thì ưu tiên ô trả lời. Debounce 300ms chờ
   bàn phím mở xong (metrics đổi liên tục trong animation).
 - **Soạn nội dung chỉ trên Mac/web** (`!isPhone`): "+ Nhóm", "✎" đổi tên nhóm,
-  "+ Bộ mới" (hàng cuối menu ô chọn bộ), "+ Mô tả" và "+ Thêm từ" (căn trái
-  dưới ô chọn bộ),
+  "+ Bộ mới" (hàng cuối menu ô chọn bộ), "Deck này" (icon sửa; tên, loại, mô
+  tả bộ — một PATCH gửi cả ba) và "+ Thêm từ" (căn phải dưới ô chọn bộ, "Deck này" ngoài cùng),
   "✎ Sửa / xoá thẻ". Điện thoại chỉ còn
-  ⭐/漢/📖 trong menu •••. Trình tạo bộ nhận JSON `{"name", "words": [{front,
+  ⭐/漢/📖 trong menu •••. Trình tạo bộ / thêm từ có hai chế độ: **Nhập tay**
+  (cùng các ô với dialog sửa thẻ — widget chung `CardFormFields`, trừ file
+  nghe; mỗi lần lưu một từ — nhiều từ thì dán JSON) và **Dán JSON** (nút bên
+  trái, luôn mở sẵn; bấm "Nhập tay" mới đổi).
+  JSON `{"name", "words": [{front,
   back, hint?, note?, altAnswers?, typeAnswer?}]}` hoặc mảng
   trần, kể cả còn bọc trong ` ```json `; nút "Sao chép prompt tách từ" chép
-  `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô "Nhập đáp án" (tick
-  sẵn theo `defaultTypeAnswer`: mặt sau ≤ 3 từ), đổi được trước khi gửi. Dialog
+  `deckExtractionPrompt`. Xem trước liệt kê từng thẻ với ô tick **chọn từ nào
+  được lưu** (mặc định chọn hết, có "Chọn hết/Bỏ chọn hết"). Từ thêm mới luôn
+  là thẻ gõ đáp án (JSON ghi rõ `typeAnswer: false` thì giữ, hiện "· tự
+  chấm"); đổi sang tự chấm bằng dialog sửa thẻ. Dialog
   sửa thẻ có checkbox "Nhập đáp án" và ô "Giải thích đáp án".
 - **Loại bộ** (`DeckType`, 듣기/말하기/읽기/쓰기/문법, không bắt buộc): chọn bằng
-  hàng chip khi tạo bộ, đổi bằng nút "Loại: …" (bên phải, cùng hàng "+ Mô tả"/"+ Thêm từ")
-  (Mac/web, cần mạng; chọn lại loại đang có = bỏ phân loại). Ô chọn bộ hiện nhãn loại (`DeckTypeBadge`) trước tên bộ
-  trên mọi máy. Cache/`content.json` cũ thiếu `type` → chưa phân loại.
+  hàng chip (`DeckTypeChips`) khi tạo bộ và trong "Deck này" (Mac/web, cần
+  mạng; bấm lại chip đang chọn = bỏ phân loại). Ô chọn bộ hiện nhãn loại
+  (`DeckTypeBadge`) trước tên bộ trên mọi máy. Cache/`content.json` cũ thiếu `type` → chưa phân loại.
 - **Mô tả bộ** (`description`, không bắt buộc, ≤ 500 ký tự): nhập khi tạo bộ,
-  sửa bằng nút "+ Mô tả"/"✎ Mô tả" (Mac/web, cần mạng; xoá trắng = xoá). Hiện
+  sửa trong "Deck này" cùng tên bộ (Mac/web, cần mạng; xoá trắng = xoá). Hiện
   dưới ô chọn bộ trên mọi máy (bộ ảo thì không). Link `http(s)://` tách bằng
   `linkify` (`domain/`) và **chỉ bấm được trên Mac/web** (`LinkedText` →
   `linkLauncherProvider` → `url_launcher`, mở trình duyệt ngoài); điện thoại

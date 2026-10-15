@@ -152,23 +152,19 @@ void main() {
     expect(adapter.requests.last.data, containsPair("type", "speaking"));
     expect(adapter.requests.last.data, containsPair("description", "mô tả"));
 
-    await api.setDeckDescription("dx", "https://a.com");
-    expect(
-      [adapter.requests.last.path, adapter.requests.last.data],
-      [
-        "/decks/dx",
-        {"description": "https://a.com"},
-      ],
+    final d = await api.updateDeckInfo(
+      "dx",
+      name: "Nghe 2",
+      type: null,
+      description: null,
     );
-
-    final d = await api.setDeckType("dx", null);
     final req = adapter.requests.last;
     expect(
       [req.method, req.path, req.data],
       [
         "PATCH",
         "/decks/dx",
-        {"type": null},
+        {"name": "Nghe 2", "type": null, "description": null},
       ],
     );
     expect(d.type, DeckType.reading);
