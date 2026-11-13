@@ -123,6 +123,7 @@ class ContentDeck {
     required this.position,
     required this.cards,
     this.type,
+    this.source,
     this.description,
   });
 
@@ -134,6 +135,9 @@ class ContentDeck {
   /// Cache/`content.json` cũ chưa có trường này → `null`.
   final DeckType? type;
 
+  /// Cache/`content.json` cũ chưa có trường này → `null`.
+  final DeckSource? source;
+
   /// Mô tả ngắn, chữ thuần (link hiển thị thành bấm được). Cache cũ → `null`.
   final String? description;
   final List<ContentCard> cards;
@@ -144,6 +148,7 @@ class ContentDeck {
     name: json["name"] as String,
     position: json["position"] as int,
     type: DeckType.fromKey(json["type"]),
+    source: DeckSource.fromKey(json["source"]),
     description: json["description"] as String?,
     cards: (json["cards"] as List)
         .map((c) => ContentCard.fromJson(c as Map<String, dynamic>))
@@ -156,6 +161,7 @@ class ContentDeck {
     "name": name,
     "position": position,
     "type": type?.key,
+    "source": source?.key,
     "description": description,
     "cards": [for (final c in cards) c.toJson()],
   };
@@ -166,6 +172,7 @@ class ContentDeck {
     name: name,
     position: position,
     type: type,
+    source: source,
     description: description,
     cards: cards ?? this.cards,
   );
@@ -326,6 +333,7 @@ StudyCatalog buildStudyCatalog(ContentSnapshot content) {
         name: d.name,
         group: d.groupId,
         type: d.type,
+        source: d.source,
         description: d.description,
         words: words,
       ),

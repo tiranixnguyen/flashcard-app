@@ -48,11 +48,14 @@ khởi đầu / bản sao:
   `reading`/`writing`/`grammar` — client hiển thị 듣기/말하기/읽기/쓰기/문법.
   Lưu khoá ASCII để đổi nhãn không cần migration; app gặp giá trị lạ thì coi
   như chưa phân loại.
+- `Deck.source` (enum `DeckSource`, không bắt buộc) — "Tài liệu": `snu3a`/
+  `snu3b`/`snu4a`/`snu4b`/`thth3`/`thth4` — client hiển thị SNU 3A … THTH 4.
+  Cùng quy ước với `type` (khoá ASCII, giá trị lạ = chưa chọn).
 - `Deck.description` (không bắt buộc): chữ thuần ≤ 500 ký tự, bỏ khoảng trắng
   hai đầu + đổi CRLF, rỗng → `null` (`parseDescription`). App tự biến link
   `http(s)://` thành link bấm được (chỉ Mac/web).
-- `POST /decks` nhận thêm `type`, `description`. `PATCH /decks/:id`
-  `{ name?, type?, description? }`: thiếu trường = giữ, `null` = xoá (`name`
+- `POST /decks` nhận thêm `type`, `source`, `description`. `PATCH /decks/:id`
+  `{ name?, type?, source?, description? }`: thiếu trường = giữ, `null` = xoá (`name`
   không xoá được: rỗng/`null`/quá 120 ký tự → 400), giá trị sai hoặc body không
   có trường nào → 400.
 - `prisma/seed-data/decks.json` — 28 bộ gốc (574 mục, 3 nhóm), **định dạng cũ

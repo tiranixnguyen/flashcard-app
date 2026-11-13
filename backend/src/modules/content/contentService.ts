@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "../../../prisma/generated/prisma/client";
-import { DeckType } from "../../../prisma/generated/prisma/enums";
+import { DeckSource, DeckType } from "../../../prisma/generated/prisma/enums";
 import { missingAudioIds } from "../audio/audioService";
 import { HttpError } from "../common/httpError";
 import { cleanAlts, cleanNote, cleanWordInputs, type WordInput } from "./wordInput";
@@ -36,6 +36,15 @@ export function parseDeckType(value: unknown): DeckType | null | undefined {
   return DECK_TYPES.find((t) => t === value);
 }
 
+/** Tài liệu hợp lệ (client hiển thị SNU 3A, SNU 3B, SNU 4A, SNU 4B, THTH 3, THTH 4). */
+export const DECK_SOURCES = Object.values(DeckSource);
+
+/** `undefined` = không hợp lệ; `null` = bỏ tài liệu. */
+export function parseDeckSource(value: unknown): DeckSource | null | undefined {
+  if (value === null) return null;
+  return DECK_SOURCES.find((s) => s === value);
+}
+
 export const MAX_DESCRIPTION = 500;
 
 /**
@@ -56,6 +65,7 @@ export interface DeckDto {
   name: string;
   position: number;
   type: DeckType | null;
+  source: DeckSource | null;
   description: string | null;
   cards: CardDto[];
 }
@@ -99,6 +109,7 @@ function toDeckDto(d: {
   name: string;
   position: number;
   type: DeckType | null;
+  source: DeckSource | null;
   description: string | null;
   cards: CardDto[];
 }): DeckDto {
@@ -108,6 +119,7 @@ function toDeckDto(d: {
     name: d.name,
     position: d.position,
     type: d.type,
+    source: d.source,
     description: d.description,
     cards: d.cards,
   };
@@ -191,6 +203,7 @@ export async function createDeck(
     groupId: string;
     name: string;
     type?: DeckType | null;
+    source?: DeckSource | null;
     description?: string | null;
     words: WordInput[];
   },
@@ -210,6 +223,7 @@ export async function createDeck(
         name: input.name.trim(),
         position: (last?.position ?? -1) + 1,
         type: input.type ?? null,
+        source: input.source ?? null,
         description: input.description ?? null,
       },
     });
@@ -220,12 +234,17 @@ export async function createDeck(
   });
 }
 
-/** Sửa thông tin bộ (tên, loại, mô tả): thiếu trường = giữ nguyên, `null` = xoá. */
+/** Sửa thông tin bộ (tên, loại, tài liệu, mô tả): thiếu trường = giữ nguyên, `null` = xoá. */
 export async function updateDeck(
   prisma: PrismaClient,
   userId: string,
   deckId: string,
-  patch: { name?: string; type?: DeckType | null; description?: string | null },
+  patch: {
+    name?: string;
+    type?: DeckType | null;
+    source?: DeckSource | null;
+    description?: string | null;
+  },
 ): Promise<DeckDto> {
   const { count } = await prisma.deck.updateMany({ where: { id: deckId, userId }, data: patch });
   if (count === 0) throw new HttpError(404, "Không tìm thấy bộ từ.");

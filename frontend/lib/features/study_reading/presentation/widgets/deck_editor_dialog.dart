@@ -7,13 +7,14 @@ import "../../domain/deck_import.dart";
 import "../../models/deck.dart";
 import "card_form_fields.dart";
 
-/// Gửi lên server; trả về thông báo lỗi, `null` nếu thành công. [type] và
-/// [description] luôn `null` khi thêm từ vào bộ có sẵn.
+/// Gửi lên server; trả về thông báo lỗi, `null` nếu thành công. [type],
+/// [source] và [description] luôn `null` khi thêm từ vào bộ có sẵn.
 typedef DeckSubmit =
     Future<String?> Function(
       String name,
       List<Map<String, dynamic>> words,
       DeckType? type,
+      DeckSource? source,
       String? description,
     );
 
@@ -82,6 +83,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
   List<bool> _selected = const [];
 
   DeckType? _type;
+  DeckSource? _source;
   bool _nameTouched = false;
   bool _sending = false;
   String? _error;
@@ -154,6 +156,7 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
       _nameController.text.trim(),
       _words,
       _type,
+      _source,
       _isAppend ? null : _descriptionController.text,
     );
     if (!mounted) return;
@@ -214,6 +217,15 @@ class _DeckEditorDialogState extends State<_DeckEditorDialog> {
                   palette: p,
                   selected: _type,
                   onChanged: _sending ? null : (t) => setState(() => _type = t),
+                ),
+                const SizedBox(height: 14),
+                _label(p, "Tài liệu (không bắt buộc)"),
+                DeckSourceChips(
+                  palette: p,
+                  selected: _source,
+                  onChanged: _sending
+                      ? null
+                      : (s) => setState(() => _source = s),
                 ),
                 const SizedBox(height: 14),
                 _label(p, "Mô tả ngắn (không bắt buộc, link bấm được)"),
@@ -463,14 +475,21 @@ class _DescriptionField extends StatelessWidget {
 
 /// Gửi thông tin bộ đã sửa; trả về thông báo lỗi, `null` nếu thành công.
 typedef DeckInfoSubmit =
-    Future<String?> Function(String name, DeckType? type, String description);
+    Future<String?> Function(
+      String name,
+      DeckType? type,
+      DeckSource? source,
+      String description,
+    );
 
-/// "Deck này": sửa tên, loại, mô tả bộ đang mở (mô tả để trống là xoá).
+/// "Deck này": sửa tên, loại, tài liệu, mô tả bộ đang mở (mô tả để trống là
+/// xoá).
 Future<bool?> showDeckInfoDialog({
   required BuildContext context,
   required AppPalette palette,
   required String name,
   required DeckType? type,
+  required DeckSource? source,
   required String? description,
   required DeckInfoSubmit onSubmit,
 }) {
@@ -480,6 +499,7 @@ Future<bool?> showDeckInfoDialog({
       palette: palette,
       name: name,
       type: type,
+      source: source,
       description: description ?? "",
       onSubmit: onSubmit,
     ),
@@ -491,6 +511,7 @@ class _DeckInfoDialog extends StatefulWidget {
     required this.palette,
     required this.name,
     required this.type,
+    required this.source,
     required this.description,
     required this.onSubmit,
   });
@@ -498,6 +519,7 @@ class _DeckInfoDialog extends StatefulWidget {
   final AppPalette palette;
   final String name;
   final DeckType? type;
+  final DeckSource? source;
   final String description;
   final DeckInfoSubmit onSubmit;
 
@@ -509,6 +531,7 @@ class _DeckInfoDialogState extends State<_DeckInfoDialog> {
   late final _name = TextEditingController(text: widget.name);
   late final _description = TextEditingController(text: widget.description);
   late DeckType? _type = widget.type;
+  late DeckSource? _source = widget.source;
   bool _sending = false;
   String? _error;
 
@@ -530,6 +553,7 @@ class _DeckInfoDialogState extends State<_DeckInfoDialog> {
     final err = await widget.onSubmit(
       _name.text.trim(),
       _type,
+      _source,
       _description.text,
     );
     if (!mounted) return;
@@ -586,6 +610,14 @@ class _DeckInfoDialogState extends State<_DeckInfoDialog> {
               onChanged: _sending ? null : (t) => setState(() => _type = t),
             ),
             const SizedBox(height: 14),
+            Text("Tài liệu (bấm lại tài liệu đang chọn để bỏ)", style: label),
+            const SizedBox(height: 6),
+            DeckSourceChips(
+              palette: p,
+              selected: _source,
+              onChanged: _sending ? null : (s) => setState(() => _source = s),
+            ),
+            const SizedBox(height: 14),
             Text("Mô tả ngắn", style: label),
             const SizedBox(height: 6),
             _DescriptionField(controller: _description, palette: p),
@@ -634,29 +666,80 @@ class DeckTypeChips extends StatelessWidget {
   final ValueChanged<DeckType?>? onChanged;
 
   @override
+  Widget build(BuildContext context) => _ChoiceChips(
+    palette: palette,
+    values: DeckType.values,
+    labelOf: (t) => t.label,
+    selected: selected,
+    onChanged: onChanged,
+  );
+}
+
+/// Hàng chip chọn tài liệu; bấm lại chip đang chọn = bỏ.
+class DeckSourceChips extends StatelessWidget {
+  const DeckSourceChips({
+    super.key,
+    required this.palette,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final AppPalette palette;
+  final DeckSource? selected;
+
+  /// `null` = khoá (đang gửi).
+  final ValueChanged<DeckSource?>? onChanged;
+
+  @override
+  Widget build(BuildContext context) => _ChoiceChips(
+    palette: palette,
+    values: DeckSource.values,
+    labelOf: (s) => s.label,
+    selected: selected,
+    onChanged: onChanged,
+  );
+}
+
+/// Chọn tối đa một giá trị; bấm lại chip đang chọn = bỏ chọn (`null`).
+class _ChoiceChips<T> extends StatelessWidget {
+  const _ChoiceChips({
+    required this.palette,
+    required this.values,
+    required this.labelOf,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final AppPalette palette;
+  final List<T> values;
+  final String Function(T) labelOf;
+  final T? selected;
+  final ValueChanged<T?>? onChanged;
+
+  @override
   Widget build(BuildContext context) {
     final p = palette;
     return Wrap(
       spacing: 6,
       runSpacing: 6,
       children: [
-        for (final t in DeckType.values)
+        for (final v in values)
           ChoiceChip(
-            label: Text(t.label),
-            selected: t == selected,
+            label: Text(labelOf(v)),
+            selected: v == selected,
             showCheckmark: false,
             visualDensity: VisualDensity.compact,
             backgroundColor: p.cardBg,
             selectedColor: p.blue.withValues(alpha: 0.15),
-            side: BorderSide(color: t == selected ? p.blue : p.paperLine),
+            side: BorderSide(color: v == selected ? p.blue : p.paperLine),
             labelStyle: GoogleFonts.notoSansKr(
               fontSize: 13,
-              color: t == selected ? p.blue : p.ink,
-              fontWeight: t == selected ? FontWeight.w600 : FontWeight.w400,
+              color: v == selected ? p.blue : p.ink,
+              fontWeight: v == selected ? FontWeight.w600 : FontWeight.w400,
             ),
             onSelected: onChanged == null
                 ? null
-                : (on) => onChanged!(on ? t : null),
+                : (on) => onChanged!(on ? v : null),
           ),
       ],
     );

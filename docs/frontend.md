@@ -160,6 +160,10 @@ tới) rồi truyền vào `StudyCard`.
   hàng chip (`DeckTypeChips`) khi tạo bộ và trong "Deck này" (Mac/web, cần
   mạng; bấm lại chip đang chọn = bỏ phân loại). Ô chọn bộ hiện nhãn loại
   (`DeckTypeBadge`) trước tên bộ trên mọi máy. Cache/`content.json` cũ thiếu `type` → chưa phân loại.
+- **Tài liệu** (`DeckSource`, SNU 3A/3B/4A/4B, THTH 3/4, không bắt buộc): y
+  hệt loại bộ — `DeckSourceChips` khi tạo bộ + "Deck này", nhãn xanh lá
+  `DeckSourceBadge` đứng sau nhãn loại trong ô chọn bộ. Hai hàng chip dùng
+  chung `_ChoiceChips`.
 - **Mô tả bộ** (`description`, không bắt buộc, ≤ 500 ký tự): nhập khi tạo bộ,
   sửa trong "Deck này" cùng tên bộ (Mac/web, cần mạng; xoá trắng = xoá). Hiện
   dưới ô chọn bộ trên mọi máy (bộ ảo thì không). Link `http(s)://` tách bằng

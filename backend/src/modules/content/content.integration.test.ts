@@ -101,6 +101,31 @@ describe("bộ từ và thẻ", () => {
     expect(content.json.decks.map((d: any) => d.type)).toEqual([null, null]);
   });
 
+  it("tài liệu: mặc định null, đặt khi tạo, PATCH đổi/bỏ không đụng loại", async () => {
+    const g = await makeGroup();
+    const words = [{ back: "가다", front: "đi" }];
+    expect((await makeDeck(g.id, words)) as any).toMatchObject({ source: null });
+
+    const r = await api("POST", "/decks", {
+      groupId: g.id,
+      name: "Đọc",
+      type: "reading",
+      source: "snu3a",
+      words,
+    });
+    expect(r.status).toBe(201);
+    expect(r.json).toMatchObject({ type: "reading", source: "snu3a" });
+
+    const changed = await api("PATCH", `/decks/${r.json.id}`, { source: "thth4" });
+    expect(changed.json).toMatchObject({ type: "reading", source: "thth4", name: "Đọc" });
+    const cleared = await api("PATCH", `/decks/${r.json.id}`, { source: null });
+    expect(cleared.json).toMatchObject({ type: "reading", source: null });
+
+    const bad = await api("POST", "/decks", { groupId: g.id, name: "x", source: "SNU 3A", words });
+    expect(bad.status).toBe(400);
+    expect((await api("PATCH", `/decks/${r.json.id}`, { source: "snu5a" })).status).toBe(400);
+  });
+
   it("loại bộ sai -> 400; bộ không tồn tại -> 404", async () => {
     const g = await makeGroup();
     const words = [{ back: "가다", front: "đi" }];

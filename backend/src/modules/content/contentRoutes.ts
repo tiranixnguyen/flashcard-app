@@ -8,10 +8,12 @@ import {
   type AudioField,
   createDeck,
   createGroup,
+  DECK_SOURCES,
   DECK_TYPES,
   deleteCard,
   getContent,
   MAX_DESCRIPTION,
+  parseDeckSource,
   parseDeckType,
   parseDescription,
   renameGroup,
@@ -29,6 +31,7 @@ export const contentRouter = Router();
 
 const MAX_NAME = 120;
 const TYPE_ERROR = `Loại bộ không hợp lệ (${DECK_TYPES.join(", ")} hoặc null).`;
+const SOURCE_ERROR = `Tài liệu không hợp lệ (${DECK_SOURCES.join(", ")} hoặc null).`;
 const DESCRIPTION_ERROR = `Mô tả bộ phải là chữ, tối đa ${MAX_DESCRIPTION} ký tự.`;
 
 function nameOf(body: unknown): string | null {
@@ -87,6 +90,11 @@ contentRouter.post(
       res.status(400).json({ error: TYPE_ERROR });
       return;
     }
+    const source = body.source === undefined ? null : parseDeckSource(body.source);
+    if (source === undefined) {
+      res.status(400).json({ error: SOURCE_ERROR });
+      return;
+    }
     const description = body.description === undefined ? null : parseDescription(body.description);
     if (description === undefined) {
       res.status(400).json({ error: DESCRIPTION_ERROR });
@@ -102,6 +110,7 @@ contentRouter.post(
         groupId: body.groupId,
         name,
         type,
+        source,
         description,
         words: words.value,
       }),
@@ -110,7 +119,7 @@ contentRouter.post(
 );
 
 /**
- * Sửa thông tin bộ: body `{ name?, type?, description? }` — thiếu trường =
+ * Sửa thông tin bộ: body `{ name?, type?, source?, description? }` — thiếu trường =
  * giữ nguyên, `null` = xoá (tên thì không xoá được). Phải có ít nhất một trường.
  */
 contentRouter.patch(
@@ -134,6 +143,14 @@ contentRouter.patch(
       }
       patch.type = type;
     }
+    if (body.source !== undefined) {
+      const source = parseDeckSource(body.source);
+      if (source === undefined) {
+        res.status(400).json({ error: SOURCE_ERROR });
+        return;
+      }
+      patch.source = source;
+    }
     if (body.description !== undefined) {
       const description = parseDescription(body.description);
       if (description === undefined) {
@@ -143,7 +160,7 @@ contentRouter.patch(
       patch.description = description;
     }
     if (Object.keys(patch).length === 0) {
-      res.status(400).json({ error: "Không có gì để sửa (name, type, description)." });
+      res.status(400).json({ error: "Không có gì để sửa (name, type, source, description)." });
       return;
     }
     res.json(await updateDeck(prisma, userId, String(req.params.id), patch));

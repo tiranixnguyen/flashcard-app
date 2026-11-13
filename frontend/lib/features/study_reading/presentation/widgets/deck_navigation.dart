@@ -123,7 +123,7 @@ class AuthoringRow extends ConsumerWidget {
             groupName: group.name,
             knownKorean: s.knownKorean,
             appendTo: s.currentDeckName,
-            onSubmit: (_, words, _, _) => vm.appendCards(deckId, words),
+            onSubmit: (_, words, _, _, _) => vm.appendCards(deckId, words),
           ),
           child: Text("+ Thêm từ", style: style),
         ),
@@ -133,11 +133,13 @@ class AuthoringRow extends ConsumerWidget {
             palette: p,
             name: s.currentDeckName ?? "",
             type: s.currentDeckType,
+            source: s.currentDeckSource,
             description: s.currentDeckDescription,
-            onSubmit: (name, type, description) => vm.updateDeckInfo(
+            onSubmit: (name, type, source, description) => vm.updateDeckInfo(
               deckId,
               name: name,
               type: type,
+              source: source,
               description: description,
             ),
           ),
@@ -181,19 +183,47 @@ class DeckTypeBadge extends StatelessWidget {
   final AppPalette palette;
 
   @override
+  Widget build(BuildContext context) =>
+      _Badge(text: type.label, color: palette.blue);
+}
+
+/// Nhãn tài liệu nhỏ (xanh lá, khác màu nhãn loại) đặt sau nhãn loại trong ô
+/// chọn.
+class DeckSourceBadge extends StatelessWidget {
+  const DeckSourceBadge({
+    super.key,
+    required this.source,
+    required this.palette,
+  });
+
+  final DeckSource source;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) =>
+      _Badge(text: source.label, color: palette.correct);
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.text, required this.color});
+
+  final String text;
+  final Color color;
+
+  @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(right: 8),
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
     decoration: BoxDecoration(
-      border: Border.all(color: palette.blue.withValues(alpha: 0.5)),
+      border: Border.all(color: color.withValues(alpha: 0.5)),
       borderRadius: BorderRadius.circular(3),
     ),
     child: Text(
-      type.label,
+      text,
       style: GoogleFonts.notoSansKr(
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        color: palette.blue,
+        color: color,
       ),
     ),
   );
@@ -216,11 +246,12 @@ void showNewDeckDialog(
     palette: palette,
     groupName: group.name,
     knownKorean: s.knownKorean,
-    onSubmit: (name, words, type, description) => vm.createDeck(
+    onSubmit: (name, words, type, source, description) => vm.createDeck(
       groupId: group.id,
       name: name,
       words: words,
       type: type,
+      source: source,
       description: description,
     ),
   );
@@ -330,7 +361,7 @@ class _DeckPickerState extends ConsumerState<DeckPicker> {
   }
 }
 
-/// Một dòng bộ: [nhãn loại] tên bộ … gợi ý ôn lại.
+/// Một dòng bộ: [nhãn loại] [tài liệu] tên bộ … gợi ý ôn lại.
 class _DeckOptionRow extends StatelessWidget {
   const _DeckOptionRow({required this.option, required this.palette});
 
@@ -344,6 +375,7 @@ class _DeckOptionRow extends StatelessWidget {
     return Row(
       children: [
         if (o.type case final t?) DeckTypeBadge(type: t, palette: p),
+        if (o.source case final s?) DeckSourceBadge(source: s, palette: p),
         Expanded(
           child: Text(
             o.label,

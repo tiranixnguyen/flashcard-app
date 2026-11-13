@@ -35,6 +35,7 @@ class StudySessionState {
     required this.currentDeckId,
     required this.currentDeckName,
     required this.currentDeckType,
+    required this.currentDeckSource,
     required this.currentDeckDescription,
     required this.isVirtualDeck,
     required this.word,
@@ -73,6 +74,9 @@ class StudySessionState {
 
   /// Loại bộ đang mở (`null` = chưa phân loại hoặc bộ ảo).
   final DeckType? currentDeckType;
+
+  /// Tài liệu của bộ đang mở (`null` = chưa chọn hoặc bộ ảo).
+  final DeckSource? currentDeckSource;
 
   /// Mô tả bộ đang mở (`null` = không có hoặc bộ ảo).
   final String? currentDeckDescription;
@@ -139,6 +143,7 @@ class DeckOption {
     required this.id,
     required this.label,
     this.type,
+    this.source,
     this.review,
     this.enabled = true,
   });
@@ -148,6 +153,9 @@ class DeckOption {
 
   /// Loại bộ (chỉ bộ thật) — hiện thành nhãn nhỏ trước tên bộ.
   final DeckType? type;
+
+  /// Tài liệu (chỉ bộ thật) — hiện thành nhãn nhỏ cạnh nhãn loại.
+  final DeckSource? source;
 
   /// Gợi ý ôn lại (chỉ bộ thật) — hiện mờ sau tên bộ.
   final ReviewStatus? review;
@@ -242,6 +250,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
       currentDeckId: e.currentDeckId,
       currentDeckName: deck?.name,
       currentDeckType: deck?.type,
+      currentDeckSource: deck?.source,
       currentDeckDescription: deck?.description,
       isVirtualDeck: isVirtual,
       word: e.currentWord,
@@ -303,6 +312,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
           id: d.id,
           label: d.name,
           type: d.type,
+          source: d.source,
           review: reviewOf(d.id),
         ),
     ];
@@ -679,6 +689,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     required String name,
     required List<Map<String, dynamic>> words,
     DeckType? type,
+    DeckSource? source,
     String? description,
   }) async {
     String? deckId;
@@ -689,6 +700,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
           name: name,
           words: words,
           type: type,
+          source: source,
           description: _cleanDescription(description),
         );
         deckId = deck.id;
@@ -701,12 +713,13 @@ class StudySessionViewModel extends _$StudySessionViewModel {
     );
   }
 
-  /// Sửa bộ thật ("Deck này"): tên, loại ([type] `null` = bỏ phân loại), mô
-  /// tả (rỗng = xoá).
+  /// Sửa bộ thật ("Deck này"): tên, loại ([type] `null` = bỏ phân loại), tài
+  /// liệu ([source] `null` = bỏ), mô tả (rỗng = xoá).
   Future<String?> updateDeckInfo(
     String deckId, {
     required String name,
     required DeckType? type,
+    required DeckSource? source,
     required String? description,
   }) => _author(
     () async => _content.upsertDeck(
@@ -714,6 +727,7 @@ class StudySessionViewModel extends _$StudySessionViewModel {
         deckId,
         name: name.trim(),
         type: type,
+        source: source,
         description: _cleanDescription(description),
       ),
     ),

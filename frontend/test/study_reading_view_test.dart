@@ -16,7 +16,7 @@ import "package:flashcard_app/features/study_reading/models/content.dart";
 import "package:flashcard_app/features/study_reading/models/deck.dart";
 import "package:flashcard_app/features/study_reading/models/study_session_record.dart";
 import "package:flashcard_app/features/study_reading/presentation/widgets/deck_navigation.dart"
-    show DeckDescription, DeckPicker, DeckTypeBadge;
+    show DeckDescription, DeckPicker, DeckSourceBadge, DeckTypeBadge;
 import "package:flashcard_app/features/study_reading/presentation/study_session_view_model.dart"
     show DeckOption;
 import "package:flashcard_app/features/study_reading/presentation/widgets/dashed_line.dart";
@@ -111,6 +111,7 @@ class _FakeApi implements ContentApi {
     required String name,
     required List<Map<String, dynamic>> words,
     DeckType? type,
+    DeckSource? source,
     String? description,
   }) async {
     _check();
@@ -121,6 +122,7 @@ class _FakeApi implements ContentApi {
       name: name,
       position: 99,
       type: type,
+      source: source,
       description: description,
     );
     server = server.upsertDeck(d);
@@ -132,6 +134,7 @@ class _FakeApi implements ContentApi {
     String deckId, {
     required String name,
     required DeckType? type,
+    required DeckSource? source,
     required String? description,
   }) async {
     _check();
@@ -142,6 +145,7 @@ class _FakeApi implements ContentApi {
       name: name,
       position: old.position,
       type: type,
+      source: source,
       description: description,
       cards: old.cards,
     );
@@ -1037,6 +1041,8 @@ void main() {
       await tester.pump();
       await tester.tap(find.widgetWithText(ChoiceChip, "듣기"));
       await tester.pump();
+      await tester.tap(find.widgetWithText(ChoiceChip, "SNU 3A"));
+      await tester.pump();
 
       await tester.tap(find.widgetWithText(ElevatedButton, "Tạo bộ (2 thẻ)"));
       await tester.pumpAndSettle();
@@ -1050,9 +1056,11 @@ void main() {
       expect(find.text("Bài 12"), findsOneWidget); // ô chọn bộ đã sang bộ mới
       expect(find.textContaining("Thuộc 0/2"), findsOneWidget);
       expect(h.api.server.decks.last.type, DeckType.listening);
+      expect(h.api.server.decks.last.source, DeckSource.snu3a);
       expect(h.api.server.decks.last.description, "Sách Sơ cấp — https://a.vn");
       expect(find.byType(DeckDescription), findsOneWidget);
       expect(find.byType(DeckTypeBadge), findsOneWidget);
+      expect(find.byType(DeckSourceBadge), findsOneWidget);
     }, variant: desktop);
 
     testWidgets("Deck này: đổi loại bộ, nhãn hiện trong ô chọn bộ, bỏ được", (
@@ -1089,6 +1097,38 @@ void main() {
       await pickType("문법");
       expect(h.api.server.decks.first.type, isNull);
       expect(find.byType(DeckTypeBadge), findsNothing);
+    }, variant: desktop);
+
+    testWidgets("Deck này: đổi tài liệu, giữ loại, bấm lại để bỏ", (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final h = await pumpApp(tester, api: _FakeApi(online: true));
+      expect(find.byType(DeckSourceBadge), findsNothing);
+      Future<void> pick(List<String> labels) async {
+        await tester.tap(find.text("Deck này"));
+        await tester.pumpAndSettle();
+        for (final l in labels) {
+          await tester.tap(find.widgetWithText(ChoiceChip, l));
+          await tester.pump();
+        }
+        await tester.tap(find.widgetWithText(ElevatedButton, "Lưu"));
+        await tester.pumpAndSettle();
+      }
+
+      await pick(["읽기", "THTH 4"]);
+      expect(h.api.server.decks.first.type, DeckType.reading);
+      expect(h.api.server.decks.first.source, DeckSource.thth4);
+      expect(find.byType(DeckSourceBadge), findsOneWidget);
+      expect(find.text("THTH 4"), findsOneWidget); // nhãn trong ô chọn bộ
+
+      await pick(["SNU 4B"]); // chọn tài liệu khác = thay
+      expect(h.api.server.decks.first.source, DeckSource.snu4b);
+      await pick(["SNU 4B"]);
+      expect(h.api.server.decks.first.source, isNull);
+      expect(h.api.server.decks.first.type, DeckType.reading);
+      expect(find.byType(DeckSourceBadge), findsNothing);
     }, variant: desktop);
 
     testWidgets(

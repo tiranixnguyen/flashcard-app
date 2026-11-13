@@ -16,6 +16,7 @@ ContentDeck contentDeck(
   String? name,
   int position = 0,
   DeckType? type,
+  DeckSource? source,
   String? description,
   Set<int> marked = const {},
   Set<int> hanja = const {},
@@ -47,6 +48,7 @@ ContentDeck contentDeck(
     name: name ?? "Bộ $id",
     position: position,
     type: type,
+    source: source,
     description: description,
     cards: cards,
   );

@@ -68,6 +68,7 @@ void main() {
             "name": "Bộ 1",
             "position": 0,
             "type": "listening",
+            "source": "snu4a",
             "description": "Nghe https://a.com",
             "cards": [
               {
@@ -109,6 +110,9 @@ void main() {
     expect([cards[0].typeAnswer, cards[1].typeAnswer], [true, false]);
     expect(c.decks.single.type, DeckType.listening);
     expect(c.decks.single.toJson()["type"], "listening");
+    expect(c.decks.single.source, DeckSource.snu4a);
+    expect(c.decks.single.toJson()["source"], "snu4a");
+    expect(c.decks.single.copyWith(cards: []).source, DeckSource.snu4a);
     expect(c.decks.single.description, "Nghe https://a.com");
     expect(
       c.decks.single.copyWith(cards: []).description,
@@ -132,6 +136,28 @@ void main() {
     expect(deck("grammar").copyWith(cards: []).type, DeckType.grammar);
   });
 
+  test("tài liệu: thiếu (cache cũ) hoặc giá trị lạ -> chưa chọn", () {
+    ContentDeck deck(Object? source) => ContentDeck.fromJson({
+      "id": "ds1",
+      "groupId": "g1",
+      "name": "Bộ 1",
+      "position": 0,
+      "source": ?source,
+      "cards": [],
+    });
+    expect(deck(null).source, isNull);
+    expect(deck("SNU 3A").source, isNull);
+    expect(deck("thth3").source, DeckSource.thth3);
+    expect(DeckSource.values.map((s) => s.label), [
+      "SNU 3A",
+      "SNU 3B",
+      "SNU 4A",
+      "SNU 4B",
+      "THTH 3",
+      "THTH 4",
+    ]);
+  });
+
   test("tạo bộ gửi kèm loại; đổi loại = PATCH /decks/:id", () async {
     final deckJson = {
       "id": "dx",
@@ -147,15 +173,18 @@ void main() {
       name: "Nghe",
       words: const [],
       type: DeckType.speaking,
+      source: DeckSource.snu3b,
       description: "mô tả",
     );
     expect(adapter.requests.last.data, containsPair("type", "speaking"));
+    expect(adapter.requests.last.data, containsPair("source", "snu3b"));
     expect(adapter.requests.last.data, containsPair("description", "mô tả"));
 
     final d = await api.updateDeckInfo(
       "dx",
       name: "Nghe 2",
       type: null,
+      source: DeckSource.thth3,
       description: null,
     );
     final req = adapter.requests.last;
@@ -164,7 +193,12 @@ void main() {
       [
         "PATCH",
         "/decks/dx",
-        {"name": "Nghe 2", "type": null, "description": null},
+        {
+          "name": "Nghe 2",
+          "type": null,
+          "source": "thth3",
+          "description": null,
+        },
       ],
     );
     expect(d.type, DeckType.reading);

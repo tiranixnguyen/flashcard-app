@@ -48,6 +48,17 @@ enum DeckType {
   grammar
 }
 
+/// Tài liệu (giáo trình) bộ từ lấy ra. Lưu khoá ASCII; nhãn (SNU 3A, …,
+/// THTH 4) do client hiển thị.
+enum DeckSource {
+  snu3a
+  snu3b
+  snu4a
+  snu4b
+  thth3
+  thth4
+}
+
 /// Bộ từ. 28 bộ gốc giữ id cũ ("ds1" … "ds30") để khớp với bản đóng gói sẵn
 /// trong app (frontend/assets/content.json) — xem scripts/importContent.ts.
 model Deck {
@@ -58,6 +69,8 @@ model Deck {
   position    Int
   /// Không bắt buộc — bộ chưa phân loại để `null`. Chỉ Mac/web đặt/đổi.
   type        DeckType?
+  /// Tài liệu — không bắt buộc, như `type`.
+  source      DeckSource?
   /// Mô tả ngắn (không bắt buộc, chữ thuần). Link `http(s)://` trong đó app
   /// hiển thị thành link bấm được.
   description String?

@@ -39,15 +39,17 @@ abstract class ContentApi {
     required String name,
     required List<Map<String, dynamic>> words,
     DeckType? type,
+    DeckSource? source,
     String? description,
   });
 
-  /// Sửa thông tin bộ: tên, loại (`null` = bỏ phân loại), mô tả (`null` =
-  /// xoá) — gửi đủ cả ba.
+  /// Sửa thông tin bộ: tên, loại (`null` = bỏ phân loại), tài liệu (`null` =
+  /// bỏ), mô tả (`null` = xoá) — gửi đủ cả bốn.
   Future<ContentDeck> updateDeckInfo(
     String deckId, {
     required String name,
     required DeckType? type,
+    required DeckSource? source,
     required String? description,
   });
   Future<ContentDeck> appendCards(
@@ -147,6 +149,7 @@ class DioContentApi implements ContentApi {
     required String name,
     required List<Map<String, dynamic>> words,
     DeckType? type,
+    DeckSource? source,
     String? description,
   }) => _request(
     "POST",
@@ -155,6 +158,7 @@ class DioContentApi implements ContentApi {
       "groupId": groupId,
       "name": name,
       "type": type?.key,
+      "source": source?.key,
       "description": description,
       "words": words,
     },
@@ -166,11 +170,17 @@ class DioContentApi implements ContentApi {
     String deckId, {
     required String name,
     required DeckType? type,
+    required DeckSource? source,
     required String? description,
   }) => _request(
     "PATCH",
     "/decks/$deckId",
-    body: {"name": name, "type": type?.key, "description": description},
+    body: {
+      "name": name,
+      "type": type?.key,
+      "source": source?.key,
+      "description": description,
+    },
     parse: ContentDeck.fromJson,
   );
 
